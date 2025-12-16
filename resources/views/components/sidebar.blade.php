@@ -17,17 +17,12 @@
                <label>Absensi</label>
            </li>
            <li class="pc-item">
-               <a href="/absensi/masuk" class="pc-link">
+               <a href="/absensi" class="pc-link">
                    <span class="pc-micon"><i class="ph ph-camera"></i></span>
-                   <span class="pc-mtext">Absen Masuk</span>
+                   <span class="pc-mtext">Absen Sekarang</span>
                </a>
            </li>
-           <li class="pc-item">
-               <a href="/absensi/pulang" class="pc-link">
-                   <span class="pc-micon"><i class="ph ph-sign-out"></i></span>
-                   <span class="pc-mtext">Absen Pulang</span>
-               </a>
-           </li>
+           
            <li class="pc-item">
                <a href="/absensi/riwayat" class="pc-link">
                    <span class="pc-micon"><i class="ph ph-clock-counter-clockwise"></i></span>
@@ -39,18 +34,28 @@
            <li class="pc-item pc-caption">
                <label>Manajemen Karyawan</label>
            </li>
+
            <li class="pc-item">
                <a href="/karyawan" class="pc-link">
                    <span class="pc-micon"><i class="ph ph-users"></i></span>
                    <span class="pc-mtext">Data Karyawan</span>
                </a>
            </li>
+
+           <li class="pc-item">
+               <a href="/divisi" class="pc-link">
+                   <span class="pc-micon"><i class="ph ph-buildings"></i></span>
+                   <span class="pc-mtext">Divisi</span>
+               </a>
+           </li>
+
            <li class="pc-item">
                <a href="/shift" class="pc-link">
                    <span class="pc-micon"><i class="ph ph-timer"></i></span>
                    <span class="pc-mtext">Shift Kerja</span>
                </a>
            </li>
+
 
            <!-- MONITORING -->
            <li class="pc-item pc-caption">

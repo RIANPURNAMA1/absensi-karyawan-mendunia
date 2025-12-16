@@ -3,8 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-
-
+use App\Http\Controllers\DivisiController;
 
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard')->middleware('auth');
 
@@ -39,6 +38,27 @@ use App\Http\Controllers\KaryawanController;
 Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::get('/karyawan', [KaryawanController::class, 'index'])->name('karyawan.index');
     Route::post('/karyawan', [KaryawanController::class, 'store'])->name('karyawan.store');
-    Route::put('/karyawan/{karyawan}', [KaryawanController::class, 'update'])->name('karyawan.update');
-    Route::delete('/karyawan/{karyawan}', [KaryawanController::class, 'destroy'])->name('karyawan.destroy');
+    Route::put('/karyawan/{id}', [KaryawanController::class, 'update'])->name('karyawan.update');
+    Route::delete('/karyawan/{id}', [KaryawanController::class, 'destroy'])
+        ->name('karyawan.destroy');
+    Route::get('/karyawan/{id}', [KaryawanController::class, 'show'])
+        ->name('karyawan.show');
+});
+
+
+// divisi
+Route::middleware(['auth'])->group(function () {
+    Route::resource('divisi', DivisiController::class)
+        ->only(['index', 'store', 'update', 'destroy']);
+});
+
+
+// absensi
+use App\Http\Controllers\AbsensiController;
+
+Route::middleware('auth')->group(function() {
+    Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
+    Route::post('/absensi/masuk', [AbsensiController::class, 'absenMasuk'])->name('absensi.masuk');
+    Route::post('/absensi/pulang', [AbsensiController::class, 'absenPulang'])->name('absensi.pulang');
+    Route::get('/absensi/history', [AbsensiController::class, 'history'])->name('absensi.history');
 });

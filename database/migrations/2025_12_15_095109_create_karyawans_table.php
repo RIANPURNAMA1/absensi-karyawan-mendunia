@@ -9,19 +9,21 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-     public function up(): void
+    public function up(): void
     {
         Schema::create('karyawan', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('divisi_id');
             $table->string('nip')->unique();
+            $table->string('name');
             $table->string('jabatan');
-            $table->string('departemen');
+            $table->string('email')->unique();
             $table->string('no_hp');
             $table->text('alamat')->nullable();
             $table->string('foto_profil')->nullable();
             $table->date('tanggal_masuk');
-            $table->enum('status_kerja', ['TETAP','KONTRAK','MAGANG']);
+            $table->enum('status_kerja', ['TETAP', 'KONTRAK', 'MAGANG']);
             $table->timestamps();
         });
     }

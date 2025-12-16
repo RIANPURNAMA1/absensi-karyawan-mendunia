@@ -161,7 +161,7 @@
                         btn.prop('disabled', true)
                             .html(
                                 '<span class="spinner-border spinner-border-sm"></span> Memproses...'
-                                );
+                            );
                     },
 
                     success: function(response) {
@@ -203,6 +203,22 @@
             });
 
         });
+
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('bi-eye-fill');
+                eyeIcon.classList.add('bi-eye-slash-fill');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('bi-eye-slash-fill');
+                eyeIcon.classList.add('bi-eye-fill');
+            }
+        }
     </script>
 
 

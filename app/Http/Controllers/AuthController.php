@@ -51,7 +51,7 @@ class AuthController extends Controller
         $redirect = match ($user->role) {
             'HR'       => route('dashboard'),
             'MANAGER'  => route('dashboard'),
-            'KARYAWAN' => route('absensi'),
+            'KARYAWAN' => route('dashboard'),
             default    => route('login')
         };
 
