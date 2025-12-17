@@ -10,8 +10,8 @@ class Divisi extends Model
 
     protected $fillable = ['nama_divisi'];
 
-    public function karyawan()
+    public function user()
     {
-        return $this->hasMany(Karyawan::class, 'divisi_id');
+        return $this->hasMany(User::class, 'user_id');
     }
 }

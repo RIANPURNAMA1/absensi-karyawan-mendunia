@@ -12,24 +12,6 @@
                </a>
            </li>
 
-           <!-- ABSENSI -->
-           <li class="pc-item pc-caption">
-               <label>Absensi</label>
-           </li>
-           <li class="pc-item">
-               <a href="/absensi" class="pc-link">
-                   <span class="pc-micon"><i class="ph ph-camera"></i></span>
-                   <span class="pc-mtext">Absen Sekarang</span>
-               </a>
-           </li>
-           
-           <li class="pc-item">
-               <a href="/absensi/riwayat" class="pc-link">
-                   <span class="pc-micon"><i class="ph ph-clock-counter-clockwise"></i></span>
-                   <span class="pc-mtext">Riwayat Absensi</span>
-               </a>
-           </li>
-
            <!-- DATA KARYAWAN -->
            <li class="pc-item pc-caption">
                <label>Manajemen Karyawan</label>
@@ -41,7 +23,6 @@
                    <span class="pc-mtext">Data Karyawan</span>
                </a>
            </li>
-
            <li class="pc-item">
                <a href="/divisi" class="pc-link">
                    <span class="pc-micon"><i class="ph ph-buildings"></i></span>
@@ -55,6 +36,13 @@
                    <span class="pc-mtext">Shift Kerja</span>
                </a>
            </li>
+           <li class="pc-item">
+               <a href="/daftar-user" class="pc-link">
+                   <span class="pc-micon"><i class="ph ph-list"></i></span>
+                   <span class="pc-mtext">Daftar User Karyawan</span>
+               </a>
+           </li>
+
 
 
            <!-- MONITORING -->

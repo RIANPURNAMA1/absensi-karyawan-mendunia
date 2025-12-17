@@ -14,17 +14,15 @@ return new class extends Migration
         Schema::create('absensis', function (Blueprint $table) {
             $table->id();
 
-            $table->unsignedBigInteger('karyawan_id'); // relasi ke karyawan
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->date('tanggal');                  // tanggal absensi
             $table->time('jam_masuk')->nullable();   // jam masuk karyawan
             $table->time('jam_keluar')->nullable();  // jam keluar karyawan
-            $table->enum('status', ['HADIR', 'TERLAMBAT', 'IZIN', 'ALPA'])->default('HADIR'); // status
+            $table->enum('status', ['HADIR', 'TERLAMBAT', 'IZIN', 'ALPA', 'PULANG LEBIH AWAL'])->default('HADIR');
+
             $table->text('keterangan')->nullable();  // tambahan catatan
 
             $table->timestamps();
-
-            $table->foreign('karyawan_id')->references('id')->on('karyawan')->onDelete('cascade');
-            $table->unique(['karyawan_id', 'tanggal']); // supaya tidak double absensi per hari
         });
     }
 

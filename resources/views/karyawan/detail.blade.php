@@ -94,11 +94,11 @@
                 <h5>Akun Login Karyawan</h5>
             </div>
             <div class="card-body">
-                @if ($karyawan->user)
+
                     <table class="table table-bordered">
                         <tr>
                             <th width="30%">Email</th>
-                            <td>{{ $karyawan->user->email }}</td>
+                            <td>{{ $karyawan->email }}</td>
                         </tr>
                         <tr>
                             <th>Password Default</th>
@@ -106,25 +106,22 @@
                         </tr>
                         <tr>
                             <th>Role</th>
-                            <td>{{ $karyawan->user->role }}</td>
+                            <td>{{ $karyawan->role }}</td>
                         </tr>
                         <tr>
                             <th>Status Akun</th>
                             <td>
-                                <span class="badge {{ $karyawan->user->status == 'AKTIF' ? 'bg-success' : 'bg-danger' }}">
-                                    {{ $karyawan->user->status }}
+                                <span class="badge {{ $karyawan->status == 'AKTIF' ? 'bg-success' : 'bg-danger' }}">
+                                    {{ $karyawan->status }}
                                 </span>
                             </td>
                         </tr>
                         <tr>
                             <th>Terakhir Login</th>
-                            <td>{{ $karyawan->user->last_login ? \Carbon\Carbon::parse($karyawan->user->last_login)->format('d M Y H:i') : '-' }}
+                            <td>{{ $karyawan->last_login ? \Carbon\Carbon::parse($karyawan->last_login)->format('d M Y H:i') : '-' }}
                             </td>
                         </tr>
                     </table>
-                @else
-                    <p class="text-muted">Akun user belum dibuat.</p>
-                @endif
             </div>
         </div>
     </div>

@@ -10,7 +10,7 @@ class DashboardController extends Controller
     public function index()
     {
         // Ambil semua absensi beserta relasi karyawan
-        $absensi = Absensi::with('karyawan')->orderBy('tanggal', 'desc')->get();
+        $absensi = Absensi::with('user')->orderBy('tanggal', 'desc')->get();
         return view('admin.dashboard', compact('absensi'));
     }
 }

@@ -1,33 +1,31 @@
 <?php
 
-// app/Http/Controllers/KaryawanController.php
 namespace App\Http\Controllers;
 
 use App\Models\Divisi;
-use App\Models\Karyawan;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class KaryawanController extends Controller
 {
     public function index()
     {
-        $karyawan = Karyawan::with('divisi')->get();
-        $divisi   = Divisi::orderBy('nama_divisi')->get();
+        // Ambil semua user dengan role KARYAWAN dan relasi divisi
+        $karyawan  = User::with('divisi')->where('role', 'KARYAWAN')->get();
+        $divisi = Divisi::orderBy('nama_divisi')->get();
 
         return view('karyawan.index', compact('karyawan', 'divisi'));
     }
 
     public function store(Request $request)
     {
-        // Validasi input
         $request->validate([
-            'nip'           => 'required|string|max:50|unique:karyawan,nip',
+            'nip'           => 'required|string|max:50|unique:users,nip',
             'name'          => 'required|string|max:100',
-            'email'         => 'required|email|unique:karyawan,email|unique:users,email',
+            'email'         => 'required|email|unique:users,email',
             'jabatan'       => 'required|string|max:100',
             'divisi_id'     => 'required|exists:divisis,id',
             'no_hp'         => 'required|string|max:20',
@@ -37,7 +35,6 @@ class KaryawanController extends Controller
             'foto_profil'   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // Upload foto profil
         $namaFoto = null;
         if ($request->hasFile('foto_profil')) {
             $file = $request->file('foto_profil');
@@ -45,93 +42,67 @@ class KaryawanController extends Controller
             $file->storeAs('foto-karyawan', $namaFoto, 'public');
         }
 
-        // Gunakan transaction agar user & karyawan sinkron
-        $karyawan = DB::transaction(function () use ($request, $namaFoto) {
+        // Simpan data user karyawan
+        $user = User::create([
+            'name'          => $request->name,
+            'email'         => $request->email,
+            'password'      => Hash::make('12345678'),
+            'role'          => 'KARYAWAN',
+            'status'        => 'AKTIF',
+            'divisi_id'     => $request->divisi_id,
+            'nip'           => $request->nip,
+            'jabatan'       => $request->jabatan,
+            'no_hp'         => $request->no_hp,
+            'alamat'        => $request->alamat,
+            'foto_profil'   => $namaFoto,
+            'tanggal_masuk' => $request->tanggal_masuk,
+            'status_kerja'  => $request->status_kerja,
+        ]);
 
-            // Buat atau ambil user berdasarkan email
-            $user = User::firstOrCreate(
-                ['email' => $request->email],
-                [
-                    'name'     => $request->name,
-                    'password' => Hash::make('12345678'), // password default
-                    'role'     => 'KARYAWAN',
-                    'status'   => 'AKTIF',
-                ]
-            );
-
-            // Simpan data karyawan
-            return Karyawan::create([
-                'user_id'       => $user->id,
-                'divisi_id'     => $request->divisi_id,
-                'nip'           => $request->nip,
-                'name'          => $request->name,
-                'email'         => $request->email,
-                'jabatan'       => $request->jabatan,
-                'no_hp'         => $request->no_hp,
-                'alamat'        => $request->alamat,
-                'foto_profil'   => $namaFoto,
-                'tanggal_masuk' => $request->tanggal_masuk,
-                'status_kerja'  => $request->status_kerja,
-            ]);
-        });
-
-        // Response JSON
         return response()->json([
             'status'  => true,
-            'message' => 'Karyawan dan akun absensi berhasil dibuat',
+            'message' => 'Karyawan berhasil dibuat',
             'akun'    => [
                 'email'    => $request->email,
                 'password' => '12345678'
             ],
-            'data' => $karyawan
+            'data' => $user
         ], 201);
     }
 
     public function update(Request $request, $id)
     {
-        // Ambil data karyawan
-        $karyawan = Karyawan::findOrFail($id);
+        $user = User::findOrFail($id);
 
-        // Validasi
         $request->validate([
-            'nip'           => 'required|unique:karyawan,nip,' . $karyawan->id,
+            'nip'           => 'required|unique:users,nip,' . $user->id,
             'name'          => 'required|string|max:255',
             'jabatan'       => 'required|string|max:255',
             'divisi_id'     => 'required|exists:divisis,id',
             'no_hp'         => 'required|string|max:20',
-            'email'         => 'required|email|unique:karyawan,email|unique:users,email',
+            'email'         => 'required|email|unique:users,email,' . $user->id,
             'alamat'        => 'nullable|string',
             'tanggal_masuk' => 'required|date',
             'status_kerja'  => 'required|in:TETAP,KONTRAK,MAGANG',
             'foto_profil'   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        /* ===============================
-       HANDLE FOTO (JIKA ADA)
-    =============================== */
-        $namaFoto = $karyawan->foto_profil;
+        $namaFoto = $user->foto_profil;
 
         if ($request->hasFile('foto_profil')) {
             $file = $request->file('foto_profil');
-
             $namaFoto = time() . '_' . $file->getClientOriginalName();
 
-            // Simpan ke public/foto-karyawan
-            $file->move(public_path('foto-karyawan'), $namaFoto);
-
-            // Hapus foto lama
-            if (
-                $karyawan->foto_profil &&
-                file_exists(public_path('foto-karyawan/' . $karyawan->foto_profil))
-            ) {
-                unlink(public_path('foto-karyawan/' . $karyawan->foto_profil));
+            // Hapus foto lama jika ada
+            if ($user->foto_profil && Storage::disk('public')->exists('foto-karyawan/' . $user->foto_profil)) {
+                Storage::disk('public')->delete('foto-karyawan/' . $user->foto_profil);
             }
+
+            // Simpan file baru
+            $file->storeAs('foto-karyawan', $namaFoto, 'public');
         }
 
-        /* ===============================
-       UPDATE DATA (AMAN & MANUAL)
-    =============================== */
-        $karyawan->update([
+        $user->update([
             'nip'           => $request->nip,
             'name'          => $request->name,
             'jabatan'       => $request->jabatan,
@@ -147,32 +118,33 @@ class KaryawanController extends Controller
         return response()->json([
             'status'  => 'success',
             'message' => 'Data karyawan berhasil diperbarui',
-            'data'    => $karyawan
+            'data'    => $user
         ]);
     }
 
+
     public function show($id)
     {
-        $karyawan = Karyawan::with(['divisi', 'user'])->findOrFail($id);
+        $karyawan = User::with('divisi')->findOrFail($id);
         return view('karyawan.detail', compact('karyawan'));
     }
 
-
-
-
     public function destroy($id)
     {
-        $karyawan = Karyawan::findOrFail($id);
+        $user = User::findOrFail($id);
 
-        // hapus foto jika ada
-        if (
-            $karyawan->foto_profil &&
-            file_exists(public_path('foto-karyawan/' . $karyawan->foto_profil))
-        ) {
-            unlink(public_path('foto-karyawan/' . $karyawan->foto_profil));
+        if (in_array(strtoupper($user->role), ['MANAGER', 'HR'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User dengan role MANAGER atau HR tidak bisa dihapus!'
+            ], 403);
         }
 
-        $karyawan->delete();
+        if ($user->foto_profil && file_exists(public_path('foto-karyawan/' . $user->foto_profil))) {
+            unlink(public_path('foto-karyawan/' . $user->foto_profil));
+        }
+
+        $user->delete();
 
         return response()->json([
             'status'  => 'success',

@@ -4,10 +4,13 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DivisiController;
+use App\Http\Controllers\UserController;
 
-Route::get('/', [DashboardController::class, 'index'])->name('dashboard')->middleware('auth');
 
+Route::middleware(['auth', 'role:MANAGER, HR'])->group(function () {
 
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard')->middleware('auth');
+});
 Route::middleware('guest')->group(
     function () {
 
@@ -47,18 +50,54 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
 
 
 // divisi
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::resource('divisi', DivisiController::class)
         ->only(['index', 'store', 'update', 'destroy']);
+});
+
+
+// daftar user
+Route::get('/daftar-user', [UserController::class, 'userKaryawan'])->name('user.karyawan');
+Route::prefix('/daftar-user')->group(function () {
+    Route::post('/store', [App\Http\Controllers\UserController::class, 'store'])->name('user.karyawan.store');
+    Route::get('/edit/{id}', [App\Http\Controllers\UserController::class, 'edit'])->name('user.karyawan.edit');
+    Route::post('/update/{id}', [App\Http\Controllers\UserController::class, 'update'])->name('user.karyawan.update');
+    Route::delete('/delete/{id}', [App\Http\Controllers\UserController::class, 'destroy'])->name('user.karyawan.delete');
 });
 
 
 // absensi
 use App\Http\Controllers\AbsensiController;
 
-Route::middleware('auth')->group(function() {
+
+Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
     Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
-    Route::post('/absensi/masuk', [AbsensiController::class, 'absenMasuk'])->name('absensi.masuk');
-    Route::post('/absensi/pulang', [AbsensiController::class, 'absenPulang'])->name('absensi.pulang');
     Route::get('/absensi/history', [AbsensiController::class, 'history'])->name('absensi.history');
+    Route::get('/absensi/profile', [AbsensiController::class, 'profile'])->name('absensi.profile');
+    Route::post('/absensi/manual', [AbsensiController::class, 'manual'])
+        ->middleware('auth');
 });
+
+// routes/web.php
+Route::middleware(['auth'])->group(function () {
+    Route::post('/absen/masuk', [AbsensiController::class, 'absenMasuk'])->name('absen.masuk');
+    Route::post('/absen/pulang', [AbsensiController::class, 'absenPulang'])->name('absen.pulang');
+});
+
+
+Route::middleware('auth')->group(function () {
+    Route::get('/absensi/mobile', fn() => view('absensi.mobile'))->name('absensi.mobile');
+
+    Route::get('/absensi/history', [AbsensiController::class, 'history'])
+        ->name('absensi.history');
+
+    Route::post('/absensi/deteksi', [AbsensiController::class, 'deteksiWajah'])
+        ->name('absensi.deteksi');
+});
+
+
+// Halaman riwayat semua absensi user login
+Route::get('/absensi/riwayat', [AbsensiController::class, 'riwayat'])->name('absensi.riwayat');
+
+// Halaman detail absensi per tanggal
+Route::get('/absensi/detail/{tanggal}', [AbsensiController::class, 'detail'])->name('absensi.detail');

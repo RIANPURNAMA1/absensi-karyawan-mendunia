@@ -14,8 +14,18 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'cabang_id',
-        'status'
+        'divisi_id',
+        'status',
+        'nip',
+        'name',
+        'jabatan',
+        'departemen',
+        'no_hp',
+        'email',
+        'alamat',
+        'foto_profil',
+        'tanggal_masuk',
+        'status_kerja'
     ];
 
     protected $hidden = [
@@ -42,9 +52,8 @@ class User extends Authenticatable
     }
 
 
- public function karyawan()
-{
-    return $this->hasOne(Karyawan::class, 'user_id', 'id');
-}
-
+    public function divisi()
+    {
+        return $this->belongsTo(Divisi::class);
+    }
 }

@@ -167,11 +167,11 @@
                                 @forelse($absensi as $a)
                                     <tr>
                                         <td>
-                                            <img src="{{ $a->karyawan->foto_profil ? asset('storage/foto-karyawan/' . $a->karyawan->foto_profil) : '../assets/images/avatar/avatar-1.jpg' }}"
-                                                class="rounded-circle" width="40" alt="foto">
+                                            <img src="{{ $a->foto_profil ? asset('storage/foto-karyawan/' . $a->foto_profil) : '../assets/images/avatar/avatar-1.jpg' }}"
+                                                class="rounded-circle" width="40" height="40" alt="foto">
                                         </td>
-                                        <td>{{ $a->karyawan->nip }}</td>
-                                        <td>{{ $a->karyawan->name }}</td>
+                                        <td>{{ $a->nip }}</td>
+                                        <td>{{ $a->name }}</td>
                                         <td>{{ $a->jam_masuk ? \Carbon\Carbon::parse($a->jam_masuk)->format('Y-m-d H:i') : '-' }}
                                         <td>{{ $a->jam_keluar ? \Carbon\Carbon::parse($a->jam_masuk)->format('Y-m-d H:i') : '-' }}
                                         </td>

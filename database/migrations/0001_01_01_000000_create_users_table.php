@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+
+            // Info login
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
@@ -20,6 +22,17 @@ return new class extends Migration
             $table->unsignedBigInteger('cabang_id')->nullable();
             $table->enum('status', ['AKTIF', 'NONAKTIF'])->default('AKTIF');
             $table->timestamp('last_login')->nullable();
+
+            // Info karyawan
+            $table->unsignedBigInteger('divisi_id')->nullable(); // bisa null jika bukan karyawan
+            $table->string('nip')->unique()->nullable();
+            $table->string('jabatan')->nullable();
+            $table->string('no_hp')->nullable();
+            $table->text('alamat')->nullable();
+            $table->string('foto_profil')->nullable();
+            $table->date('tanggal_masuk')->nullable();
+            $table->enum('status_kerja', ['TETAP', 'KONTRAK', 'MAGANG'])->nullable();
+
             $table->timestamps();
         });
 
