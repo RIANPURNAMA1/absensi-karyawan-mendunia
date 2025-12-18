@@ -11,9 +11,10 @@ Route::middleware(['auth', 'role:MANAGER, HR'])->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard')->middleware('auth');
 });
+
+
 Route::middleware('guest')->group(
     function () {
-
         // authenticate
         Route::get('/login', [AuthController::class, 'loginForm'])->name('login');
         Route::post('/login/process', [AuthController::class, 'login'])->name('login.process');
@@ -21,6 +22,8 @@ Route::middleware('guest')->group(
         Route::post('/register', [AuthController::class, 'register']);
     }
 );
+
+
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth', 'role:HR'])->group(function () {
     Route::get('/hr/dashboard', fn() => view('dashboard'))->name('hr.dashboard');
@@ -101,3 +104,5 @@ Route::get('/absensi/riwayat', [AbsensiController::class, 'riwayat'])->name('abs
 
 // Halaman detail absensi per tanggal
 Route::get('/absensi/detail/{tanggal}', [AbsensiController::class, 'detail'])->name('absensi.detail');
+Route::get('/absensi/riwayat-json', [AbsensiController::class, 'riwayatJson'])
+    ->name('absensi.riwayat.json');

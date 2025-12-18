@@ -10,6 +10,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class AbsensiController extends Controller
 {
@@ -56,98 +57,118 @@ class AbsensiController extends Controller
         return response()->json(['message' => 'Absen manual berhasil']);
     }
 
-    public function absenMasuk()
-    {
-        $user = Auth::user();
-        $today = now()->toDateString();
+ public function absenMasuk(Request $request)
+{
+    $user  = Auth::user();
+    $today = now()->toDateString();
 
-        // Cek absensi hari ini berdasarkan user_id
-        $absen = Absensi::where('user_id', $user->id)
-            ->where('tanggal', $today)
-            ->first();
-
-        // SUDAH ABSEN MASUK
-        if ($absen && $absen->jam_masuk) {
-            return response()->json([
-                'status'  => 'already',
-                'message' => 'Anda sudah melakukan absen masuk hari ini'
-            ], 409);
-        }
-
-        // Tentukan jam masuk normal (08:00)
-        $jamKerja = \Carbon\Carbon::parse($today . ' 08:00:00');
-
-        // Waktu sekarang
-        $now = now();
-
-        // Tentukan status: TERLAMBAT jika masuk > 08:00
-        $status = $now->gt($jamKerja) ? 'TERLAMBAT' : 'HADIR';
-
-        // SIMPAN ABSENSI
-        Absensi::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'tanggal' => $today
-            ],
-            [
-                'jam_masuk' => $now,
-                'status'    => $status
-            ]
-        );
-
+    if (!$request->photo) {
         return response()->json([
-            'status'       => 'success',
-            'message'      => 'Absen masuk berhasil',
-            'jam_masuk'    => $now->format('H:i:s'),
-            'status_absen' => $status
-        ]);
+            'message' => 'Foto absensi wajib diambil'
+        ], 400);
     }
 
+    // Cek absensi hari ini
+    $absen = Absensi::where('user_id', $user->id)
+        ->where('tanggal', $today)
+        ->first();
 
-    public function absenPulang()
-    {
-        $user = Auth::user();
-        $today = now()->toDateString();
-
-        // Ambil absensi hari ini berdasarkan user_id
-        $absen = Absensi::where('user_id', $user->id)
-            ->where('tanggal', $today)
-            ->first();
-
-        if (!$absen || !$absen->jam_masuk) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Anda belum melakukan absen masuk hari ini'
-            ], 409);
-        }
-
-        if ($absen->jam_keluar) {
-            return response()->json([
-                'status' => 'already',
-                'message' => 'Anda sudah melakukan absen pulang hari ini'
-            ], 409);
-        }
-
-        // Tentukan jam pulang normal (17:00)
-        $jamPulang = \Carbon\Carbon::parse($today . ' 17:00:00');
-        $now = now();
-
-        // Tentukan status pulang
-        $statusPulang = $now->lt($jamPulang) ? 'PULANG LEBIH AWAL' : $absen->status;
-
-        // Update kolom jam_keluar dan status jika perlu
-        $absen->update([
-            'jam_keluar' => $now,
-            'status'     => $statusPulang
-        ]);
-
+    if ($absen && $absen->jam_masuk) {
         return response()->json([
-            'status'       => 'success',
-            'message'      => 'Absen pulang berhasil',
-            'jam_keluar'   => $now->format('H:i:s'),
-            'status_absen' => $statusPulang
-        ]);
+            'message' => 'Anda sudah melakukan absen masuk hari ini'
+        ], 409);
     }
+
+    // Simpan foto masuk
+    $fotoMasuk = $this->saveBase64Photo($request->photo, 'masuk');
+
+    $jamKerja = \Carbon\Carbon::parse($today . ' 08:00:00');
+    $now      = now();
+
+    $status = $now->gt($jamKerja) ? 'TERLAMBAT' : 'HADIR';
+
+    Absensi::updateOrCreate(
+        [
+            'user_id' => $user->id,
+            'tanggal' => $today
+        ],
+        [
+            'jam_masuk'  => $now,
+            'status'     => $status,
+            'foto_masuk' => $fotoMasuk
+        ]
+    );
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'Absen masuk berhasil'
+    ]);
+}
+
+
+public function absenPulang(Request $request)
+{
+    $user  = Auth::user();
+    $today = now()->toDateString();
+
+    if (!$request->photo) {
+        return response()->json([
+            'message' => 'Foto absensi wajib diambil'
+        ], 400);
+    }
+
+    $absen = Absensi::where('user_id', $user->id)
+        ->where('tanggal', $today)
+        ->first();
+
+    if (!$absen || !$absen->jam_masuk) {
+        return response()->json([
+            'message' => 'Anda belum melakukan absen masuk hari ini'
+        ], 409);
+    }
+
+    if ($absen->jam_keluar) {
+        return response()->json([
+            'message' => 'Anda sudah melakukan absen pulang hari ini'
+        ], 409);
+    }
+
+    // Simpan foto pulang
+    $fotoPulang = $this->saveBase64Photo($request->photo, 'pulang');
+
+    $jamPulang = \Carbon\Carbon::parse($today . ' 17:00:00');
+    $now       = now();
+
+    $status = $now->lt($jamPulang)
+        ? 'PULANG LEBIH AWAL'
+        : $absen->status;
+
+    $absen->update([
+        'jam_keluar'  => $now,
+        'status'      => $status,
+        'foto_pulang' => $fotoPulang
+    ]);
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'Absen pulang berhasil'
+    ]);
+}
+
+
+private function saveBase64Photo(string $base64, string $type): string
+{
+    $base64 = preg_replace('/^data:image\/\w+;base64,/', '', $base64);
+    $image  = base64_decode($base64);
+
+    $folder = 'absensi/' . now()->format('Y/m');
+    $name   = $type . '_' . uniqid() . '.jpg';
+
+    Storage::put("$folder/$name", $image);
+
+    return "$folder/$name";
+}
+
 
     // Riwayat absensi user login
     public function riwayat()
@@ -160,6 +181,17 @@ class AbsensiController extends Controller
 
         return view('absensi.riwayat', compact('absensi'));
     }
+
+    public function riwayatJson()
+    {
+        $riwayat = Absensi::where('user_id', Auth::id())
+            ->orderBy('tanggal', 'desc')
+            ->limit(10)
+            ->get();
+
+        return response()->json($riwayat);
+    }
+
 
     // Detail absensi per tanggal
     public function detail($tanggal)

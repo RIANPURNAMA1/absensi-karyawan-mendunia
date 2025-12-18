@@ -196,49 +196,42 @@
         </div>
 
         <div class="space-y-3">
-            @forelse ($riwayat as $a)
-                <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4">
-                    <!-- Kartu tanggal -->
-                    <a href="{{ route('absensi.riwayat') }}"
-                        class="flex items-center gap-4  p-4  hover:bg-gray-50 transition cursor-pointer w-full">
+            <div id="riwayatContainer">
+                @forelse ($riwayat as $a)
+                    <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4">
+                        <a href="{{ route('absensi.riwayat') }}"
+                            class="flex items-center gap-4 p-4 hover:bg-gray-50 transition w-full">
 
-                        <!-- Tanggal -->
-                        <div
-                            class="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <div class="text-center">
-                                <div class="text-xs text-blue-600 font-medium">
-                                    {{ \Carbon\Carbon::parse($a->tanggal)->translatedFormat('D') }}
-                                </div>
-                                <div class="text-xl font-bold text-blue-700">
-                                    {{ \Carbon\Carbon::parse($a->tanggal)->format('d') }}
+                            <div
+                                class="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
+                                <div class="text-center">
+                                    <div class="text-xs text-blue-600 font-medium">
+                                        {{ \Carbon\Carbon::parse($a->tanggal)->translatedFormat('D') }}
+                                    </div>
+                                    <div class="text-xl font-bold text-blue-700">
+                                        {{ \Carbon\Carbon::parse($a->tanggal)->format('d') }}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Info absensi -->
-                        <div class="flex-1">
-                            <h3 class="font-semibold text-gray-900 mb-1">{{ $a->status }}</h3>
-                            <div class="flex items-center gap-4 text-xs text-gray-500">
-                                <div class="flex items-center gap-1">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900 mb-1">{{ $a->status }}</h3>
+                                <div class="flex gap-4 text-xs text-gray-500">
                                     <span>In: {{ $a->jam_masuk ?? '-' }}</span>
-                                </div>
-                                <div class="flex items-center gap-1">
                                     <span>Out: {{ $a->jam_keluar ?? '-' }}</span>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Icon arah -->
-                        <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
-                    </a>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
+                        </a>
+                    </div>
+                @empty
+                    <div class="text-center text-gray-500 text-sm">
+                        Belum ada riwayat absensi
+                    </div>
+                @endforelse
+            </div>
 
-
-                </div>
-            @empty
-                <div class="text-center text-gray-500 text-sm">
-                    Belum ada riwayat absensi
-                </div>
-            @endforelse
         </div>
     </div>
 
@@ -275,6 +268,184 @@
             </button>
         </div>
     </div>
+    <!-- 1. jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- 2. SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        function openAbsenManual() {
+            const modal = document.getElementById('modalAbsenManual');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeAbsenManual() {
+            const modal = document.getElementById('modalAbsenManual');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    </script>
+
+
+    <script>
+        let absenType = null;
+        let stream = null;
+        let capturedPhoto = null;
+
+        /* =========================
+           STEP 1: KLIK ABSEN → BUKA KAMERA
+        ========================== */
+        function submitAbsen(type) {
+            absenType = type;
+            closeAbsenManual();
+            openCamera();
+        }
+
+        function openCamera() {
+            $('#modalCamera').removeClass('hidden').addClass('flex');
+
+            navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'user'
+                }
+            }).then(s => {
+                stream = s;
+                document.getElementById('video').srcObject = stream;
+            }).catch(() => {
+                Swal.fire('Error', 'Kamera tidak dapat diakses', 'error');
+                closeCamera();
+            });
+        }
+
+        function closeCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            $('#modalCamera').addClass('hidden').removeClass('flex');
+        }
+
+        /* =========================
+           STEP 2: AMBIL FOTO
+        ========================== */
+        function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            capturedPhoto = canvas.toDataURL('image/jpeg');
+
+            closeCamera();
+            submitAbsenWithPhoto();
+        }
+
+        /* =========================
+           STEP 3: SUBMIT AJAX + FOTO
+        ========================== */
+        function submitAbsenWithPhoto() {
+
+            const form = absenType === 'masuk' ?
+                $('#formAbsenMasuk') :
+                $('#formAbsenPulang');
+
+            $.ajax({
+                url: form.attr('action'),
+                type: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    photo: capturedPhoto
+                },
+
+                beforeSend() {
+                    Swal.fire({
+                        title: 'Menyimpan absensi...',
+                        allowOutsideClick: false,
+                        didOpen: () => Swal.showLoading()
+                    });
+                },
+
+                success(res) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: res.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    loadRiwayatRealtime(); // realtime update
+                },
+
+                error(xhr) {
+                    let message = xhr.responseJSON?.message ?? 'Terjadi kesalahan';
+
+                    Swal.fire({
+                        icon: xhr.status === 400 || xhr.status === 409 ? 'info' : 'error',
+                        title: 'Gagal',
+                        text: message
+                    });
+                }
+            });
+        }
+    </script>
+
+
+
+    <script>
+        function loadRiwayatRealtime() {
+            $.get("{{ route('absensi.riwayat.json') }}", function(data) {
+
+                let html = '';
+
+                if (data.length === 0) {
+                    html = `<div class="text-center text-gray-500 text-sm">
+                            Belum ada riwayat absensi
+                        </div>`;
+                } else {
+                    data.forEach(a => {
+                        const date = new Date(a.tanggal);
+                        const day = date.toLocaleDateString('id-ID', {
+                            weekday: 'short'
+                        });
+                        const dayNumber = date.getDate();
+
+                        html += `
+                    <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4">
+                        <a href="/absensi/riwayat"
+                           class="flex items-center gap-4 p-4 hover:bg-gray-50 transition w-full">
+
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
+                                <div class="text-center">
+                                    <div class="text-xs text-blue-600 font-medium">${day}</div>
+                                    <div class="text-xl font-bold text-blue-700">${dayNumber}</div>
+                                </div>
+                            </div>
+
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900 mb-1">${a.status}</h3>
+                                <div class="flex gap-4 text-xs text-gray-500">
+                                    <span>In: ${a.jam_masuk ?? '-'}</span>
+                                    <span>Out: ${a.jam_keluar ?? '-'}</span>
+                                </div>
+                            </div>
+
+                            <i class="w-5 h-5 text-gray-400" data-lucide="chevron-right"></i>
+                        </a>
+                    </div>`;
+                    });
+                }
+
+                $('#riwayatContainer').html(html);
+                lucide.createIcons();
+            });
+        }
+    </script>
+
 
     <script>
         // Initialize Lucide Icons

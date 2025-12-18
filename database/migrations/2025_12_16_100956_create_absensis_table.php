@@ -14,15 +14,39 @@ return new class extends Migration
         Schema::create('absensis', function (Blueprint $table) {
             $table->id();
 
-            $table->unsignedBigInteger('user_id')->nullable();
-            $table->date('tanggal');                  // tanggal absensi
-            $table->time('jam_masuk')->nullable();   // jam masuk karyawan
-            $table->time('jam_keluar')->nullable();  // jam keluar karyawan
-            $table->enum('status', ['HADIR', 'TERLAMBAT', 'IZIN', 'ALPA', 'PULANG LEBIH AWAL'])->default('HADIR');
+            // Relasi user
+            $table->foreignId('user_id')
+                ->constrained('users')
+                ->cascadeOnDelete();
 
-            $table->text('keterangan')->nullable();  // tambahan catatan
+            // Tanggal absensi (1 user = 1 record per hari)
+            $table->date('tanggal');
 
+            // Waktu absensi
+            $table->time('jam_masuk')->nullable();
+            $table->time('jam_keluar')->nullable();
+
+            // Status absensi
+            $table->enum('status', [
+                'HADIR',
+                'TERLAMBAT',
+                'IZIN',
+                'ALPA',
+                'PULANG LEBIH AWAL'
+            ])->default('HADIR');
+
+            // Foto dari kamera
+            $table->string('foto_masuk')->nullable();
+            $table->string('foto_pulang')->nullable();
+
+            // Catatan tambahan
+            $table->text('keterangan')->nullable();
+
+            // Audit
             $table->timestamps();
+
+            // 🔐 Constraint: 1 user hanya boleh 1 absensi per hari
+            $table->unique(['user_id', 'tanggal']);
         });
     }
 
