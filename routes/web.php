@@ -103,6 +103,8 @@ Route::middleware('auth')->group(function () {
 Route::get('/absensi/riwayat', [AbsensiController::class, 'riwayat'])->name('absensi.riwayat');
 
 // Halaman detail absensi per tanggal
-Route::get('/absensi/detail/{tanggal}', [AbsensiController::class, 'detail'])->name('absensi.detail');
+Route::get('/absensi/detail/{tanggal}', [AbsensiController::class, 'detail'])
+    ->name('absensi.detail');
+
 Route::get('/absensi/riwayat-json', [AbsensiController::class, 'riwayatJson'])
     ->name('absensi.riwayat.json');

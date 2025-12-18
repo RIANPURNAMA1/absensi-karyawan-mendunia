@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Riwayat Absensi</title>
-    
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+
     <style>
         .safe-area-bottom {
             padding-bottom: env(safe-area-inset-bottom);
         }
     </style>
 </head>
+
 <body class="bg-gray-50">
 
     <!-- STATUS BAR -->
@@ -38,13 +40,15 @@
                 <i data-lucide="arrow-left" class="w-5 h-5 text-gray-700"></i>
             </button>
             <h1 class="text-lg font-bold text-gray-900">Riwayat Absensi</h1>
-            <button onclick="toggleFilter()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+            <button onclick="toggleFilter()"
+                class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
                 <i data-lucide="filter" class="w-5 h-5 text-gray-700"></i>
             </button>
         </div>
 
         <!-- Month Selector -->
-        <div class="flex items-center justify-between bg-gradient-to-r from-[#00c0ff] to-blue-700 rounded-2xl p-4 text-white">
+        <div
+            class="flex items-center justify-between bg-gradient-to-r from-[#00c0ff] to-blue-700 rounded-2xl p-4 text-white">
             <button onclick="changeMonth(-1)" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                 <i data-lucide="chevron-left" class="w-5 h-5"></i>
             </button>
@@ -61,19 +65,29 @@
     <!-- FILTER TABS -->
     <div class="px-5 py-4" id="filterTabs">
         <div class="flex gap-2 overflow-x-auto pb-2">
-            <button onclick="filterData('semua')" class="filter-btn px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm whitespace-nowrap" data-filter="semua">
+            <button onclick="filterData('semua')"
+                class="filter-btn px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm whitespace-nowrap"
+                data-filter="semua">
                 Semua
             </button>
-            <button onclick="filterData('hadir')" class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200" data-filter="hadir">
+            <button onclick="filterData('hadir')"
+                class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200"
+                data-filter="hadir">
                 Hadir
             </button>
-            <button onclick="filterData('terlambat')" class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200" data-filter="terlambat">
+            <button onclick="filterData('terlambat')"
+                class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200"
+                data-filter="terlambat">
                 Terlambat
             </button>
-            <button onclick="filterData('izin')" class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200" data-filter="izin">
+            <button onclick="filterData('izin')"
+                class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200"
+                data-filter="izin">
                 Izin
             </button>
-            <button onclick="filterData('sakit')" class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200" data-filter="sakit">
+            <button onclick="filterData('sakit')"
+                class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200"
+                data-filter="sakit">
                 Sakit
             </button>
         </div>
@@ -105,8 +119,11 @@
         // Update status time
         function updateStatusTime() {
             const now = new Date();
-            document.getElementById('statusTime').textContent = 
-                now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('statusTime').textContent =
+                now.toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
         }
         setInterval(updateStatusTime, 1000);
         updateStatusTime();
@@ -122,15 +139,35 @@
         function getStatusBadge(status) {
             const statusLower = status.toLowerCase();
             const colorMap = {
-                'hadir': { bg: 'bg-green-100', text: 'text-green-700', icon: 'check-circle' },
-                'terlambat': { bg: 'bg-orange-100', text: 'text-orange-700', icon: 'clock' },
-                'izin': { bg: 'bg-blue-100', text: 'text-blue-700', icon: 'file-text' },
-                'sakit': { bg: 'bg-red-100', text: 'text-red-700', icon: 'heart-pulse' },
-                'alpha': { bg: 'bg-gray-100', text: 'text-gray-700', icon: 'x-circle' }
+                'hadir': {
+                    bg: 'bg-green-100',
+                    text: 'text-green-700',
+                    icon: 'check-circle'
+                },
+                'terlambat': {
+                    bg: 'bg-orange-100',
+                    text: 'text-orange-700',
+                    icon: 'clock'
+                },
+                'izin': {
+                    bg: 'bg-blue-100',
+                    text: 'text-blue-700',
+                    icon: 'file-text'
+                },
+                'sakit': {
+                    bg: 'bg-red-100',
+                    text: 'text-red-700',
+                    icon: 'heart-pulse'
+                },
+                'alpha': {
+                    bg: 'bg-gray-100',
+                    text: 'text-gray-700',
+                    icon: 'x-circle'
+                }
             };
-            
+
             const colors = colorMap[statusLower] || colorMap['hadir'];
-            
+
             return `
                 <div class="flex items-center gap-1.5 px-3 py-1 ${colors.bg} rounded-full">
                     <i data-lucide="${colors.icon}" class="w-3 h-3 ${colors.text}"></i>
@@ -145,25 +182,25 @@
                 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
                 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
             ];
-            
-            document.getElementById('currentMonth').textContent = 
+
+            document.getElementById('currentMonth').textContent =
                 `${monthNames[selectedMonth]} ${selectedYear}`;
-            
+
             // Count hadir for selected month
             const hadirCount = filteredData.filter(a => {
                 const date = new Date(a.tanggal);
-                return date.getMonth() === selectedMonth && 
-                       date.getFullYear() === selectedYear &&
-                       a.status.toLowerCase() === 'hadir';
+                return date.getMonth() === selectedMonth &&
+                    date.getFullYear() === selectedYear &&
+                    a.status.toLowerCase() === 'hadir';
             }).length;
-            
+
             document.getElementById('totalHadir').textContent = `${hadirCount} Hari Hadir`;
         }
 
         // Change month
         function changeMonth(delta) {
             selectedMonth += delta;
-            
+
             if (selectedMonth > 11) {
                 selectedMonth = 0;
                 selectedYear++;
@@ -171,7 +208,7 @@
                 selectedMonth = 11;
                 selectedYear--;
             }
-            
+
             updateMonthDisplay();
             loadRiwayat();
         }
@@ -179,25 +216,27 @@
         // Filter data
         function filterData(filter) {
             currentFilter = filter;
-            
+
             // Update button styles
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 if (btn.dataset.filter === filter) {
-                    btn.className = 'filter-btn px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm whitespace-nowrap';
+                    btn.className =
+                        'filter-btn px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm whitespace-nowrap';
                 } else {
-                    btn.className = 'filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200';
+                    btn.className =
+                        'filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200';
                 }
             });
-            
+
             // Filter data
             if (filter === 'semua') {
                 filteredData = [...absensiData];
             } else {
-                filteredData = absensiData.filter(a => 
+                filteredData = absensiData.filter(a =>
                     a.status.toLowerCase() === filter.toLowerCase()
                 );
             }
-            
+
             updateMonthDisplay();
             loadRiwayat();
         }
@@ -206,20 +245,20 @@
         function loadRiwayat() {
             const container = document.getElementById('riwayatContainer');
             const emptyState = document.getElementById('emptyState');
-            
+
             // Filter by selected month
             const monthFiltered = filteredData.filter(a => {
                 const date = new Date(a.tanggal);
-                return date.getMonth() === selectedMonth && 
-                       date.getFullYear() === selectedYear;
+                return date.getMonth() === selectedMonth &&
+                    date.getFullYear() === selectedYear;
             });
-            
+
             if (monthFiltered.length === 0) {
                 container.innerHTML = '';
                 emptyState.classList.remove('hidden');
                 return;
             }
-            
+
             emptyState.classList.add('hidden');
             container.innerHTML = '';
 
@@ -230,9 +269,17 @@
                 const dayNumber = date.getDate();
 
                 const card = document.createElement('a');
-                card.href = `/absensi/detail/${a.tanggal}`;
+                const d = new Date(a.tanggal);
+                const tanggal =
+                    d.getFullYear() + '-' +
+                    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(d.getDate()).padStart(2, '0');
+
+                card.href = `/absensi/detail/${tanggal}`;
+
+
                 card.className = 'block';
-                
+
                 card.innerHTML = `
                     <div class="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
                         <div class="flex items-center gap-4">
@@ -270,7 +317,7 @@
                         </div>
                     </div>
                 `;
-                
+
                 container.appendChild(card);
             });
 
@@ -285,11 +332,11 @@
 
         // Navigation functions
         function goBack() {
-            window.history.back();
+            window.location.href = '/absensi';
         }
 
         function goToHome() {
-            window.location.href = '/';
+            window.location.href = '/absensi';
         }
 
         // Initialize
@@ -297,4 +344,5 @@
         loadRiwayat();
     </script>
 </body>
+
 </html>

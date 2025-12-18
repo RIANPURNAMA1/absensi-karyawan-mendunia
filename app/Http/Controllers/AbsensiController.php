@@ -57,117 +57,106 @@ class AbsensiController extends Controller
         return response()->json(['message' => 'Absen manual berhasil']);
     }
 
- public function absenMasuk(Request $request)
-{
-    $user  = Auth::user();
-    $today = now()->toDateString();
+    public function absenMasuk(Request $request)
+    {
+        $user = Auth::user();
+        $today = now()->toDateString();
 
-    if (!$request->photo) {
+        if (!$request->photo) {
+            return response()->json([
+                'message' => 'Foto absensi wajib diambil'
+            ], 400);
+        }
+
+        $absen = Absensi::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->first();
+
+        if ($absen && $absen->jam_masuk) {
+            return response()->json([
+                'message' => 'Anda sudah absen masuk hari ini'
+            ], 409);
+        }
+
+        $fotoMasuk = $this->saveBase64Photo($request->photo, 'masuk');
+
+        $jamKerja = \Carbon\Carbon::parse($today . ' 08:00:00');
+        $now = now();
+
+        $status = $now->gt($jamKerja)
+            ? 'TERLAMBAT'
+            : 'HADIR';
+
+        Absensi::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'tanggal' => $today
+            ],
+            [
+                'jam_masuk'  => $now->format('H:i:s'),
+                'status'     => $status,
+                'foto_masuk' => $fotoMasuk
+            ]
+        );
+
         return response()->json([
-            'message' => 'Foto absensi wajib diambil'
-        ], 400);
+            'message' => 'Absen masuk berhasil'
+        ]);
     }
 
-    // Cek absensi hari ini
-    $absen = Absensi::where('user_id', $user->id)
-        ->where('tanggal', $today)
-        ->first();
 
-    if ($absen && $absen->jam_masuk) {
+    public function absenPulang(Request $request)
+    {
+        $user = Auth::user();
+        $today = now()->toDateString();
+
+        if (!$request->photo) {
+            return response()->json([
+                'message' => 'Foto absensi wajib diambil'
+            ], 400);
+        }
+
+        $absen = Absensi::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->first();
+
+        if (!$absen || !$absen->jam_masuk) {
+            return response()->json([
+                'message' => 'Anda belum absen masuk'
+            ], 409);
+        }
+
+        if ($absen->jam_keluar) {
+            return response()->json([
+                'message' => 'Anda sudah absen pulang hari ini'
+            ], 409);
+        }
+
+        $fotoPulang = $this->saveBase64Photo($request->photo, 'pulang');
+
+        $absen->update([
+            'jam_keluar'  => now()->format('H:i:s'),
+            'foto_pulang' => $fotoPulang
+        ]);
+
         return response()->json([
-            'message' => 'Anda sudah melakukan absen masuk hari ini'
-        ], 409);
+            'message' => 'Absen pulang berhasil'
+        ]);
     }
 
-    // Simpan foto masuk
-    $fotoMasuk = $this->saveBase64Photo($request->photo, 'masuk');
+    private function saveBase64Photo($base64, $type)
+    {
+        $image = explode(',', $base64)[1];
+        $image = base64_decode($image);
 
-    $jamKerja = \Carbon\Carbon::parse($today . ' 08:00:00');
-    $now      = now();
+        $filename = $type . '_' . uniqid() . '.jpg';
+        $path = 'absensi/' . $filename;
 
-    $status = $now->gt($jamKerja) ? 'TERLAMBAT' : 'HADIR';
+        Storage::disk('public')->put($path, $image);
 
-    Absensi::updateOrCreate(
-        [
-            'user_id' => $user->id,
-            'tanggal' => $today
-        ],
-        [
-            'jam_masuk'  => $now,
-            'status'     => $status,
-            'foto_masuk' => $fotoMasuk
-        ]
-    );
-
-    return response()->json([
-        'status'  => 'success',
-        'message' => 'Absen masuk berhasil'
-    ]);
-}
-
-
-public function absenPulang(Request $request)
-{
-    $user  = Auth::user();
-    $today = now()->toDateString();
-
-    if (!$request->photo) {
-        return response()->json([
-            'message' => 'Foto absensi wajib diambil'
-        ], 400);
+        return $path;
     }
 
-    $absen = Absensi::where('user_id', $user->id)
-        ->where('tanggal', $today)
-        ->first();
-
-    if (!$absen || !$absen->jam_masuk) {
-        return response()->json([
-            'message' => 'Anda belum melakukan absen masuk hari ini'
-        ], 409);
-    }
-
-    if ($absen->jam_keluar) {
-        return response()->json([
-            'message' => 'Anda sudah melakukan absen pulang hari ini'
-        ], 409);
-    }
-
-    // Simpan foto pulang
-    $fotoPulang = $this->saveBase64Photo($request->photo, 'pulang');
-
-    $jamPulang = \Carbon\Carbon::parse($today . ' 17:00:00');
-    $now       = now();
-
-    $status = $now->lt($jamPulang)
-        ? 'PULANG LEBIH AWAL'
-        : $absen->status;
-
-    $absen->update([
-        'jam_keluar'  => $now,
-        'status'      => $status,
-        'foto_pulang' => $fotoPulang
-    ]);
-
-    return response()->json([
-        'status'  => 'success',
-        'message' => 'Absen pulang berhasil'
-    ]);
-}
-
-
-private function saveBase64Photo(string $base64, string $type): string
-{
-    $base64 = preg_replace('/^data:image\/\w+;base64,/', '', $base64);
-    $image  = base64_decode($base64);
-
-    $folder = 'absensi/' . now()->format('Y/m');
-    $name   = $type . '_' . uniqid() . '.jpg';
-
-    Storage::put("$folder/$name", $image);
-
-    return "$folder/$name";
-}
 
 
     // Riwayat absensi user login
@@ -193,14 +182,17 @@ private function saveBase64Photo(string $base64, string $type): string
     }
 
 
-    // Detail absensi per tanggal
     public function detail($tanggal)
     {
-        $user = Auth::user();
+        $user = auth()->user();
 
         $absensi = Absensi::where('user_id', $user->id)
             ->where('tanggal', $tanggal)
-            ->firstOrFail();
+            ->first();
+
+        if (!$absensi) {
+            abort(404, 'Data absensi tidak ditemukan');
+        }
 
         return view('absensi.detail', compact('absensi'));
     }

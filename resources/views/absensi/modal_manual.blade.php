@@ -41,16 +41,15 @@
             </p>
 
             <div class="space-y-3">
-                <button onclick="openCamera('masuk')"
+                <button onclick="submitAbsen('masuk')"
                     class="w-full py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold transition">
                     Absen Masuk
                 </button>
 
-                <button onclick="openCamera('pulang')"
+                <button onclick="submitAbsen('pulang')"
                     class="w-full py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold transition">
                     Absen Pulang
                 </button>
-
 
                 <button onclick="closeAbsenManual()"
                     class="w-full py-3 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium transition">
@@ -61,82 +60,140 @@
     </div>
 
     <!-- MODAL KAMERA -->
-    <div id="modalCamera" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+    <div id="modalKamera" class="fixed inset-0 bg-black z-50 hidden flex-col">
+        <div class="bg-black/80 backdrop-blur p-4 flex items-center justify-between">
+            <h2 class="text-white font-semibold text-lg" id="modalTitle">Absen Masuk</h2>
+            <button onclick="stopCamera()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                ✕
+            </button>
+        </div>
 
-        <div class="bg-white w-[90%] max-w-sm rounded-2xl p-4">
-            <h3 class="text-lg font-bold text-gray-800 mb-2">Ambil Foto Absensi</h3>
+        <div class="flex-1 relative">
+            <video id="video" autoplay playsinline muted class="w-full h-full object-cover bg-black"></video>
 
-            <div class="relative w-full aspect-square rounded-xl overflow-hidden bg-black">
-                <video id="video" autoplay playsinline class="w-full rounded-lg"></video>
-                <canvas id="canvas" class="hidden"></canvas>
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="w-64 h-64 border-4 border-white/50 rounded-full"></div>
             </div>
+        </div>
 
-            <div class="mt-4 flex gap-2">
-                <button onclick="capturePhoto()" class="flex-1 py-2 rounded-xl bg-blue-600 text-white font-semibold">
-                    Ambil Foto
-                </button>
+        <canvas id="canvas" class="hidden"></canvas>
 
-                <button onclick="closeCamera()" class="flex-1 py-2 rounded-xl bg-gray-300 text-gray-700 font-medium">
-                    Batal
-                </button>
-            </div>
+        <div class="p-6 bg-black/80 backdrop-blur">
+            <button onclick="capture()"
+                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-2xl font-semibold text-lg">
+                Ambil Foto & Absen
+            </button>
         </div>
     </div>
 
+
+    {{-- 
     <script>
         let stream = null;
         let absenType = null;
         let capturedImage = null;
 
-        function openCamera(type) {
+        function submitAbsen(type) {
             absenType = type;
-
             closeAbsenManual();
+            openCamera(type);
+        }
 
-            const modal = document.getElementById('modalCamera');
+        async function openCamera(type) {
+            document.getElementById('modalTitle').innerText =
+                type === 'masuk' ? 'Absen Masuk' : 'Absen Pulang';
+
+            const modal = document.getElementById('modalKamera');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
-            navigator.mediaDevices.getUserMedia({
-                    video: true
-                })
-                .then(s => {
-                    stream = s;
-                    const video = document.getElementById('video');
-                    video.srcObject = stream;
-                    video.play(); // 🔥 PENTING
-                })
-                .catch(err => {
-                    console.error(err);
-                    Swal.fire('Error', 'Kamera tidak dapat diakses', 'error');
-                    closeCamera();
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: {
+                            ideal: 1280
+                        },
+                        height: {
+                            ideal: 720
+                        }
+                    },
+                    audio: false
                 });
+
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                video.play();
+            } catch (err) {
+                Swal.fire('Error', 'Kamera tidak dapat diakses', 'error');
+                stopCamera();
+            }
         }
 
-        function closeCamera() {
+        function stopCamera() {
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
             }
 
-            document.getElementById('modalCamera').classList.add('hidden');
+            document.getElementById('modalKamera').classList.add('hidden');
         }
 
-        function capturePhoto() {
+        function capture() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
 
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
 
-            canvas.getContext('2d').drawImage(video, 0, 0);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
 
-            capturedImage = canvas.toDataURL('image/jpeg');
+            capturedImage = canvas.toDataURL('image/jpeg', 0.9);
 
-            closeCamera();
+            stopCamera();
             submitAbsenWithPhoto();
         }
-    </script>
+
+        function submitAbsenWithPhoto() {
+            const url = absenType === 'masuk' ?
+                "{{ route('absen.masuk') }}" :
+                "{{ route('absen.pulang') }}";
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: {
+                    _token: document
+                        .querySelector('meta[name="csrf-token"]').content,
+                    photo: capturedImage
+                },
+                beforeSend() {
+                    Swal.fire({
+                        title: 'Menyimpan...',
+                        allowOutsideClick: false,
+                        didOpen: () => Swal.showLoading()
+                    });
+                },
+                success(res) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: res.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                },
+                error(xhr) {
+                    Swal.fire(
+                        'Gagal',
+                        xhr.responseJSON?.message ?? 'Terjadi kesalahan',
+                        'error'
+                    );
+                }
+            });
+        }
+    </script> --}}
 
 
 

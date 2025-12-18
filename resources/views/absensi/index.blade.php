@@ -241,33 +241,7 @@
     {{-- modal absensi manual --}}
     @include('absensi.modal_manual')
 
-    <!-- MODAL KAMERA -->
-    <div id="modalKamera" class="fixed inset-0 bg-black z-50 hidden flex-col">
-        <div class="bg-black/80 backdrop-blur p-4 flex items-center justify-between">
-            <h2 class="text-white font-semibold text-lg" id="modalTitle">Absen Masuk</h2>
-            <button onclick="stopCamera()"
-                class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <i data-lucide="x" class="w-6 h-6 text-white"></i>
-            </button>
-        </div>
 
-        <div class="flex-1 relative">
-            <video id="video" autoplay playsinline class="w-full h-full object-cover"></video>
-            <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-64 h-64 border-4 border-white/50 rounded-full"></div>
-            </div>
-        </div>
-
-        <canvas id="canvas" class="hidden"></canvas>
-
-        <div class="p-6 bg-black/80 backdrop-blur">
-            <button onclick="capture()"
-                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-2xl font-semibold text-lg shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
-                <i data-lucide="camera" class="w-6 h-6"></i>
-                Ambil Foto & Absen
-            </button>
-        </div>
-    </div>
     <!-- 1. jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
@@ -288,111 +262,6 @@
         }
     </script>
 
-
-    <script>
-        let absenType = null;
-        let stream = null;
-        let capturedPhoto = null;
-
-        /* =========================
-           STEP 1: KLIK ABSEN → BUKA KAMERA
-        ========================== */
-        function submitAbsen(type) {
-            absenType = type;
-            closeAbsenManual();
-            openCamera();
-        }
-
-        function openCamera() {
-            $('#modalCamera').removeClass('hidden').addClass('flex');
-
-            navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: 'user'
-                }
-            }).then(s => {
-                stream = s;
-                document.getElementById('video').srcObject = stream;
-            }).catch(() => {
-                Swal.fire('Error', 'Kamera tidak dapat diakses', 'error');
-                closeCamera();
-            });
-        }
-
-        function closeCamera() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
-
-            $('#modalCamera').addClass('hidden').removeClass('flex');
-        }
-
-        /* =========================
-           STEP 2: AMBIL FOTO
-        ========================== */
-        function capturePhoto() {
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
-
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            capturedPhoto = canvas.toDataURL('image/jpeg');
-
-            closeCamera();
-            submitAbsenWithPhoto();
-        }
-
-        /* =========================
-           STEP 3: SUBMIT AJAX + FOTO
-        ========================== */
-        function submitAbsenWithPhoto() {
-
-            const form = absenType === 'masuk' ?
-                $('#formAbsenMasuk') :
-                $('#formAbsenPulang');
-
-            $.ajax({
-                url: form.attr('action'),
-                type: 'POST',
-                data: {
-                    _token: $('meta[name="csrf-token"]').attr('content'),
-                    photo: capturedPhoto
-                },
-
-                beforeSend() {
-                    Swal.fire({
-                        title: 'Menyimpan absensi...',
-                        allowOutsideClick: false,
-                        didOpen: () => Swal.showLoading()
-                    });
-                },
-
-                success(res) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil',
-                        text: res.message,
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-
-                    loadRiwayatRealtime(); // realtime update
-                },
-
-                error(xhr) {
-                    let message = xhr.responseJSON?.message ?? 'Terjadi kesalahan';
-
-                    Swal.fire({
-                        icon: xhr.status === 400 || xhr.status === 409 ? 'info' : 'error',
-                        title: 'Gagal',
-                        text: message
-                    });
-                }
-            });
-        }
-    </script>
 
 
 
@@ -446,18 +315,21 @@
         }
     </script>
 
-
     <script>
-        // Initialize Lucide Icons
+        let stream = null;
+        let jenisAbsensi = null;
+
+        // Init icon
         lucide.createIcons();
-
-
 
         document.addEventListener('DOMContentLoaded', loadRiwayat);
 
-        // Open Camera
+        // ===============================
+        // OPEN CAMERA
+        // ===============================
         async function openCamera(type) {
             jenisAbsensi = type;
+
             document.getElementById('modalTitle').textContent =
                 `Absen ${type === 'masuk' ? 'Masuk' : 'Pulang'}`;
 
@@ -468,31 +340,40 @@
             try {
                 stream = await navigator.mediaDevices.getUserMedia({
                     video: {
-                        facingMode: "user"
+                        facingMode: 'user'
                     },
                     audio: false
                 });
-                document.getElementById('video').srcObject = stream;
+
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                video.play();
+
             } catch (err) {
-                alert('Kamera tidak tersedia');
+                Swal.fire('Error', 'Kamera tidak dapat diakses', 'error');
                 stopCamera();
             }
 
             lucide.createIcons();
         }
 
-        // Stop Camera
+        // ===============================
+        // STOP CAMERA
+        // ===============================
         function stopCamera() {
             if (stream) {
                 stream.getTracks().forEach(t => t.stop());
                 stream = null;
             }
+
             const modal = document.getElementById('modalKamera');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
 
-        // Capture
+        // ===============================
+        // CAPTURE & AJAX SUBMIT
+        // ===============================
         function capture() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
@@ -501,19 +382,62 @@
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
 
-            const image = canvas.toDataURL('image/jpeg');
-            console.log('Send to backend:', {
-                jenis: jenisAbsensi,
-                image
-            });
+            const photoBase64 = canvas.toDataURL('image/jpeg', 0.9);
 
-            alert(`Absen ${jenisAbsensi.toUpperCase()} berhasil`);
+            if (!photoBase64) {
+                Swal.fire('Error', 'Foto gagal diambil', 'error');
+                return;
+            }
+
             stopCamera();
+            submitAbsen(photoBase64);
         }
 
-        // Initialize
-        loadRiwayat();
+        // ===============================
+        // AJAX ABSEN
+        // ===============================
+        function submitAbsen(photo) {
+
+            const url = jenisAbsensi === 'masuk' ?
+                "{{ route('absen.masuk') }}" :
+                "{{ route('absen.pulang') }}";
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: {
+                    _token: document.querySelector('meta[name="csrf-token"]').content,
+                    photo: photo
+                },
+                beforeSend() {
+                    Swal.fire({
+                        title: 'Menyimpan...',
+                        allowOutsideClick: false,
+                        didOpen: () => Swal.showLoading()
+                    });
+                },
+                success(res) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: res.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    loadRiwayat();
+                },
+                error(xhr) {
+                    Swal.fire(
+                        'Gagal',
+                        xhr.responseJSON?.message ?? 'Terjadi kesalahan',
+                        'error'
+                    );
+                }
+            });
+        }
     </script>
+
 </body>
 
 </html>
