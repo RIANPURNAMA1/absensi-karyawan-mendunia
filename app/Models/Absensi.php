@@ -29,9 +29,18 @@ class Absensi extends Model
         'jam_keluar' => 'datetime:H:i:s',
     ];
 
+
+
+
     /* =========================
        RELASI
     ========================== */
+
+
+    public function shift()
+    {
+        return $this->belongsTo(Shift::class, 'shift_id');
+    }
 
     // User (karyawan)
     public function user()

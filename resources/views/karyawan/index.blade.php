@@ -29,7 +29,13 @@
                     </ul>
 
                     <!-- BUTTON TAMBAH -->
-                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahKaryawan">
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahKaryawan"
+                        style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%); 
+           border: none; 
+           padding: 8px 16px; 
+           font-weight: 500; 
+           box-shadow: 0 2px 6px rgba(30, 60, 114, 0.3);
+           transition: all 0.3s ease;">
                         <i class="ph ph-plus-circle"></i> Tambah Karyawan
                     </button>
 
@@ -56,6 +62,7 @@
                             <th>Nama</th>
                             <th>Jabatan</th>
                             <th>Departemen</th>
+                            <th>Shift</th>
                             <th>No HP</th>
                             <th>Email</th>
                             <th>Status Kerja</th>
@@ -63,7 +70,6 @@
                         </tr>
                     </thead>
                     <tbody>
-
                         @foreach ($karyawan as $k)
                             <tr>
                                 <td>
@@ -71,15 +77,32 @@
                                         ? asset('storage/foto-karyawan/' . $k->foto_profil)
                                         : asset('assets/images/avatar/avatar-1.jpg') }}"
                                         class="rounded-circle" width="40" height="40">
-
                                 </td>
 
                                 <td>{{ $k->nip }}</td>
                                 <td>{{ $k->name }}</td>
                                 <td>{{ $k->jabatan }}</td>
                                 <td>{{ $k->divisi->nama_divisi }}</td>
-                                <td>{{ $k->no_hp }}</td> 
-                                <td>{{ $k->email}}</td> 
+
+                                <td class="text-center">
+                                    @if ($k->shift)
+                                        <span class="badge bg-light text-primary border border-primary px-2 py-1 mb-1">
+                                            <i class="ph ph-clock me-1"></i> {{ $k->shift->nama_shift }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted fw-bold">
+                                            {{ \Carbon\Carbon::parse($k->shift->jam_masuk)->format('H:i') }} -
+                                            {{ \Carbon\Carbon::parse($k->shift->jam_pulang)->format('H:i') }}
+                                        </small>
+                                    @else
+                                        <span class="badge bg-soft-danger text-danger">
+                                            <i class="ph ph-warning-circle me-1"></i> Belum Set
+                                        </span>
+                                    @endif
+                                </td>
+
+                                <td>{{ $k->no_hp }}</td>
+                                <td>{{ $k->email }}</td>
 
                                 <td>
                                     @if ($k->status_kerja === 'TETAP')
@@ -92,34 +115,36 @@
                                 </td>
 
                                 <td class="text-center">
-                                    <button class="btn btn-sm btn-warning"
-                                        onclick="editKaryawan(
-                                        {{ $k->id }},
-                                        '{{ $k->nip }}',
-                                        '{{ $k->name }}',
-                                        '{{ $k->jabatan }}',
-                                        {{ $k->divisi_id }},
-                                        '{{ $k->no_hp }}',
-                                        '{{ $k->email}}',
-                                        '{{ $k->tanggal_masuk }}',
-                                        '{{ $k->status_kerja }}',
-                                        '{{ $k->alamat }}'
-                                    )">
-                                        <i class="ph ph-pencil"></i>
-                                    </button>
-                                    <a href="{{ route('karyawan.show', $k->id) }}" class="btn btn-sm btn-info">
-                                        <i class="ph ph-eye"></i>
-                                    </a>
+                                    <div class="d-flex gap-1 justify-content-center">
+                                        <button type="button" class="btn btn-sm btn-warning"
+                                            onclick="editKaryawan(
+                                                '{{ $k->id }}', 
+                                                '{{ $k->nip }}', 
+                                                '{{ $k->name }}', 
+                                                '{{ $k->jabatan }}', 
+                                                '{{ $k->divisi_id }}', 
+                                                '{{ $k->no_hp }}', 
+                                                '{{ $k->email }}', 
+                                                '{{ $k->tanggal_masuk }}', 
+                                                '{{ $k->status_kerja }}', 
+                                                '{{ $k->alamat }}',
+                                                '{{ $k->shift_id }}'
+                                            )">
+                                            <i class="ph ph-note-pencil"></i>
+                                        </button>
 
+                                        <a href="{{ route('karyawan.show', $k->id) }}" class="btn btn-sm btn-info">
+                                            <i class="ph ph-eye"></i>
+                                        </a>
 
-                                    <button class="btn btn-sm btn-danger" onclick="deleteKaryawan({{ $k->id }})">
-                                        <i class="ph ph-trash"></i>
-                                    </button>
+                                        <button class="btn btn-sm btn-danger"
+                                            onclick="deleteKaryawan({{ $k->id }})">
+                                            <i class="ph ph-trash"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
-
-
                     </tbody>
                 </table>
             </div>
@@ -140,10 +165,11 @@
 
 
     <script>
-        function editKaryawan(
-            id, nip, name, jabatan, divisi_id,
-            no_hp,email, tanggal_masuk, status_kerja, alamat
-        ) {
+        // Pastikan urutan parameter sesuai dengan tombol di Blade
+        function editKaryawan(id, nip, name, jabatan, divisi_id, no_hp, email, tanggal_masuk, status_kerja, alamat,
+            shift_id) {
+
+            // Reset form dan masukkan data ke input modal
             $('#edit_id').val(id);
             $('#edit_nip').val(nip);
             $('#edit_name').val(name);
@@ -155,6 +181,10 @@
             $('#edit_status_kerja').val(status_kerja);
             $('#edit_alamat').val(alamat);
 
+            // PERBAIKAN: Gunakan variabel shift_id langsung dari parameter fungsi
+            $('#edit_shift_id').val(shift_id);
+
+            // Tampilkan modal
             $('#modalEditKaryawan').modal('show');
         }
         $(document).ready(function() {
@@ -187,7 +217,7 @@
             });
         });
 
-// delete function
+        // delete function
         function deleteKaryawan(id) {
 
             Swal.fire({

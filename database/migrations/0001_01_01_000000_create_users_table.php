@@ -25,6 +25,7 @@ return new class extends Migration
 
             // Info karyawan
             $table->unsignedBigInteger('divisi_id')->nullable(); // bisa null jika bukan karyawan
+            $table->unsignedBigInteger('shift_id')->nullable(); // bisa null jika bukan karyawan
             $table->string('nip')->unique()->nullable();
             $table->string('jabatan')->nullable();
             $table->string('no_hp')->nullable();

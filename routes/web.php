@@ -71,7 +71,7 @@ Route::prefix('/daftar-user')->group(function () {
 
 // absensi
 use App\Http\Controllers\AbsensiController;
-
+use App\Http\Controllers\ShiftController;
 
 Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
     Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
@@ -108,3 +108,32 @@ Route::get('/absensi/detail/{tanggal}', [AbsensiController::class, 'detail'])
 
 Route::get('/absensi/riwayat-json', [AbsensiController::class, 'riwayatJson'])
     ->name('absensi.riwayat.json');
+
+
+
+// Shift Routes
+Route::middleware(['auth'])->group(function () {
+    Route::resource('shift', ShiftController::class);
+    
+    // atau jika ingin manual:
+    Route::get('/shift', [ShiftController::class, 'index'])->name('shift.index');
+    Route::post('/shift', [ShiftController::class, 'store'])->name('shift.store');
+    Route::get('/shift/{id}', [ShiftController::class, 'show'])->name('shift.show');
+    Route::put('/shift/{id}', [ShiftController::class, 'update'])->name('shift.update');
+    Route::delete('/shift/{id}', [ShiftController::class, 'destroy'])->name('shift.destroy');
+});
+
+
+
+use App\Http\Controllers\CabangController;
+
+// Halaman Utama Daftar Cabang
+Route::get('/cabang', [CabangController::class, 'index'])->name('cabang.index');
+
+// Proses Simpan Cabang Baru
+Route::post('/cabang', [CabangController::class, 'store'])->name('cabang.store');
+
+Route::put('/cabang/{id}', [CabangController::class, 'update'])->name('cabang.update');
+
+// Proses Hapus Cabang
+Route::delete('/cabang/{id}', [CabangController::class, 'destroy'])->name('cabang.destroy');

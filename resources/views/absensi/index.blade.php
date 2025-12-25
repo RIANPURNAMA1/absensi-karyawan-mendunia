@@ -90,7 +90,6 @@
         </div>
     </div>
 
-    <!-- UPCOMING SHIFT CARD -->
     <div class="px-5 py-5">
         <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
@@ -102,33 +101,42 @@
             <button class="text-blue-600 text-sm font-semibold">See All</button>
         </div>
 
-        <div class="bg-gradient-to-br from-[#00c0ff] to-blue-700 rounded-2xl p-5 text-white shadow-lg">
-            <div class="flex items-start justify-between mb-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
-                        <i data-lucide="clock" class="w-6 h-6"></i>
+        @if (Auth::user()->shift)
+            <div class="bg-gradient-to-br from-[#00c0ff] to-blue-700 rounded-2xl p-5 text-white shadow-lg">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
+                            <i data-lucide="clock" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base">{{ Auth::user()->shift->nama_shift }}</h3>
+                            <p class="text-blue-100 text-sm">Status: {{ Auth::user()->shift->status }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="font-bold text-base">Shift Pagi - Regular</h3>
-                        <p class="text-blue-100 text-sm">Senin - Jumat</p>
-                    </div>
+                    <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
+                        <i data-lucide="camera" class="w-5 h-5 text-blue-600"></i>
+                    </button>
                 </div>
-                <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                    <i data-lucide="camera" class="w-5 h-5 text-blue-600"></i>
-                </button>
-            </div>
 
-            <div class="flex items-center gap-6">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="calendar" class="w-4 h-4 text-blue-200"></i>
-                    <span class="text-sm">Senin, 20 Jan</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <i data-lucide="clock" class="w-4 h-4 text-blue-200"></i>
-                    <span class="text-sm">08:00 - 17:00</span>
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="calendar" class="w-4 h-4 text-blue-200"></i>
+                        <span class="text-sm">{{ \Carbon\Carbon::now()->translatedFormat('l, d M') }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="clock" class="w-4 h-4 text-blue-200"></i>
+                        <span class="text-sm">
+                            {{ \Carbon\Carbon::parse(Auth::user()->shift->jam_masuk)->format('H:i') }} -
+                            {{ \Carbon\Carbon::parse(Auth::user()->shift->jam_pulang)->format('H:i') }}
+                        </span>
+                    </div>
                 </div>
             </div>
-        </div>
+        @else
+            <div class="bg-gray-100 rounded-2xl p-5 text-gray-500 border-2 border-dashed border-gray-200 text-center">
+                <p class="text-sm">Jadwal shift belum ditentukan.</p>
+            </div>
+        @endif
     </div>
 
     <!-- QUICK ACTIONS -->
@@ -288,7 +296,7 @@
                         <a href="/absensi/riwayat"
                            class="flex items-center gap-4 p-4 hover:bg-gray-50 transition w-full">
 
-                            <div class="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
+                            <div class="w-16 h-16 bg-gradient-to-br fromp-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
                                 <div class="text-center">
                                     <div class="text-xs text-blue-600 font-medium">${day}</div>
                                     <div class="text-xl font-bold text-blue-700">${dayNumber}</div>

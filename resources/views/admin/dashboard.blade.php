@@ -3,56 +3,168 @@
     <div class="row">
         <!-- Total Karyawan -->
         <div class="col-md-6 col-xl-3">
-            <div class="card bg-grd-primary order-card">
+            <div class="card order-card" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
                 <div class="card-body">
                     <h6 class="text-white">Total Karyawan</h6>
                     <h2 class="text-end text-white">
-                        <i class="feather icon-users float-start"></i>
+                        <i class="ph ph-users float-start"></i>
                         <span>{{ $totalKaryawan ?? 0 }}</span>
                     </h2>
-                    <p class="m-b-0">Aktif<span class="float-end">{{ $karyawanAktif ?? 0 }}</span></p>
+                    <p class="m-b-0 text-white">Aktif<span class="float-end">{{ $karyawanAktif ?? 0 }}</span></p>
                 </div>
             </div>
         </div>
 
         <!-- Hadir Hari Ini -->
         <div class="col-md-6 col-xl-3">
-            <div class="card bg-grd-success order-card">
+            <div class="card order-card" style="background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);">
                 <div class="card-body">
                     <h6 class="text-white">Hadir Hari Ini</h6>
                     <h2 class="text-end text-white">
-                        <i class="feather icon-check-circle float-start"></i>
+                        <i class="ph ph-check-circle float-start"></i>
                         <span>{{ $hadirHariIni ?? 0 }}</span>
                     </h2>
-                    <p class="m-b-0">On Time<span class="float-end">{{ $tepatWaktu ?? 0 }}</span></p>
+                    <p class="m-b-0 text-white">On Time<span class="float-end">{{ $tepatWaktu ?? 0 }}</span></p>
                 </div>
             </div>
         </div>
 
         <!-- Terlambat -->
         <div class="col-md-6 col-xl-3">
-            <div class="card bg-grd-warning order-card">
+            <div class="card order-card" style="background: linear-gradient(135deg, #b79891 0%, #94716b 100%);">
                 <div class="card-body">
                     <h6 class="text-white">Terlambat</h6>
                     <h2 class="text-end text-white">
-                        <i class="feather icon-clock float-start"></i>
+                        <i class="ph ph-clock float-start"></i>
                         <span>{{ $terlambat ?? 0 }}</span>
                     </h2>
-                    <p class="m-b-0">Hari Ini</p>
+                    <p class="m-b-0 text-white">Hari Ini</p>
                 </div>
             </div>
         </div>
 
         <!-- Tidak Hadir -->
         <div class="col-md-6 col-xl-3">
-            <div class="card bg-grd-danger order-card">
+            <div class="card order-card" style="background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);">
                 <div class="card-body">
                     <h6 class="text-white">Tidak Hadir</h6>
                     <h2 class="text-end text-white">
-                        <i class="feather icon-x-circle float-start"></i>
+                        <i class="ph ph-x-circle float-start"></i>
                         <span>{{ $tidakHadir ?? 0 }}</span>
                     </h2>
-                    <p class="m-b-0">Hari Ini</p>
+                    <p class="m-b-0 text-white">Hari Ini</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Aktif -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card order-card" style="background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);">
+                <div class="card-body">
+                    <h6 class="text-white">Project Aktif</h6>
+                    <h2 class="text-end text-white">
+                        <i class="ph ph-kanban float-start"></i>
+                        <span>{{ $projectAktif ?? 0 }}</span>
+                    </h2>
+                    <p class="m-b-0 text-white">Selesai<span class="float-end">{{ $projectSelesai ?? 0 }}</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Task -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card order-card" style="background: linear-gradient(135deg, #403b4a 0%, #5c6670 100%);">
+                <div class="card-body">
+                    <h6 class="text-white">Total Task</h6>
+                    <h2 class="text-end text-white">
+                        <i class="ph ph-check-square float-start"></i>
+                        <span>{{ $totalTask ?? 0 }}</span>
+                    </h2>
+                    <p class="m-b-0 text-white">Progress<span class="float-end">{{ $taskProgress ?? 0 }}</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Izin & Cuti -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card order-card" style="background: linear-gradient(135deg, #36454f 0%, #556b7a 100%);">
+                <div class="card-body">
+                    <h6 class="text-white">Izin & Cuti</h6>
+                    <h2 class="text-end text-white">
+                        <i class="ph ph-file-text float-start"></i>
+                        <span>{{ $izinCuti ?? 0 }}</span>
+                    </h2>
+                    <p class="m-b-0 text-white">Pending<span class="float-end">{{ $izinPending ?? 0 }}</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Artikel Blog -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card order-card" style="background: linear-gradient(135deg, #1a4068 0%, #2e7d9a 100%);">
+                <div class="card-body">
+                    <h6 class="text-white">Artikel Blog</h6>
+                    <h2 class="text-end text-white">
+                        <i class="ph ph-article float-start"></i>
+                        <span>{{ $totalArtikel ?? 0 }}</span>
+                    </h2>
+                    <p class="m-b-0 text-white">Published<span class="float-end">{{ $artikelPublished ?? 0 }}</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Divisi Aktif -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card order-card" style="background: linear-gradient(135deg, #3d5a80 0%, #627e94 100%);">
+                <div class="card-body">
+                    <h6 class="text-white">Divisi Aktif</h6>
+                    <h2 class="text-end text-white">
+                        <i class="ph ph-buildings float-start"></i>
+                        <span>{{ $totalDivisi ?? 0 }}</span>
+                    </h2>
+                    <p class="m-b-0 text-white">Total Divisi</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shift Hari Ini -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card order-card" style="background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);">
+                <div class="card-body">
+                    <h6 class="text-white">Shift Hari Ini</h6>
+                    <h2 class="text-end text-white">
+                        <i class="ph ph-timer float-start"></i>
+                        <span>{{ $shiftAktif ?? 0 }}</span>
+                    </h2>
+                    <p class="m-b-0 text-white">Karyawan Shift</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lembur Bulan Ini -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card order-card" style="background: linear-gradient(135deg, #485563 0%, #29323c 100%);">
+                <div class="card-body">
+                    <h6 class="text-white">Lembur Bulan Ini</h6>
+                    <h2 class="text-end text-white">
+                        <i class="ph ph-clock-afternoon float-start"></i>
+                        <span>{{ $totalLembur ?? 0 }}</span>
+                    </h2>
+                    <p class="m-b-0 text-white">Jam Lembur<span class="float-end">{{ $jamLembur ?? 0 }}</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cabang & Lokasi -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card order-card" style="background: linear-gradient(135deg, #2b5876 0%, #4e8098 100%);">
+                <div class="card-body">
+                    <h6 class="text-white">Cabang & Lokasi</h6>
+                    <h2 class="text-end text-white">
+                        <i class="ph ph-map-pin-line float-start"></i>
+                        <span>{{ $totalCabang ?? 0 }}</span>
+                    </h2>
+                    <p class="m-b-0 text-white">Total Cabang</p>
                 </div>
             </div>
         </div>

@@ -61,38 +61,48 @@ class AbsensiController extends Controller
     {
         $user = Auth::user();
         $today = now()->toDateString();
+        $now = now();
 
+        // 1. Validasi Foto
         if (!$request->photo) {
-            return response()->json([
-                'message' => 'Foto absensi wajib diambil'
-            ], 400);
+            return response()->json(['message' => 'Foto absensi wajib diambil'], 400);
         }
 
+        // 2. Cek apakah karyawan punya shift
+        // Diasumsikan relasi: User -> Karyawan -> Shift
+        $karyawan = $user->karyawan;
+        if (!$karyawan || !$karyawan->shift_id) {
+            return response()->json(['message' => 'Anda belum terdaftar dalam shift kerja apa pun. Hubungi Admin.'], 403);
+        }
+
+        $shift = $karyawan->shift;
+
+        // 3. Cek Double Absen
         $absen = Absensi::where('user_id', $user->id)
             ->where('tanggal', $today)
             ->first();
 
         if ($absen && $absen->jam_masuk) {
-            return response()->json([
-                'message' => 'Anda sudah absen masuk hari ini'
-            ], 409);
+            return response()->json(['message' => 'Anda sudah absen masuk hari ini'], 409);
         }
 
-        $fotoMasuk = $this->saveBase64Photo($request->photo, 'masuk');
+        // 4. Logika Penentuan Status (HADIR / TERLAMBAT)
+        $jamMasukShift = Carbon::createFromFormat('H:i:s', $shift->jam_masuk);
+        $batasToleransi = $jamMasukShift->copy()->addMinutes($shift->toleransi);
 
-        $jamKerja = \Carbon\Carbon::parse($today . ' 08:00:00');
-        $now = now();
-
-        $status = $now->gt($jamKerja)
+        // Jika jam sekarang melewati (Jam Masuk Shift + Toleransi)
+        $status = $now->format('H:i:s') > $batasToleransi->format('H:i:s')
             ? 'TERLAMBAT'
             : 'HADIR';
 
+        // 5. Simpan Foto
+        $fotoMasuk = $this->saveBase64Photo($request->photo, 'masuk');
+
+        // 6. Eksekusi Simpan
         Absensi::updateOrCreate(
+            ['user_id' => $user->id, 'tanggal' => $today],
             [
-                'user_id' => $user->id,
-                'tanggal' => $today
-            ],
-            [
+                'shift_id'   => $shift->id, // Menyimpan shift yang berlaku saat itu
                 'jam_masuk'  => $now->format('H:i:s'),
                 'status'     => $status,
                 'foto_masuk' => $fotoMasuk
@@ -100,63 +110,65 @@ class AbsensiController extends Controller
         );
 
         return response()->json([
-            'message' => 'Absen masuk berhasil'
+            'message' => 'Absen masuk berhasil. Status: ' . $status,
+            'jam' => $now->format('H:i:s')
         ]);
     }
-
 
     public function absenPulang(Request $request)
     {
         $user = Auth::user();
         $today = now()->toDateString();
+        $now = now();
 
         if (!$request->photo) {
-            return response()->json([
-                'message' => 'Foto absensi wajib diambil'
-            ], 400);
+            return response()->json(['message' => 'Foto absensi wajib diambil'], 400);
         }
 
-        $absen = Absensi::where('user_id', $user->id)
+        $absen = Absensi::with('shift')->where('user_id', $user->id)
             ->where('tanggal', $today)
             ->first();
 
         if (!$absen || !$absen->jam_masuk) {
-            return response()->json([
-                'message' => 'Anda belum absen masuk'
-            ], 409);
+            return response()->json(['message' => 'Anda belum absen masuk'], 409);
         }
 
         if ($absen->jam_keluar) {
-            return response()->json([
-                'message' => 'Anda sudah absen pulang hari ini'
-            ], 409);
+            return response()->json(['message' => 'Anda sudah absen pulang hari ini'], 409);
+        }
+
+        // LOGIKA OPSIONAL: Cek Pulang Lebih Awal
+        $statusSekarang = $absen->status;
+        $jamPulangShift = $absen->shift->jam_pulang;
+
+        if ($now->format('H:i:s') < $jamPulangShift) {
+            // Jika sebelumnya HADIR tapi pulang cepat, status bisa diupdate ke PULANG LEBIH AWAL
+            // Namun jika sebelumnya TERLAMBAT, biarkan tetap TERLAMBAT agar tetap terhitung poin minusnya
+            if ($statusSekarang == 'HADIR') {
+                $statusSekarang = 'PULANG LEBIH AWAL';
+            }
         }
 
         $fotoPulang = $this->saveBase64Photo($request->photo, 'pulang');
 
         $absen->update([
-            'jam_keluar'  => now()->format('H:i:s'),
-            'foto_pulang' => $fotoPulang
+            'jam_keluar'  => $now->format('H:i:s'),
+            'foto_pulang' => $fotoPulang,
+            'status'      => $statusSekarang
         ]);
 
-        return response()->json([
-            'message' => 'Absen pulang berhasil'
-        ]);
+        return response()->json(['message' => 'Absen pulang berhasil']);
     }
 
     private function saveBase64Photo($base64, $type)
     {
         $image = explode(',', $base64)[1];
         $image = base64_decode($image);
-
         $filename = $type . '_' . uniqid() . '.jpg';
         $path = 'absensi/' . $filename;
-
         Storage::disk('public')->put($path, $image);
-
         return $path;
     }
-
 
 
     // Riwayat absensi user login
@@ -184,7 +196,7 @@ class AbsensiController extends Controller
 
     public function detail($tanggal)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         $absensi = Absensi::where('user_id', $user->id)
             ->where('tanggal', $tanggal)

@@ -36,6 +36,7 @@
     <!-- [Template CSS Files] -->
     <link rel="stylesheet" href="../assets/css/style.css" id="main-style-link" />
     <link rel="stylesheet" href="../assets/css/style-preset.css" />
+    <link rel="stylesheet" href="../assets/css/custom.css"  />
 
 </head>
 <!-- [Head] end -->

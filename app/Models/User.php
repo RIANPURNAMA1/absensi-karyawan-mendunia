@@ -15,6 +15,7 @@ class User extends Authenticatable
         'password',
         'role',
         'divisi_id',
+        'shift_id', // PASTIKAN ADA INI
         'status',
         'nip',
         'name',
@@ -55,5 +56,10 @@ class User extends Authenticatable
     public function divisi()
     {
         return $this->belongsTo(Divisi::class);
+    }
+    public function shift()
+    {
+        // Pastikan foreign key di tabel users adalah shift_id
+        return $this->belongsTo(Shift::class, 'shift_id');
     }
 }
