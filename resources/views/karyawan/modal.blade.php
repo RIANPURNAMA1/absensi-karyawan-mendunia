@@ -42,6 +42,16 @@
                                    @endforeach
                                </select>
                            </div>
+                           <!-- CABANG -->
+                           <div class="col-md-6">
+                               <label class="form-label">Cabang</label>
+                               <select name="cabang_id" class="form-select" required>
+                                   <option value="">-- Pilih Cabang --</option>
+                                   @foreach ($cabang as $c)
+                                       <option value="{{ $c->id }}">{{ $c->nama_cabang }}</option>
+                                   @endforeach
+                               </select>
+                           </div>
 
 
                            <!-- NO HP -->
@@ -156,6 +166,15 @@
                                    <option value="">-- Pilih Divisi --</option>
                                    @foreach ($divisi as $d)
                                        <option value="{{ $d->id }}">{{ $d->nama_divisi }}</option>
+                                   @endforeach
+                               </select>
+                           </div>
+                           <div class="col-md-6">
+                               <label class="form-label fw-semibold">Cabang <span class="text-danger">*</span></label>
+                               <select name="cabang_id" id="edit_divisi" class="form-select" required>
+                                   <option value="">-- Pilih Cabang --</option>
+                                   @foreach ($cabang as $c)
+                                       <option value="{{ $c->id }}">{{ $c->nama_cabang }}</option>
                                    @endforeach
                                </select>
                            </div>

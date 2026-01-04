@@ -15,6 +15,7 @@ class User extends Authenticatable
         'password',
         'role',
         'divisi_id',
+        'cabang_id',
         'shift_id', // PASTIKAN ADA INI
         'status',
         'nip',
@@ -61,5 +62,9 @@ class User extends Authenticatable
     {
         // Pastikan foreign key di tabel users adalah shift_id
         return $this->belongsTo(Shift::class, 'shift_id');
+    }
+    public function cabang()
+    {
+        return $this->belongsTo(Cabang::class, 'cabang_id');
     }
 }

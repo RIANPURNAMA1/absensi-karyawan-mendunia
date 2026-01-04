@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cabang;
 use App\Models\Divisi;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -14,16 +15,17 @@ class KaryawanController extends Controller
     public function index()
     {
         // 1. Tambahkan 'shift' ke dalam with() agar data shift karyawan muncul di tabel
-        $karyawan = User::with(['divisi', 'shift'])->where('role', 'KARYAWAN')->get();
+        $karyawan = User::with(['divisi', 'shift', 'cabang'])->where('role', 'KARYAWAN')->get();
 
         // 2. Ambil data divisi untuk dropdown modal
         $divisi = Divisi::orderBy('nama_divisi')->get();
+        $cabang = Cabang::orderBy('nama_cabang')->get();
 
         // 3. TAMBAHKAN INI: Ambil data shift untuk dropdown modal (tambah & edit)
         $shifts = \App\Models\Shift::where('status', 'AKTIF')->get();
 
         // 4. Kirim $shifts ke dalam compact()
-        return view('karyawan.index', compact('karyawan', 'divisi', 'shifts'));
+        return view('karyawan.index', compact('karyawan', 'divisi','cabang', 'shifts'));
     }
 
     public function store(Request $request)
@@ -34,6 +36,7 @@ class KaryawanController extends Controller
             'email'         => 'required|email|unique:users,email',
             'jabatan'       => 'required|string|max:100',
             'divisi_id'     => 'required|exists:divisis,id',
+            'cabang_id'     => 'required|exists:cabangs,id',
             'shift_id'      => 'required|exists:shifts,id', // TAMBAHKAN VALIDASI SHIFT
             'no_hp'         => 'required|string|max:20',
             'alamat'        => 'nullable|string',
@@ -57,6 +60,7 @@ class KaryawanController extends Controller
             'role'          => 'KARYAWAN',
             'status'        => 'AKTIF',
             'divisi_id'     => $request->divisi_id,
+            'cabang_id'     => $request->cabang_id,
             'shift_id'      => $request->shift_id, // TAMBAHKAN SHIFT_ID
             'nip'           => $request->nip,
             'jabatan'       => $request->jabatan,
@@ -87,6 +91,7 @@ class KaryawanController extends Controller
             'name'          => 'required|string|max:255',
             'jabatan'       => 'required|string|max:255',
             'divisi_id'     => 'required|exists:divisis,id',
+            'cabang_id'     => 'required|exists:cabangs,id',
             'shift_id'      => 'required|exists:shifts,id', // TAMBAHKAN VALIDASI SHIFT
             'no_hp'         => 'required|string|max:20',
             'email'         => 'required|email|unique:users,email,' . $user->id,
@@ -116,6 +121,7 @@ class KaryawanController extends Controller
             'name'          => $request->name,
             'jabatan'       => $request->jabatan,
             'divisi_id'     => $request->divisi_id,
+            'cabang_id'     => $request->cabang_id,
             'shift_id'      => $request->shift_id, // TAMBAHKAN SHIFT_ID
             'no_hp'         => $request->no_hp,
             'email'         => $request->email,

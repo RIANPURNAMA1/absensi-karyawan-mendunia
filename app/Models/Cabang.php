@@ -14,4 +14,9 @@ class Cabang extends Model
         'radius',
         'alamat'
     ];
+
+    public function user()
+{
+    return $this->hasMany(User::class, 'cabang_id');
+}
 }

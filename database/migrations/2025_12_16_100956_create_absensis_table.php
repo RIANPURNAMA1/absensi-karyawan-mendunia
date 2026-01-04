@@ -28,6 +28,14 @@ return new class extends Migration
             $table->time('jam_masuk')->nullable();
             $table->time('jam_keluar')->nullable();
 
+            // Lokasi user saat absen masuk
+            $table->decimal('lat_masuk', 10, 8)->nullable();
+            $table->decimal('long_masuk', 11, 8)->nullable();
+
+            // Lokasi user saat absen pulang
+            $table->decimal('lat_pulang', 10, 8)->nullable();
+            $table->decimal('long_pulang', 11, 8)->nullable();
+
             // Status absensi
             $table->enum('status', [
                 'HADIR',

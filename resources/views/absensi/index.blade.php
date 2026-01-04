@@ -404,43 +404,142 @@
         // ===============================
         // AJAX ABSEN
         // ===============================
-        function submitAbsen(photo) {
+        // function submitAbsen(photo) {
 
-            const url = jenisAbsensi === 'masuk' ?
-                "{{ route('absen.masuk') }}" :
-                "{{ route('absen.pulang') }}";
+        //     const url = jenisAbsensi === 'masuk' ?
+        //         "{{ route('absen.masuk') }}" :
+        //         "{{ route('absen.pulang') }}";
+
+        //     $.ajax({
+        //         url: url,
+        //         method: 'POST',
+        //         data: {
+        //             _token: document.querySelector('meta[name="csrf-token"]').content,
+        //             photo: photo
+        //         },
+        //         beforeSend() {
+        //             Swal.fire({
+        //                 title: 'Menyimpan...',
+        //                 allowOutsideClick: false,
+        //                 didOpen: () => Swal.showLoading()
+        //             });
+        //         },
+        //         success(res) {
+        //             Swal.fire({
+        //                 icon: 'success',
+        //                 title: 'Berhasil',
+        //                 text: res.message,
+        //                 timer: 1500,
+        //                 showConfirmButton: false
+        //             });
+
+        //             loadRiwayat();
+        //         },
+        //         error(xhr) {
+        //             Swal.fire(
+        //                 'Gagal',
+        //                 xhr.responseJSON?.message ?? 'Terjadi kesalahan',
+        //                 'error'
+        //             );
+        //         }
+        //     });
+        // }
+    </script>
+
+    
+    <script>
+        // Fungsi untuk MENUTUP Modal
+        function closeAbsenManual() {
+            const modal = document.getElementById('modalAbsenManual');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        // Menutup modal jika pengguna mengklik area hitam di luar modal (Overlay)
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalAbsenManual');
+            if (event.target == modal) {
+                closeAbsenManual();
+            }
+        }
+
+        function submitAbsen(type) {
+            // 1. Alert awal agar user tahu proses sedang berjalan
+            Swal.fire({
+                title: 'Memverifikasi Lokasi...',
+                text: 'Harap tunggu, kami sedang memastikan posisi Anda tepat di radius cabang.',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // 2. Cek fitur Geolocation di Browser/HP
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const long = position.coords.longitude;
+
+                        // Kirim data koordinat ke server
+                        sendToServer(type, lat, long);
+                    },
+                    (error) => {
+                        let msg = "Gagal mengambil lokasi.";
+                        if (error.code == 1) msg =
+                            "Izin lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser Anda.";
+                        if (error.code == 2) msg = "Sinyal GPS tidak stabil.";
+                        if (error.code == 3) msg = "Waktu pencarian lokasi habis.";
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lokasi Gagal diakses',
+                            text: msg,
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }, {
+                        enableHighAccuracy: true, // Akurasi tinggi (GPS)
+                        timeout: 10000, // Maksimal 10 detik pencarian
+                        maximumAge: 0 // Jangan gunakan cache lokasi lama
+                    }
+                );
+            } else {
+                Swal.fire('Error', 'Perangkat/Browser Anda tidak mendukung GPS', 'error');
+            }
+        }
+
+        function sendToServer(type, lat, long) {
+            // URL disesuaikan dengan route Laravel Anda
+            const url = type === 'masuk' ? "{{ route('absen.masuk') }}" : "{{ route('absen.pulang') }}";
 
             $.ajax({
                 url: url,
                 method: 'POST',
                 data: {
-                    _token: document.querySelector('meta[name="csrf-token"]').content,
-                    photo: photo
-                },
-                beforeSend() {
-                    Swal.fire({
-                        title: 'Menyimpan...',
-                        allowOutsideClick: false,
-                        didOpen: () => Swal.showLoading()
-                    });
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    latitude: lat,
+                    longitude: long
                 },
                 success(res) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Berhasil',
+                        title: 'Presensi Berhasil',
                         text: res.message,
-                        timer: 1500,
-                        showConfirmButton: false
+                        confirmButtonColor: '#059669'
+                    }).then(() => {
+                        location.reload(); // Refresh halaman untuk update status
                     });
-
-                    loadRiwayat();
                 },
                 error(xhr) {
-                    Swal.fire(
-                        'Gagal',
-                        xhr.responseJSON?.message ?? 'Terjadi kesalahan',
-                        'error'
-                    );
+                    // Menangkap error radius dari controller (422/403)
+                    const errorMsg = xhr.responseJSON?.message ?? 'Terjadi kesalahan sistem';
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Akses Ditolak',
+                        text: errorMsg,
+                        confirmButtonColor: '#f97316'
+                    });
                 }
             });
         }

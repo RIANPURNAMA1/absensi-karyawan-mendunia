@@ -14,9 +14,14 @@ class Absensi extends Model
 
     protected $fillable = [
         'user_id',
+        'shift_id', // Tambahkan ini agar bisa disimpan
         'tanggal',
         'jam_masuk',
         'jam_keluar',
+        'lat_masuk',   // Tambahkan koordinat masuk
+        'long_masuk',  // Tambahkan koordinat masuk
+        'lat_pulang',  // Tambahkan koordinat pulang
+        'long_pulang', // Tambahkan koordinat pulang
         'status',
         'foto_masuk',
         'foto_pulang',
@@ -25,22 +30,23 @@ class Absensi extends Model
 
     protected $casts = [
         'tanggal'    => 'date',
-        'jam_masuk'  => 'datetime:H:i:s',
-        'jam_keluar' => 'datetime:H:i:s',
+        // Gunakan string jika hanya menyimpan waktu (H:i:s) agar tidak konflik dengan objek Carbon penuh
+        'jam_masuk'  => 'string', 
+        'jam_keluar' => 'string',
+        'lat_masuk'  => 'float',
+        'long_masuk' => 'float',
+        'lat_pulang' => 'float',
+        'long_pulang'=> 'float',
     ];
-
-
-
 
     /* =========================
        RELASI
     ========================== */
 
-
-    public function shift()
-    {
-        return $this->belongsTo(Shift::class, 'shift_id');
-    }
+    // Relasi ke Shift (Wajib karena ada shift_id di tabel)
+ public function shift() {
+    return $this->belongsTo(Shift::class, 'shift_id');
+}
 
     // User (karyawan)
     public function user()
@@ -48,28 +54,51 @@ class Absensi extends Model
         return $this->belongsTo(User::class);
     }
 
-    // Jadwal kerja berdasarkan hari (opsional)
-    public function jadwal()
-    {
-        return $this->hasOne(JadwalKerja::class, 'user_id', 'user_id')
-            ->where('hari', now()->translatedFormat('l'));
-    }
-
     /* =========================
-       ACCESSOR (OPSIONAL)
+       ACCESSOR
     ========================== */
 
     public function getFotoMasukUrlAttribute()
     {
         return $this->foto_masuk
             ? asset('storage/' . $this->foto_masuk)
-            : null;
+            : asset('assets/images/no-image.png'); // Beri fallback image jika null
     }
 
     public function getFotoPulangUrlAttribute()
     {
         return $this->foto_pulang
             ? asset('storage/' . $this->foto_pulang)
-            : null;
+            : asset('assets/images/no-image.png');
+    }
+
+    /* =========================
+       LOGIKA JARAK (HELPERS)
+    ========================== */
+
+    /**
+     * Menghitung jarak ke cabang terkait
+     * Berguna untuk menampilkan jarak di dashboard admin
+     */
+    public function getJarakMasukAttribute()
+    {
+        if (!$this->lat_masuk || !$this->user->cabang) return null;
+
+        return $this->calculateDistance(
+            $this->lat_masuk, 
+            $this->long_masuk, 
+            $this->user->cabang->latitude, 
+            $this->user->cabang->longitude
+        );
+    }
+
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371000; // meter
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon/2) * sin($dLon/2);
+        $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+        return $earthRadius * $c;
     }
 }

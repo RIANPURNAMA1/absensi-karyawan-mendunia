@@ -51,4 +51,5 @@ class Karyawan extends Model
     {
         return $this->hasMany(JadwalKerja::class, 'karyawan_id', 'id');
     }
+
 }

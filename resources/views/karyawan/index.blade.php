@@ -62,6 +62,7 @@
                             <th>Nama</th>
                             <th>Jabatan</th>
                             <th>Departemen</th>
+                            <th>Cabang</th>
                             <th>Shift</th>
                             <th>No HP</th>
                             <th>Email</th>
@@ -83,6 +84,7 @@
                                 <td>{{ $k->name }}</td>
                                 <td>{{ $k->jabatan }}</td>
                                 <td>{{ $k->divisi->nama_divisi }}</td>
+                                <td>{{ $k->cabang->nama_cabang }}</td>
 
                                 <td class="text-center">
                                     @if ($k->shift)
@@ -123,6 +125,7 @@
                                                 '{{ $k->name }}', 
                                                 '{{ $k->jabatan }}', 
                                                 '{{ $k->divisi_id }}', 
+                                                '{{ $k->cabang_id }}', 
                                                 '{{ $k->no_hp }}', 
                                                 '{{ $k->email }}', 
                                                 '{{ $k->tanggal_masuk }}', 
@@ -166,7 +169,7 @@
 
     <script>
         // Pastikan urutan parameter sesuai dengan tombol di Blade
-        function editKaryawan(id, nip, name, jabatan, divisi_id, no_hp, email, tanggal_masuk, status_kerja, alamat,
+        function editKaryawan(id, nip, name, jabatan, divisi_id,cabang_id, no_hp, email, tanggal_masuk, status_kerja, alamat,
             shift_id) {
 
             // Reset form dan masukkan data ke input modal
@@ -175,6 +178,7 @@
             $('#edit_name').val(name);
             $('#edit_jabatan').val(jabatan);
             $('#edit_divisi').val(divisi_id);
+            $('#edit_cabang').val(cabang_id);
             $('#edit_no_hp').val(no_hp);
             $('#edit_email').val(email);
             $('#edit_tanggal_masuk').val(tanggal_masuk);

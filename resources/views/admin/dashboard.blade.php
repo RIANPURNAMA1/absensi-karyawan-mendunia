@@ -279,8 +279,10 @@
                                 @forelse($absensi as $a)
                                     <tr>
                                         <td>
-                                            <img src="{{ $a->foto_profil ? asset('storage/foto-karyawan/' . $a->foto_profil) : '../assets/images/avatar/avatar-1.jpg' }}"
-                                                class="rounded-circle" width="40" height="40" alt="foto">
+                                            <img src="{{ $a->foto_profil && file_exists(public_path('storage/foto-karyawan/' . $a->foto_profil))
+                                                ? asset('storage/foto-karyawan/' . $a->foto_profil)
+                                                : asset('assets/images/avatar/avatar-1.jpg') }}"
+                                                class="rounded-circle" width="40" height="40">
                                         </td>
                                         <td>{{ $a->nip }}</td>
                                         <td>{{ $a->name }}</td>
