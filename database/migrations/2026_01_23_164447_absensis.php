@@ -19,7 +19,22 @@ return new class extends Migration
                 ->constrained('users')
                 ->cascadeOnDelete();
             // TAMBAHKAN INI: Relasi ke Shift
-            $table->unsignedBigInteger('shift_id');
+            $table->foreignId('shift_id')
+                ->nullable()
+                ->constrained('shifts')
+                ->nullOnDelete();
+
+            $table->foreignId('cabang_id')
+                ->nullable()
+                ->constrained('cabangs')
+                ->nullOnDelete();
+
+            $table->foreignId('izin_id')
+                ->nullable()
+                ->constrained('izins')
+                ->nullOnDelete();
+
+
 
             // Tanggal absensi (1 user = 1 record per hari)
             $table->date('tanggal');

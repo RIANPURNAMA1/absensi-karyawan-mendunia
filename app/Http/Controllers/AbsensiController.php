@@ -26,6 +26,8 @@ class AbsensiController extends Controller
         return view('absensi.index', compact('riwayat'));
     }
 
+
+
     public function riwayatSemua()
     {
         // Ambil semua absensi beserta relasi karyawan
@@ -40,24 +42,7 @@ class AbsensiController extends Controller
     }
 
 
-    public function manual(Request $request)
-    {
-        $request->validate([
-            'jenis' => 'required|in:masuk,pulang',
-            'alasan' => 'required|string'
-        ]);
-
-        Absensi::create([
-            'user_id' => Auth::id(),
-            'jenis' => $request->jenis,
-            'alasan' => $request->alasan,
-            'tipe' => 'manual',
-            'tanggal' => now()
-        ]);
-
-        return response()->json(['message' => 'Absen manual berhasil']);
-    }
-
+    // contrroller manual absensi 
     public function absenMasuk(Request $request)
     {
         $user = Auth::user();
@@ -103,16 +88,17 @@ class AbsensiController extends Controller
             $status = 'TERLAMBAT';
         }
 
-        // 5. Simpan Data
         Absensi::create([
-            'user_id'    => $user->id,
-            'shift_id'   => $user->shift_id,
-            'tanggal'    => $today,
-            'jam_masuk'  => $now->toTimeString(),
-            'lat_masuk'  => $request->latitude,
-            'long_masuk' => $request->longitude,
-            'status'     => $status, // Status dinamis: HADIR atau TERLAMBAT
+            'user_id' => Auth::user()->id,
+            'cabang_id' => $shift->cabang_id ?? 1, // isi cabang_id
+            'shift_id' => $shift->id,
+            'tanggal' => now()->toDateString(),
+            'jam_masuk' => now()->toTimeString(),
+            'lat_masuk' => $request->lat,
+            'long_masuk' => $request->long,
+            'status' => $status,
         ]);
+
 
         return response()->json([
             'message' => 'Absen masuk berhasil. Status: ' . $status
@@ -184,6 +170,9 @@ class AbsensiController extends Controller
             'jam_keluar' => $now->toTimeString()
         ]);
     }
+
+
+
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
         $earthRadius = 6371000; // Meter

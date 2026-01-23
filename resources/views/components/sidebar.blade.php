@@ -73,7 +73,7 @@
                      </a>
                  </li>
                  <li class="pc-item">
-                     <a href="/absensi/izin-cuti" class="pc-link">
+                     <a href="/izin-cuti" class="pc-link">
                          <span class="pc-micon"><i class="ph ph-file-text"></i></span>
                          <span class="pc-mtext">Izin & Cuti</span>
                      </a>

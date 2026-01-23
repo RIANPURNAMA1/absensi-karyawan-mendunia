@@ -19,4 +19,9 @@ class Cabang extends Model
 {
     return $this->hasMany(User::class, 'cabang_id');
 }
+
+public function absensis()
+    {
+        return $this->hasMany(Absensi::class);
+    }
 }

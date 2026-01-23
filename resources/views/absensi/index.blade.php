@@ -139,62 +139,54 @@
         @endif
     </div>
 
-    <!-- QUICK ACTIONS -->
-    <div class="px-5 pb-5">
-        <div class="flex items-center justify-between mb-3">
-            <h2 class="text-base font-bold text-gray-900">Quick Actions</h2>
-            <button class="text-blue-600 text-sm font-semibold">See All</button>
-        </div>
-
-        <div class="grid grid-cols-5 gap-2">
-            <!-- CHECK IN -->
-            <button onclick="openCamera('masuk')"
-                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
-                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <i data-lucide="check" class="w-5 h-5 text-green-600"></i>
-                </div>
-                <span class="text-[11px] font-medium text-gray-700">Masuk</span>
-            </button>
-
-            <!-- CHECK OUT -->
-            <button onclick="openCamera('pulang')"
-                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
-                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <i data-lucide="x" class="w-5 h-5 text-orange-600"></i>
-                </div>
-                <span class="text-[11px] font-medium text-gray-700">Pulang</span>
-            </button>
-
-            <!-- OVERTIME -->
-            <button
-                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i>
-                </div>
-                <span class="text-[11px] font-medium text-gray-700">Overtime</span>
-            </button>
-
-            <!-- REQUEST -->
-            <button
-                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
-                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <i data-lucide="users" class="w-5 h-5 text-purple-600"></i>
-                </div>
-                <span class="text-[11px] font-medium text-gray-700">Request</span>
-            </button>
-
-            <!-- ABSEN MANUAL -->
-            <button onclick="openAbsenManual()"
-                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition border border-dashed border-blue-400">
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i data-lucide="edit" class="w-5 h-5 text-blue-600"></i>
-                </div>
-                <span class="text-[11px] font-semibold text-blue-600">Manual</span>
-            </button>
-
-        </div>
-
+   <div class="px-5 pb-5">
+    <div class="flex items-center justify-between mb-3">
+        <h2 class="text-base font-bold text-gray-900">Quick Actions</h2>
+        <button class="text-blue-600 text-sm font-semibold">See All</button>
     </div>
+
+    <div class="grid grid-cols-5 gap-2">
+        <button onclick="location.href='/izin'"
+            class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <i data-lucide="file-text" class="w-5 h-5 text-indigo-600"></i>
+            </div>
+            <span class="text-[11px] font-medium text-gray-700">Izin/Sakit</span>
+        </button>
+
+        <button onclick="location.href='/absensi/riwayat'"
+            class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <i data-lucide="history" class="w-5 h-5 text-amber-600"></i>
+            </div>
+            <span class="text-[11px] font-medium text-gray-700">Riwayat</span>
+        </button>
+
+        <button onclick="location.href='/overtime'"
+            class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <i data-lucide="clock-alert" class="w-5 h-5 text-red-600"></i>
+            </div>
+            <span class="text-[11px] font-medium text-gray-700">Lembur</span>
+        </button>
+
+        <button onclick="location.href='/schedule'"
+            class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <i data-lucide="calendar-range" class="w-5 h-5 text-purple-600"></i>
+            </div>
+            <span class="text-[11px] font-medium text-gray-700">Jadwal</span>
+        </button>
+
+        <button onclick="openAbsenManual()"
+            class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition border border-dashed border-blue-400">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i>
+            </div>
+            <span class="text-[11px] font-semibold text-blue-600">Manual Testing </span>
+        </button>
+    </div>
+</div>
 
     <!-- RIWAYAT ABSENSI -->
     <div class="px-5 pb-24">

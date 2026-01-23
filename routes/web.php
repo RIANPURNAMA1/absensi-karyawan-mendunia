@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DivisiController;
+use App\Http\Controllers\IzinController;
 use App\Http\Controllers\UserController;
 
 
@@ -59,6 +60,15 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
 });
 
 
+// admin approval izin
+Route::middleware(['auth','role:HR,MANAGER'])->group(function () {
+    Route::get('/izin-cuti', [IzinController::class, 'approvalList'])->name('izin.approval.list');
+    Route::post('/izin/{id}/approve', [IzinController::class, 'approve'])->name('izin.approve');
+    Route::post('/izin/{id}/reject', [IzinController::class, 'reject'])->name('izin.reject');
+});
+
+
+
 // daftar user
 Route::get('/daftar-user', [UserController::class, 'userKaryawan'])->name('user.karyawan');
 Route::prefix('/daftar-user')->group(function () {
@@ -100,7 +110,8 @@ Route::middleware('auth')->group(function () {
 
 
 // Halaman riwayat semua absensi user login
-Route::get('/absensi/riwayat', [AbsensiController::class, 'riwayat'])->name('absensi.riwayat');
+Route::get('/absensi/riwayat', [AbsensiController::class, 'riwayat'])->name('absensi.riwayat')->middleware('auth');
+
 
 // Halaman detail absensi per tanggal
 Route::get('/absensi/detail/{tanggal}', [AbsensiController::class, 'detail'])
@@ -125,6 +136,13 @@ Route::middleware(['auth'])->group(function () {
 
 
 
+// izin
+// Pengajuan Izin
+Route::get('/izin/create', [IzinController::class, 'create'])->name('izin.create')->middleware('auth');
+Route::post('/izin/store', [IzinController::class, 'store'])->name('izin.store');
+Route::get('/izin', [IzinController::class, 'index'])->name('izin.index');
+
+
 use App\Http\Controllers\CabangController;
 
 // Halaman Utama Daftar Cabang
@@ -137,3 +155,6 @@ Route::put('/cabang/{id}', [CabangController::class, 'update'])->name('cabang.up
 
 // Proses Hapus Cabang
 Route::delete('/cabang/{id}', [CabangController::class, 'destroy'])->name('cabang.destroy');
+
+
+

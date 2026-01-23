@@ -80,6 +80,11 @@
                 data-filter="terlambat">
                 Terlambat
             </button>
+            <button onclick="filterData('pulang lebih awal')"
+            class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200"
+            data-filter="pulang lebih awal">
+            Pulang Awal
+        </button>
             <button onclick="filterData('izin')"
                 class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200"
                 data-filter="izin">

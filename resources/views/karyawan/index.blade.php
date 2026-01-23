@@ -77,7 +77,7 @@
                                     <img src="{{ $k->foto_profil && file_exists(public_path('storage/foto-karyawan/' . $k->foto_profil))
                                         ? asset('storage/foto-karyawan/' . $k->foto_profil)
                                         : asset('assets/images/avatar/avatar-1.jpg') }}"
-                                        class="rounded-circle" width="40" height="40">
+                                        class="rounded-circle" width="40" height="40" style="object-fit: cover">
                                 </td>
 
                                 <td>{{ $k->nip }}</td>
