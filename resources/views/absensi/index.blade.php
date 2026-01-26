@@ -274,41 +274,54 @@
     @include('absensi.modal_manual')
 
 
-    {{-- MODAL VERIFIKASI WAJAH --}}
-    {{-- MODAL REGISTRASI WAJAH (Otomatis muncul jika face_embedding kosong) --}}
-    <div id="modalRegistrasiWajah" class="hidden fixed inset-0 bg-black/80 items-center justify-center z-[60] p-4">
+    {{-- MODAL REGISTRASI WAJAH --}}
+    <div id="modalRegistrasiWajah"
+        class="hidden fixed inset-0 bg-black/80 items-center justify-center z-[60] p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl p-6 relative w-full max-w-sm flex flex-col items-center shadow-2xl">
 
-            <div id="loaderFace">
-                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-2"></div>
-                <p class="text-xs text-gray-500">Memuat AI Engine...</p>
+            {{-- Loader Tengah (Satu-satunya yang muncul saat loading) --}}
+            <div id="loaderFace" class="flex flex-col items-center py-10">
+                <div class="relative flex items-center justify-center">
+                    <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-100 border-b-blue-600"></div>
+                    <i data-lucide="cpu" class="w-6 h-6 text-blue-600 absolute animate-pulse"></i>
+                </div>
+                <p class="mt-4 text-sm font-semibold text-gray-700">Menyiapkan AI...</p>
+                <p class="text-[10px] text-gray-400">Sedang mengunduh model data (1.5MB)</p>
             </div>
 
-            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <i data-lucide="scan-face" class="w-8 h-8 text-blue-600"></i>
+            {{-- Main Content (Bungkus ini dengan ID agar bisa kita sembunyikan/tampilkan via JS) --}}
+            <div id="mainContentReg" class="hidden w-full flex flex-col items-center">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <i data-lucide="scan-face" class="w-8 h-8 text-blue-600"></i>
+                </div>
+
+                <h3 class="font-bold text-xl text-gray-900 mb-1 text-center">Daftarkan Wajah</h3>
+                <p class="text-gray-500 text-sm text-center mb-5">Gunakan wajah Anda sebagai kunci akses absensi
+                    digital.</p>
+
+                {{-- Area Video --}}
+                <div
+                    class="relative w-full aspect-square max-w-[280px] bg-gray-900 rounded-full overflow-hidden border-4 border-blue-100 shadow-xl mx-auto">
+                    <video id="videoReg" autoplay muted playsinline
+                        class="w-full h-full object-cover scale-x-[-1]"></video>
+                    <canvas id="canvasReg" class="absolute inset-0 w-full h-full"></canvas>
+
+                    {{-- Overlay Masker Wajah (Opsional untuk estetika) --}}
+                    <div class="absolute inset-0 border-[20px] border-black/20 rounded-full pointer-events-none"></div>
+                </div>
+
+                <div class="mt-6 w-full flex flex-col gap-2">
+                    <button id="btnCaptureWajah" onclick="prosesRegistrasiWajah()" disabled
+                        class="w-full py-3 bg-gray-400 text-white rounded-xl font-bold transition shadow-lg disabled:cursor-not-allowed">
+                        Ambil Data Wajah
+                    </button>
+                    <p class="text-[10px] text-center text-gray-400 italic">*Pastikan pencahayaan cukup dan wajah
+                        terlihat jelas</p>
+                </div>
             </div>
 
-            <h3 class="font-bold text-xl text-gray-900 mb-1">Daftarkan Wajah</h3>
-            <p class="text-gray-500 text-sm text-center mb-5">Wajah Anda diperlukan sebagai kunci akses absensi
-                digital.</p>
-
-            <div
-                class="relative w-full aspect-video bg-gray-200 rounded-2xl overflow-hidden border-2 border-blue-100 shadow-inner">
-                <video id="videoReg" autoplay muted playsinline class="w-full h-full object-cover shadow-lg"></video>
-                <canvas id="canvasReg" class="absolute inset-0 w-full h-full"></canvas>
-            </div>
-
-            <div class="mt-6 w-full flex flex-col gap-2">
-                <button id="btnCaptureWajah" onclick="prosesRegistrasiWajah()" disabled
-                    class="w-full py-3 bg-gray-400 text-white rounded-xl font-bold transition shadow-lg shadow-blue-200">
-                    Ambil Data Wajah
-                </button>
-                <p class="text-[10px] text-center text-gray-400 italic">*Pastikan pencahayaan cukup dan wajah terlihat
-                    jelas</p>
-            </div>
         </div>
     </div>
-
 
 
     <!-- 1. jQuery -->
@@ -316,26 +329,19 @@
 
     <!-- 2. SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
         let streamReg = null;
         let isEngineReady = false;
         let detectionIntervalReg = null;
 
-        // MENGGUNAKAN TINY FACE DETECTOR - PALING RINGAN & CEPAT
-        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+        // MENGGUNAKAN JSDELIVR CDN - LEBIH STABIL & CEPAT
+        const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
 
         $(document).ready(async function() {
-            // Tunggu Face-API.js dimuat dari CDN
-            if (typeof faceapi === 'undefined') {
-                console.log('⏳ Menunggu Face-API.js dimuat...');
-                await waitForFaceAPI();
-            }
-
             // Cek status registrasi wajah dari Laravel
             const hasFace = @json(auth()->user()->face_embedding != null);
 
-            // PENTING: Muat engine segera setelah halaman siap
+            // Langsung muat engine di background
             initFaceEngine().then(() => {
                 if (!hasFace) {
                     showModalRegistrasi();
@@ -343,111 +349,44 @@
             });
         });
 
-        // Fungsi untuk menunggu Face-API.js dimuat
-        function waitForFaceAPI() {
-            return new Promise((resolve) => {
-                const checkInterval = setInterval(() => {
-                    if (typeof faceapi !== 'undefined') {
-                        clearInterval(checkInterval);
-                        console.log('✅ Face-API.js berhasil dimuat');
-                        resolve();
-                    }
-                }, 100);
-
-                // Timeout setelah 10 detik
-                setTimeout(() => {
-                    clearInterval(checkInterval);
-                    if (typeof faceapi === 'undefined') {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Library Error',
-                            text: 'Face-API.js tidak dapat dimuat. Refresh halaman.',
-                            confirmButtonColor: '#ef4444'
-                        });
-                    }
-                }, 10000);
-            });
-        }
-
         async function initFaceEngine() {
             try {
                 const loader = document.getElementById('loaderFace');
+                const mainContent = document.getElementById('mainContentReg'); // Ambil ID konten utama
 
-                // Update UI: Memulai loading
-                if (loader) {
-                    loader.classList.remove('hidden');
-                    loader.innerHTML = `
-                    <div class="relative mb-3">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    </div>
-                    <p class="text-sm text-gray-700 font-medium mb-1">Memuat AI Engine...</p>
-                    <p class="text-xs text-gray-400">Loading model (1.5MB)</p>
-                    <div class="w-48 h-1 bg-gray-200 rounded-full mt-3 overflow-hidden">
-                        <div class="h-full bg-blue-600 animate-pulse" style="width: 30%; transition: width 2s;"></div>
-                    </div>
-                `;
-                }
-
-                console.log("🚀 Memuat AI Engine (Tiny Model - Super Cepat)...");
-
+                console.log("🚀 Memuat AI Engine dari CDN...");
                 const loadStart = Date.now();
 
-                // HANYA LOAD MODEL YANG DIPERLUKAN (TINY = PALING RINGAN)
                 await Promise.all([
-                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), // ~400KB
-                    faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL), // ~80KB  
-                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL) // ~1MB
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
 
                 const loadTime = ((Date.now() - loadStart) / 1000).toFixed(2);
-                console.log(`✅ AI Engine Ready! (${loadTime} detik)`);
+                console.log(`✅ AI Engine Ready via CDN! (${loadTime} detik)`);
 
                 isEngineReady = true;
 
-                // Update UI: Berhasil dimuat
+                // --- BAGIAN PERBAIKAN ---
                 if (loader) {
-                    loader.innerHTML = `
-                    <div class="mb-3">
-                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <p class="text-sm text-green-600 font-medium">AI Engine Ready!</p>
-                    <p class="text-xs text-gray-400">Loaded in ${loadTime}s</p>
-                `;
-
-                    // Sembunyikan loader setelah 500ms
-                    setTimeout(() => {
-                        loader.classList.add('hidden');
-                    }, 500);
+                    loader.classList.add('hidden'); // Sembunyikan loader
                 }
+
+                if (mainContent) {
+                    mainContent.classList.remove('hidden'); // Tampilkan konten pendaftaran
+                    mainContent.classList.add('flex');
+                }
+
+                // Langsung jalankan kamera
+                await startCameraReg();
+                // ------------------------
 
             } catch (err) {
                 console.error("❌ Error loading models:", err);
-
-                isEngineReady = false;
-
-                // Tampilkan error yang lebih informatif
-                const loader = document.getElementById('loaderFace');
-                if (loader) {
-                    loader.innerHTML = `
-                    <div class="text-center">
-                        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </div>
-                        <p class="text-sm text-red-600 font-medium mb-1">Gagal Memuat AI</p>
-                        <p class="text-xs text-gray-500 mb-3">Cek koneksi internet Anda</p>
-                        <button onclick="location.reload()" 
-                                class="px-4 py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition">
-                            Coba Lagi
-                        </button>
-                    </div>
-                `;
-                }
+                // Tampilkan pesan error di loader jika gagal
+                document.getElementById('loaderFace').innerHTML =
+                    `<p class="text-red-500">Gagal memuat AI. Refresh halaman.</p>`;
             }
         }
 
@@ -456,49 +395,23 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
-            const loader = document.getElementById('loaderFace');
-
-            // Jika engine sudah siap di background, langsung buka kamera
+            // Tunggu engine siap baru buka kamera
             if (isEngineReady) {
-                if (loader) loader.classList.add('hidden');
                 await startCameraReg();
             } else {
-                // Tampilkan loader sambil menunggu engine ready
-                if (loader) {
-                    loader.classList.remove('hidden');
-                    loader.innerHTML = `
-                    <div class="relative">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-3 mx-auto"></div>
-                    </div>
-                    <p class="text-sm text-gray-700 font-medium mb-1">Memuat AI Engine...</p>
-                    <p class="text-xs text-gray-400">Mohon tunggu sebentar</p>
-                `;
-                }
-
-                // Tunggu sampai engine ready
-                await waitForEngine();
-
-                if (loader) loader.classList.add('hidden');
-                await startCameraReg();
-            }
-        }
-
-        // Fungsi untuk menunggu engine ready
-        function waitForEngine() {
-            return new Promise((resolve) => {
-                const checkInterval = setInterval(() => {
+                let waitCount = 0;
+                const checkReady = setInterval(async () => {
+                    waitCount++;
                     if (isEngineReady) {
-                        clearInterval(checkInterval);
-                        resolve();
+                        clearInterval(checkReady);
+                        await startCameraReg();
                     }
-                }, 100);
-
-                // Timeout 30 detik
-                setTimeout(() => {
-                    clearInterval(checkInterval);
-                    resolve();
-                }, 30000);
-            });
+                    if (waitCount > 50) { // Timeout 10 detik
+                        clearInterval(checkReady);
+                        Swal.fire('Timeout', 'Gagal memuat AI, silakan refresh halaman.', 'error');
+                    }
+                }, 200);
+            }
         }
 
         async function startCameraReg() {
@@ -506,216 +419,103 @@
                 streamReg = await navigator.mediaDevices.getUserMedia({
                     video: {
                         facingMode: 'user',
-                        width: {
-                            ideal: 640
-                        },
-                        height: {
-                            ideal: 480
-                        }
+                        width: 640,
+                        height: 480
                     }
                 });
-
                 const video = document.getElementById('videoReg');
                 video.srcObject = streamReg;
 
-                // Tunggu video siap, BARU start deteksi
                 video.onloadedmetadata = () => {
                     video.play();
-
-                    // Pastikan engine benar-benar ready sebelum deteksi
-                    if (isEngineReady) {
-                        console.log('🎥 Kamera aktif, memulai deteksi wajah...');
-                        startRealtimeDetectionReg();
-                    } else {
-                        console.log('⏳ Menunggu AI Engine...');
-                        // Tunggu engine ready baru start deteksi
-                        const waitDetection = setInterval(() => {
-                            if (isEngineReady) {
-                                clearInterval(waitDetection);
-                                console.log('🎥 AI Ready, memulai deteksi...');
-                                startRealtimeDetectionReg();
-                            }
-                        }, 100);
-                    }
+                    startRealtimeDetectionReg();
                 };
 
-                // Enable tombol capture
                 const btn = document.getElementById('btnCaptureWajah');
                 if (btn) {
                     btn.disabled = false;
-                    btn.classList.remove('bg-gray-400');
-                    btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                    btn.classList.replace('bg-gray-400', 'bg-blue-600');
                 }
-
             } catch (err) {
-                console.error("Kamera error:", err);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Kamera Error',
-                    text: 'Mohon izinkan akses kamera di browser Anda.',
-                    confirmButtonColor: '#ef4444'
-                });
+                Swal.fire('Kamera Error', 'Mohon izinkan akses kamera.', 'error');
             }
         }
 
-        // DETEKSI WAJAH REALTIME - MENAMPILKAN KOTAK DI WAJAH
         async function startRealtimeDetectionReg() {
             const video = document.getElementById('videoReg');
             const canvas = document.getElementById('canvasReg');
-
             if (!video || !canvas) return;
 
             const displaySize = {
-                width: video.videoWidth || 640,
-                height: video.videoHeight || 480
+                width: 640,
+                height: 480
             };
-
             faceapi.matchDimensions(canvas, displaySize);
 
-            // OPTIMASI: Deteksi lebih jarang untuk performa lebih baik
             detectionIntervalReg = setInterval(async () => {
-                if (!video.videoWidth) return;
+                if (!video.videoWidth || !isEngineReady) return;
 
-                // MENGGUNAKAN TINY LANDMARK - LEBIH CEPAT
-                const detection = await faceapi
-                    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
-                        inputSize: 224, // Lebih kecil = lebih cepat (default 416)
-                        scoreThreshold: 0.5 // Threshold deteksi
-                    }))
-                    .withFaceLandmarks(true); // true = tiny landmarks (lebih cepat)
+                const detection = await faceapi.detectSingleFace(
+                    video,
+                    new faceapi.TinyFaceDetectorOptions({
+                        inputSize: 224,
+                        scoreThreshold: 0.5
+                    })
+                ).withFaceLandmarks();
 
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 if (detection) {
-                    const resizedDetection = faceapi.resizeResults(detection, displaySize);
-
-                    // Gambar kotak wajah dengan warna hijau
-                    const box = resizedDetection.detection.box;
+                    const resized = faceapi.resizeResults(detection, displaySize);
+                    // Gambar Border Hijau
+                    const box = resized.detection.box;
                     ctx.strokeStyle = '#10b981';
                     ctx.lineWidth = 3;
                     ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-                    // Gambar landmark (titik-titik wajah)
-                    faceapi.draw.drawFaceLandmarks(canvas, resizedDetection);
-
-                    // Tampilkan confidence score
-                    const confidence = Math.round(detection.detection.score * 100);
-                    ctx.fillStyle = '#10b981';
-                    ctx.font = 'bold 16px Arial';
-                    ctx.fillText(`${confidence}%`, box.x, box.y - 10);
+                    faceapi.draw.drawFaceLandmarks(canvas, resized);
                 }
-
-            }, 200); // Update setiap 200ms (lebih jarang = lebih cepat)
+            }, 150);
         }
 
         async function prosesRegistrasiWajah() {
-            if (!isEngineReady) {
-                Swal.fire('Tunggu', 'AI Engine belum siap. Tunggu beberapa saat...', 'warning');
-                return;
-            }
+            if (!isEngineReady) return;
 
             const video = document.getElementById('videoReg');
-
             Swal.fire({
                 title: 'Menganalisa Wajah...',
-                html: '<div class="animate-pulse">Sedang memproses data wajah Anda</div>',
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                didOpen: () => Swal.showLoading()
+                didOpen: () => Swal.showLoading(),
+                allowOutsideClick: false
             });
 
-            // Deteksi menggunakan opsi Tiny (Super Cepat) dengan optimasi
             const detection = await faceapi.detectSingleFace(
-                    video,
-                    new faceapi.TinyFaceDetectorOptions({
-                        inputSize: 224, // Ukuran input kecil = lebih cepat
-                        scoreThreshold: 0.5 // Threshold deteksi
-                    })
-                ).withFaceLandmarks(true) // true = tiny landmarks (lebih cepat)
-                .withFaceDescriptor();
+                video,
+                new faceapi.TinyFaceDetectorOptions({
+                    inputSize: 416
+                }) // Input lebih besar saat capture agar akurat
+            ).withFaceLandmarks().withFaceDescriptor();
 
             if (!detection) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Wajah Tidak Terdeteksi',
-                    html: `
-                    <p class="text-gray-600 mb-2">Pastikan:</p>
-                    <ul class="text-sm text-gray-500 text-left">
-                        <li>✓ Wajah menghadap kamera</li>
-                        <li>✓ Pencahayaan cukup terang</li>
-                        <li>✓ Tidak ada penghalang (masker, kacamata hitam)</li>
-                    </ul>
-                `,
-                    confirmButtonColor: '#3b82f6'
-                });
+                Swal.fire('Gagal', 'Wajah tidak terdeteksi. Pastikan pencahayaan cukup.', 'error');
                 return;
             }
 
-            // Cek confidence score
-            const confidence = Math.round(detection.detection.score * 100);
-            if (confidence < 70) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Kualitas Deteksi Rendah',
-                    text: `Akurasi: ${confidence}%. Coba posisi yang lebih baik (minimal 70%).`,
-                    confirmButtonColor: '#f59e0b'
-                });
-                return;
-            }
-
-            // Konversi descriptor ke array
-            const faceDescriptor = Array.from(detection.descriptor);
-
-            // Kirim ke server
             $.ajax({
                 url: "{{ route('user.update-face') }}",
                 method: 'POST',
                 data: {
                     _token: "{{ csrf_token() }}",
-                    face_embedding: JSON.stringify(faceDescriptor)
+                    face_embedding: JSON.stringify(Array.from(detection.descriptor))
                 },
-                success(res) {
-                    // Stop detection interval
-                    if (detectionIntervalReg) {
-                        clearInterval(detectionIntervalReg);
-                        detectionIntervalReg = null;
-                    }
-
-                    // Stop camera
-                    if (streamReg) {
-                        streamReg.getTracks().forEach(t => t.stop());
-                    }
-
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Registrasi Berhasil!',
-                        html: `
-                        <p class="text-gray-600 mb-2">Wajah Anda telah terdaftar di sistem</p>
-                        <p class="text-sm text-gray-400">Akurasi: ${confidence}%</p>
-                    `,
-                        confirmButtonColor: '#10b981'
-                    }).then(() => {
-                        location.reload();
-                    });
+                success() {
+                    Swal.fire('Berhasil!', 'Wajah Anda telah terdaftar.', 'success')
+                        .then(() => location.reload());
                 },
-                error(xhr) {
-                    const errorMsg = xhr.responseJSON?.message || 'Gagal menyimpan data ke database.';
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Gagal Menyimpan',
-                        text: errorMsg,
-                        confirmButtonColor: '#ef4444'
-                    });
+                error() {
+                    Swal.fire('Error', 'Gagal mengirim data ke server.', 'error');
                 }
             });
         }
-
-        // Cleanup saat halaman ditutup
-        window.addEventListener('beforeunload', () => {
-            if (detectionIntervalReg) clearInterval(detectionIntervalReg);
-            if (streamReg) streamReg.getTracks().forEach(t => t.stop());
-        });
     </script>
     <script>
         function openAbsenManual() {
