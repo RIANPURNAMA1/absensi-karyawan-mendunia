@@ -1,12 +1,17 @@
 <?php
 
+use App\Http\Controllers\AbsensiController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DivisiController;
 use App\Http\Controllers\IzinController;
 use App\Http\Controllers\UserController;
-
+use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\KaryawanController;
+use App\Http\Controllers\KehadiranController;
+use App\Http\Controllers\MonitoringController;
+use App\Http\Controllers\RekapController;
 
 Route::middleware(['auth', 'role:MANAGER, HR'])->group(function () {
 
@@ -40,7 +45,6 @@ Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
 
 
 // karyawan data
-use App\Http\Controllers\KaryawanController;
 
 Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::get('/karyawan', [KaryawanController::class, 'index'])->name('karyawan.index');
@@ -61,12 +65,31 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
 
 
 // admin approval izin
-Route::middleware(['auth','role:HR,MANAGER'])->group(function () {
+Route::middleware(['auth','role:HR,MANAGER,KARYAWAN'])->group(function () {
     Route::get('/izin-cuti', [IzinController::class, 'approvalList'])->name('izin.approval.list');
     Route::post('/izin/{id}/approve', [IzinController::class, 'approve'])->name('izin.approve');
     Route::post('/izin/{id}/reject', [IzinController::class, 'reject'])->name('izin.reject');
 });
 
+Route::get('/lampiran/{filename}', [IzinController::class, 'lihatLampiran'])
+    ->name('izin.lampiran')
+    ->middleware('auth'); // cukup login saja
+
+// kehadiran karyawan 
+Route::get('/data-kehadiran', [KehadiranController::class, 'index']);
+// revisi kehadiran
+Route::post('/admin/absensi/update-status', [AbsensiController::class, 'updateStatus'])
+    ->name('admin.absensi.updateStatus');
+
+// rekap
+Route::get('/rekap-absensi', [RekapController::class, 'rekap'])->name('absensi.rekap');
+
+// monitoring absensi
+Route::get('/monitoring-lokasi', [MonitoringController::class, 'monitoring'])->name('absensi.monitoring');
+
+
+// daftar wajah
+Route::post('/user/update-face', [AbsensiController::class, 'updateFace'])->name('user.update-face');
 
 
 // daftar user
@@ -80,9 +103,6 @@ Route::prefix('/daftar-user')->group(function () {
 
 
 // absensi
-use App\Http\Controllers\AbsensiController;
-use App\Http\Controllers\ShiftController;
-
 Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
     Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
     Route::get('/absensi/history', [AbsensiController::class, 'history'])->name('absensi.history');

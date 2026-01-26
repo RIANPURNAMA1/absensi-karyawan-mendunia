@@ -16,11 +16,11 @@ class Cabang extends Model
     ];
 
     public function user()
-{
-    return $this->hasMany(User::class, 'cabang_id');
-}
+    {
+        return $this->hasMany(User::class, 'cabang_id');
+    }
 
-public function absensis()
+    public function absensis()
     {
         return $this->hasMany(Absensi::class);
     }

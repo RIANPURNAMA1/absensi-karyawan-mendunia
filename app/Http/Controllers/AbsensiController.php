@@ -17,13 +17,29 @@ class AbsensiController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
+        $user = Auth::user()->load('cabang');
+
+        // 🔒 Pengaman kalau user belum punya cabang
+        if (!$user->cabang) {
+            abort(403, 'User belum terdaftar di cabang manapun.');
+        }
+
+        // Ambil 10 riwayat absensi terakhir
         $riwayat = Absensi::where('user_id', $user->id)
             ->orderBy('tanggal', 'desc')
             ->take(10)
             ->get();
 
-        return view('absensi.index', compact('riwayat'));
+        // Pastikan data cabang valid
+        $cabang = $user->cabang;
+
+        return view('absensi.index', [
+            'riwayat'     => $riwayat,
+            'cabangLat'   => $cabang->latitude ?? 0,
+            'cabangLong'  => $cabang->longitude ?? 0,
+            'radiusMeter' => $cabang->radius ?? 100,
+            'namaCabang'  => $cabang->nama_cabang ?? '-',
+        ]);
     }
 
 
@@ -40,6 +56,24 @@ class AbsensiController extends Controller
     {
         return view('absensi.profile');
     }
+
+    // revisi
+    public function updateStatus(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:absensis,id',
+            'status' => 'required|in:HADIR,TERLAMBAT,IZIN,ALPA,PULANG LEBIH AWAL',
+        ]);
+
+        $absen = Absensi::findOrFail($request->id);
+
+        $absen->update([
+            'status' => $request->status,
+        ]);
+
+        return back()->with('success', 'Status absensi berhasil diperbarui');
+    }
+
 
 
     // contrroller manual absensi 
@@ -88,16 +122,18 @@ class AbsensiController extends Controller
             $status = 'TERLAMBAT';
         }
 
+        // absenMasuk
         Absensi::create([
-            'user_id' => Auth::user()->id,
-            'cabang_id' => $shift->cabang_id ?? 1, // isi cabang_id
-            'shift_id' => $shift->id,
-            'tanggal' => now()->toDateString(),
-            'jam_masuk' => now()->toTimeString(),
-            'lat_masuk' => $request->lat,
-            'long_masuk' => $request->long,
-            'status' => $status,
+            'user_id'    => $user->id,
+            'cabang_id'  => $cabang->id,
+            'shift_id'   => $shift->id,
+            'tanggal'    => $today,
+            'jam_masuk'  => $now->toTimeString(),
+            'lat_masuk'  => $request->latitude,  // <=== SAMAKAN DENGAN JS
+            'long_masuk' => $request->longitude,
+            'status'     => $status,
         ]);
+
 
 
         return response()->json([
@@ -157,13 +193,14 @@ class AbsensiController extends Controller
         // Jika status saat ini TERLAMBAT, variabel $statusBaru tetap berisi 'TERLAMBAT' 
         // karena tidak masuk ke dalam blok IF di atas.
 
-        // 4. UPDATE DATA
+        // absenPulang
         $absensi->update([
             'jam_keluar'  => $now->toTimeString(),
             'lat_pulang'  => $request->latitude,
             'long_pulang' => $request->longitude,
             'status'      => $statusBaru,
         ]);
+
 
         return response()->json([
             'message' => "Absen pulang berhasil. Status: $statusBaru",
@@ -400,5 +437,21 @@ class AbsensiController extends Controller
         return response()->json([
             'message' => 'Absensi berhasil diverifikasi wajah'
         ]);
+    }
+
+
+
+    public function updateFace(Request $request)
+    {
+        $request->validate([
+            'face_embedding' => 'required'
+        ]);
+
+        $user = auth()->user();
+        // Simpan string JSON dari JS ke database
+        $user->face_embedding = $request->face_embedding;
+        $user->save();
+
+        return response()->json(['status' => 'success', 'message' => 'Wajah berhasil didaftarkan']);
     }
 }

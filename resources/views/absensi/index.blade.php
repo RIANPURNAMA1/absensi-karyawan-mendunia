@@ -17,6 +17,21 @@
             padding-bottom: env(safe-area-inset-bottom);
         }
     </style>
+    <style>
+        #loaderFace {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 60;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-50">
@@ -139,54 +154,54 @@
         @endif
     </div>
 
-   <div class="px-5 pb-5">
-    <div class="flex items-center justify-between mb-3">
-        <h2 class="text-base font-bold text-gray-900">Quick Actions</h2>
-        <button class="text-blue-600 text-sm font-semibold">See All</button>
+    <div class="px-5 pb-5">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-bold text-gray-900">Quick Actions</h2>
+            <button class="text-blue-600 text-sm font-semibold">See All</button>
+        </div>
+
+        <div class="grid grid-cols-5 gap-2">
+            <button onclick="location.href='/izin'"
+                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <i data-lucide="file-text" class="w-5 h-5 text-indigo-600"></i>
+                </div>
+                <span class="text-[11px] font-medium text-gray-700">Izin/Sakit</span>
+            </button>
+
+            <button onclick="location.href='/absensi/riwayat'"
+                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <i data-lucide="history" class="w-5 h-5 text-amber-600"></i>
+                </div>
+                <span class="text-[11px] font-medium text-gray-700">Riwayat</span>
+            </button>
+
+            <button onclick="location.href='/overtime'"
+                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <i data-lucide="clock-alert" class="w-5 h-5 text-red-600"></i>
+                </div>
+                <span class="text-[11px] font-medium text-gray-700">Lembur</span>
+            </button>
+
+            <button onclick="location.href='/schedule'"
+                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i data-lucide="calendar-range" class="w-5 h-5 text-purple-600"></i>
+                </div>
+                <span class="text-[11px] font-medium text-gray-700">Jadwal</span>
+            </button>
+
+            <button onclick="openAbsenManual()"
+                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition border border-dashed border-blue-400">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i>
+                </div>
+                <span class="text-[11px] font-semibold text-blue-600">Manual Testing </span>
+            </button>
+        </div>
     </div>
-
-    <div class="grid grid-cols-5 gap-2">
-        <button onclick="location.href='/izin'"
-            class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
-            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                <i data-lucide="file-text" class="w-5 h-5 text-indigo-600"></i>
-            </div>
-            <span class="text-[11px] font-medium text-gray-700">Izin/Sakit</span>
-        </button>
-
-        <button onclick="location.href='/absensi/riwayat'"
-            class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
-            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                <i data-lucide="history" class="w-5 h-5 text-amber-600"></i>
-            </div>
-            <span class="text-[11px] font-medium text-gray-700">Riwayat</span>
-        </button>
-
-        <button onclick="location.href='/overtime'"
-            class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
-            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                <i data-lucide="clock-alert" class="w-5 h-5 text-red-600"></i>
-            </div>
-            <span class="text-[11px] font-medium text-gray-700">Lembur</span>
-        </button>
-
-        <button onclick="location.href='/schedule'"
-            class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
-            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <i data-lucide="calendar-range" class="w-5 h-5 text-purple-600"></i>
-            </div>
-            <span class="text-[11px] font-medium text-gray-700">Jadwal</span>
-        </button>
-
-        <button onclick="openAbsenManual()"
-            class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition border border-dashed border-blue-400">
-            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i>
-            </div>
-            <span class="text-[11px] font-semibold text-blue-600">Manual Testing </span>
-        </button>
-    </div>
-</div>
 
     <!-- RIWAYAT ABSENSI -->
     <div class="px-5 pb-24">
@@ -241,13 +256,150 @@
     {{-- modal absensi manual --}}
     @include('absensi.modal_manual')
 
+    {{-- MODAL VERIFIKASI WAJAH --}}
+    {{-- MODAL REGISTRASI WAJAH (Otomatis muncul jika face_embedding kosong) --}}
+    <div id="modalRegistrasiWajah" class="hidden fixed inset-0 bg-black/80 items-center justify-center z-[60] p-4">
+        <div class="bg-white rounded-3xl p-6 relative w-full max-w-sm flex flex-col items-center shadow-2xl">
+
+            <div id="loaderFace">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-2"></div>
+                <p class="text-xs text-gray-500">Memuat AI Engine...</p>
+            </div>
+
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <i data-lucide="scan-face" class="w-8 h-8 text-blue-600"></i>
+            </div>
+
+            <h3 class="font-bold text-xl text-gray-900 mb-1">Daftarkan Wajah</h3>
+            <p class="text-gray-500 text-sm text-center mb-5">Wajah Anda diperlukan sebagai kunci akses absensi
+                digital.</p>
+
+            <div
+                class="relative w-full aspect-video bg-gray-200 rounded-2xl overflow-hidden border-2 border-blue-100 shadow-inner">
+                <video id="videoReg" autoplay muted playsinline class="w-full h-full object-cover shadow-lg"></video>
+                <canvas id="canvasReg" class="absolute inset-0 w-full h-full"></canvas>
+            </div>
+
+            <div class="mt-6 w-full flex flex-col gap-2">
+                <button id="btnCaptureWajah" onclick="prosesRegistrasiWajah()" disabled
+                    class="w-full py-3 bg-gray-400 text-white rounded-xl font-bold transition shadow-lg shadow-blue-200">
+                    Ambil Data Wajah
+                </button>
+                <p class="text-[10px] text-center text-gray-400 italic">*Pastikan pencahayaan cukup dan wajah terlihat
+                    jelas</p>
+            </div>
+        </div>
+    </div>
+
+
+
+    {{-- FACE API --}}
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+
 
     <!-- 1. jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <!-- 2. SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let streamReg = null;
 
+        $(document).ready(async function() {
+            // 1. Cek apakah user sudah registrasi wajah (menggunakan data dari Laravel)
+            const hasFace = @json(auth()->user()->face_embedding != null);
+
+            if (!hasFace) {
+                showModalRegistrasi();
+            }
+        });
+
+        async function showModalRegistrasi() {
+            const modal = document.getElementById('modalRegistrasiWajah');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            try {
+                // 2. Load Model Face-API
+                await Promise.all([
+                    faceapi.nets.ssdMobilenetv1.loadFromUri(
+                        'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(
+                        'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(
+                        'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights')
+                ]);
+
+                document.getElementById('loaderFace').classList.add('hidden');
+                startCameraReg();
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Error', 'Gagal memuat engine AI. Pastikan internet stabil.', 'error');
+            }
+        }
+
+        async function startCameraReg() {
+            try {
+                streamReg = await navigator.mediaDevices.getUserMedia({
+                    video: true
+                });
+                const video = document.getElementById('videoReg');
+                video.srcObject = streamReg;
+
+                // Enable button setelah kamera aktif
+                const btn = document.getElementById('btnCaptureWajah');
+                btn.disabled = false;
+                btn.classList.remove('bg-gray-400');
+                btn.classList.add('bg-blue-600');
+            } catch (err) {
+                Swal.fire('Akses Ditolak', 'Kamera wajib diizinkan untuk registrasi wajah.', 'warning');
+            }
+        }
+
+        async function prosesRegistrasiWajah() {
+            const video = document.getElementById('videoReg');
+
+            Swal.fire({
+                title: 'Menganalisa Wajah...',
+                text: 'Harap diam sejenak',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            // 3. Deteksi Wajah & Ambil Descriptor (128 Angka)
+            const detection = await faceapi.detectSingleFace(video)
+                .withFaceLandmarks()
+                .withFaceDescriptor();
+
+            if (!detection) {
+                Swal.fire('Gagal', 'Wajah tidak terdeteksi dengan jelas. Coba posisi lain.', 'error');
+                return;
+            }
+
+            // Ambil descriptor (array angka)
+            const faceDescriptor = Array.from(detection.descriptor);
+
+            // 4. Kirim ke Server Laravel
+            $.ajax({
+                url: "{{ route('user.update-face') }}", // Buat route ini di web.php
+                method: 'POST',
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    face_embedding: JSON.stringify(faceDescriptor)
+                },
+                success(res) {
+                    Swal.fire('Berhasil!', 'Wajah Anda telah terdaftar. Sekarang Anda bisa absen.', 'success')
+                        .then(() => {
+                            if (streamReg) streamReg.getTracks().forEach(track => track.stop());
+                            location.reload();
+                        });
+                },
+                error(xhr) {
+                    Swal.fire('Error', 'Gagal menyimpan data ke server.', 'error');
+                }
+            });
+        }
+    </script>
     <script>
         function openAbsenManual() {
             const modal = document.getElementById('modalAbsenManual');
@@ -438,8 +590,8 @@
         // }
     </script>
 
-    
-    <script>
+
+    {{-- <script>
         // Fungsi untuk MENUTUP Modal
         function closeAbsenManual() {
             const modal = document.getElementById('modalAbsenManual');
@@ -525,6 +677,121 @@
                 },
                 error(xhr) {
                     // Menangkap error radius dari controller (422/403)
+                    const errorMsg = xhr.responseJSON?.message ?? 'Terjadi kesalahan sistem';
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Akses Ditolak',
+                        text: errorMsg,
+                        confirmButtonColor: '#f97316'
+                    });
+                }
+            });
+        }
+    </script> --}}
+
+
+    <script>
+        // 🔥 DATA CABANG DARI SERVER
+        const CABANG = {
+            nama: "{{ $namaCabang }}",
+            lat: {{ $cabangLat }},
+            long: {{ $cabangLong }},
+            radius: {{ $radiusMeter }}
+        };
+
+        // Haversine formula: hitung jarak dalam meter
+        function hitungJarak(lat1, lon1, lat2, lon2) {
+            const R = 6371000; // radius bumi dalam meter
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1 * Math.PI / 180) *
+                Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) ** 2;
+
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // Submit absensi
+        function submitAbsen(type) {
+            Swal.fire({
+                title: 'Memverifikasi Lokasi...',
+                text: 'Harap tunggu, kami sedang memastikan posisi Anda tepat di radius cabang.',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            if (!navigator.geolocation) {
+                Swal.fire('Error', 'Perangkat/Browser Anda tidak mendukung GPS', 'error');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLong = position.coords.longitude;
+
+                    const jarak = hitungJarak(userLat, userLong, CABANG.lat, CABANG.long);
+                    console.log("Jarak ke cabang:", jarak, "meter");
+
+                    if (jarak > CABANG.radius) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Di Luar Area Cabang',
+                            html: `Anda berada <b>${Math.round(jarak)} meter</b> dari cabang <b>${CABANG.nama}</b>.<br>Radius absensi hanya <b>${CABANG.radius} meter</b>.`,
+                            confirmButtonColor: '#ef4444'
+                        });
+                        return;
+                    }
+
+                    // Kirim ke server
+                    sendToServer(type, userLat, userLong);
+                },
+                (error) => {
+                    let msg = "Gagal mengambil lokasi.";
+                    if (error.code == 1) msg =
+                        "Izin lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser Anda.";
+                    if (error.code == 2) msg = "Sinyal GPS tidak stabil.";
+                    if (error.code == 3) msg = "Waktu pencarian lokasi habis.";
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lokasi Gagal diakses',
+                        text: msg,
+                        confirmButtonColor: '#ef4444'
+                    });
+                }, {
+                    enableHighAccuracy: false, // cukup akurat, lebih cepat
+                    timeout: 5000, // maksimal 5 detik
+                    maximumAge: 0
+                }
+            );
+        }
+
+        // AJAX ke server
+        function sendToServer(type, lat, long) {
+            const url = type === 'masuk' ? "{{ route('absen.masuk') }}" : "{{ route('absen.pulang') }}";
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    latitude: lat,
+                    longitude: long
+                },
+                success(res) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Presensi Berhasil',
+                        text: res.message,
+                        confirmButtonColor: '#059669'
+                    }).then(() => location.reload());
+                },
+                error(xhr) {
                     const errorMsg = xhr.responseJSON?.message ?? 'Terjadi kesalahan sistem';
                     Swal.fire({
                         icon: 'warning',

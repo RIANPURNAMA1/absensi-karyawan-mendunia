@@ -56,15 +56,15 @@ class Absensi extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function cabangs()
+    public function cabang()
     {
         return $this->belongsTo(Cabang::class);
     }
 
     public function izin()
-{
-    return $this->belongsTo(Izin::class);
-}
+    {
+        return $this->belongsTo(Izin::class);
+    }
 
     /* =========================
        ACCESSOR

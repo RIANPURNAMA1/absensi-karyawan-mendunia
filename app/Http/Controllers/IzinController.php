@@ -8,6 +8,7 @@ use App\Models\IzinApproval;
 use App\Services\IzinApprovalService as ServicesIzinApprovalService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use IzinApprovalService;
 
 class IzinController extends Controller
@@ -138,7 +139,7 @@ class IzinController extends Controller
 
         // 3️⃣ VALIDASI INPUT
         $request->validate([
-            'jenis_izin'  => 'required|in:sakit,cuti',
+            'jenis_izin' => 'required|in:SAKIT,CUTI,IZIN',
             'tgl_mulai'   => 'required|date|after_or_equal:today',
             'tgl_selesai' => 'required|date|after_or_equal:tgl_mulai',
             'alasan'      => 'required|string|min:10',
@@ -190,6 +191,19 @@ class IzinController extends Controller
 
         return view('absensi.izin.index', compact('riwayatIzin'));
     }
+
+
+    public function lihatLampiran($filename)
+    {
+        $path = storage_path('app/public/' . $filename);
+
+        if (!file_exists($path)) {
+            dd($path); // 🔥 biar kita tahu dia nyari dimana
+        }
+
+        return response()->file($path);
+    }
+
 
 
 

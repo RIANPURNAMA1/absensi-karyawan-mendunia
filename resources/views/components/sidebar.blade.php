@@ -67,7 +67,7 @@
              </a>
              <ul class="pc-submenu">
                  <li class="pc-item">
-                     <a href="/absensi/data-kehadiran" class="pc-link">
+                     <a href="/data-kehadiran" class="pc-link">
                          <span class="pc-micon"><i class="ph ph-clipboard-text"></i></span>
                          <span class="pc-mtext">Data Kehadiran</span>
                      </a>
@@ -79,19 +79,13 @@
                      </a>
                  </li>
                  <li class="pc-item">
-                     <a href="/absensi/lembur" class="pc-link">
-                         <span class="pc-micon"><i class="ph ph-clock-afternoon"></i></span>
-                         <span class="pc-mtext">Lembur</span>
-                     </a>
-                 </li>
-                 <li class="pc-item">
-                     <a href="/absensi/rekap" class="pc-link">
+                     <a href="/rekap-absensi" class="pc-link">
                          <span class="pc-micon"><i class="ph ph-chart-bar"></i></span>
                          <span class="pc-mtext">Rekap Absensi</span>
                      </a>
                  </li>
                  <li class="pc-item">
-                     <a href="/monitoring/lokasi" class="pc-link">
+                     <a href="/monitoring-lokasi" class="pc-link">
                          <span class="pc-micon"><i class="ph ph-map-pin"></i></span>
                          <span class="pc-mtext">Monitoring Lokasi</span>
                      </a>

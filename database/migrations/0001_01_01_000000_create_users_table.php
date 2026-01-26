@@ -33,6 +33,8 @@ return new class extends Migration
             $table->string('foto_profil')->nullable();
             $table->date('tanggal_masuk')->nullable();
             $table->enum('status_kerja', ['TETAP', 'KONTRAK', 'MAGANG'])->nullable();
+            $table->json('face_embedding')->nullable();
+
 
             $table->timestamps();
         });

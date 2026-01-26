@@ -27,7 +27,8 @@ class User extends Authenticatable
         'alamat',
         'foto_profil',
         'tanggal_masuk',
-        'status_kerja'
+        'status_kerja',
+        'foto_wajah'
     ];
 
     protected $hidden = [
@@ -67,10 +68,15 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Cabang::class, 'cabang_id');
     }
-   
+
+
+    public function absensi()
+    {
+        return $this->hasMany(\App\Models\Absensi::class, 'user_id');
+    }
 
     public function izins()
-{
-    return $this->hasMany(Izin::class);
-}
+    {
+        return $this->hasMany(Izin::class);
+    }
 }

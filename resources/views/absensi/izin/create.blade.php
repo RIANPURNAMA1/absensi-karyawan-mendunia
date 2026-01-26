@@ -24,7 +24,7 @@
 
 <body class="bg-gray-50">
 
-    
+
     <div class="bg-white px-4 pt-3 pb-2">
         <div class="flex items-center justify-between text-xs text-gray-600">
             <span id="statusTime">9:41</span>
@@ -53,27 +53,52 @@
             <div class="space-y-5">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Jenis Izin</label>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-3 gap-3">
+
+                        <!-- SAKIT -->
                         <label class="relative cursor-pointer">
-                            <input type="radio" name="jenis_izin" value="sakit" class="peer sr-only" checked>
+                            <input type="radio" name="jenis_izin" value="SAKIT" class="peer sr-only" checked>
                             <div
-                                class="p-3 text-center bg-white border border-gray-200 rounded-2xl peer-checked:border-blue-600 peer-checked:bg-blue-50 transition-all">
+                                class="p-3 text-center bg-white border border-gray-200 rounded-2xl 
+                    peer-checked:border-blue-600 peer-checked:bg-blue-50 transition-all">
                                 <i data-lucide="thermometer"
                                     class="w-5 h-5 mx-auto mb-1 text-gray-400 peer-checked:text-blue-600"></i>
-                                <span
-                                    class="text-xs font-semibold text-gray-600 peer-checked:text-blue-600">Sakit</span>
+                                <span class="text-xs font-semibold text-gray-600 peer-checked:text-blue-600">
+                                    Sakit
+                                </span>
                             </div>
                         </label>
+
+                        <!-- CUTI -->
                         <label class="relative cursor-pointer">
-                            <input type="radio" name="jenis_izin" value="cuti" class="peer sr-only">
+                            <input type="radio" name="jenis_izin" value="CUTI" class="peer sr-only">
                             <div
-                                class="p-3 text-center bg-white border border-gray-200 rounded-2xl peer-checked:border-blue-600 peer-checked:bg-blue-50 transition-all">
+                                class="p-3 text-center bg-white border border-gray-200 rounded-2xl 
+                    peer-checked:border-blue-600 peer-checked:bg-blue-50 transition-all">
                                 <i data-lucide="palmtree"
                                     class="w-5 h-5 mx-auto mb-1 text-gray-400 peer-checked:text-blue-600"></i>
-                                <span class="text-xs font-semibold text-gray-600 peer-checked:text-blue-600">Cuti</span>
+                                <span class="text-xs font-semibold text-gray-600 peer-checked:text-blue-600">
+                                    Cuti
+                                </span>
                             </div>
                         </label>
+
+                        <!-- IZIN -->
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="jenis_izin" value="IZIN" class="peer sr-only">
+                            <div
+                                class="p-3 text-center bg-white border border-gray-200 rounded-2xl 
+                    peer-checked:border-blue-600 peer-checked:bg-blue-50 transition-all">
+                                <i data-lucide="file-text"
+                                    class="w-5 h-5 mx-auto mb-1 text-gray-400 peer-checked:text-blue-600"></i>
+                                <span class="text-xs font-semibold text-gray-600 peer-checked:text-blue-600">
+                                    Izin
+                                </span>
+                            </div>
+                        </label>
+
                     </div>
+
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -121,67 +146,70 @@
     <script>
         lucide.createIcons();
 
-       $(document).ready(function() {
-    $('#formIzin').on('submit', function(e) {
-        e.preventDefault();
+        $(document).ready(function() {
+            $('#formIzin').on('submit', function(e) {
+                e.preventDefault();
 
-        // Animasi Loading
-        let btn = $('#btnSubmit');
-        let originalText = btn.text();
-        btn.prop('disabled', true).addClass('btn-loading').html('<span class="animate-spin text-lg inline-block mr-2">⏳</span> Mengirim...');
+                // Animasi Loading
+                let btn = $('#btnSubmit');
+                let originalText = btn.text();
+                btn.prop('disabled', true).addClass('btn-loading').html(
+                    '<span class="animate-spin text-lg inline-block mr-2">⏳</span> Mengirim...');
 
-        // FormData digunakan karena ada upload file
-        let formData = new FormData(this);
+                // FormData digunakan karena ada upload file
+                let formData = new FormData(this);
 
-        $.ajax({
-            url: "{{ route('izin.store') }}",
-            type: "POST",
-            data: formData,
-            contentType: false,
-            processData: false,
-            success: function(response) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: response.message || 'Pengajuan izin Anda telah dikirim.',
-                    showConfirmButton: false,
-                    timer: 2000
-                }).then(() => {
-                    window.location.href = "{{ route('izin.index') }}"; 
+                $.ajax({
+                    url: "{{ route('izin.store') }}",
+                    type: "POST",
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: response.message ||
+                                'Pengajuan izin Anda telah dikirim.',
+                            showConfirmButton: false,
+                            timer: 2000
+                        }).then(() => {
+                            window.location.href = "{{ route('izin.index') }}";
+                        });
+                    },
+                    error: function(xhr) {
+                        btn.prop('disabled', false).removeClass('btn-loading').text(
+                            originalText);
+
+                        let errorMsg = "Terjadi kesalahan pada sistem.";
+
+                        // 1. Cek jika ada pesan error kustom (Pesan "Sudah Absen" atau "Sudah Input Hari Ini")
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        // 2. Cek jika ada error validasi Laravel (Input kosong, file terlalu besar, dll)
+                        else if (xhr.status === 422 && xhr.responseJSON.errors) {
+                            let errors = xhr.responseJSON.errors;
+                            errorMsg = Object.values(errors)[0][0];
+                        }
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: errorMsg,
+                            confirmButtonColor: '#3b82f6'
+                        });
+                    }
                 });
-            },
-            error: function(xhr) {
-                btn.prop('disabled', false).removeClass('btn-loading').text(originalText);
+            });
 
-                let errorMsg = "Terjadi kesalahan pada sistem.";
-                
-                // 1. Cek jika ada pesan error kustom (Pesan "Sudah Absen" atau "Sudah Input Hari Ini")
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg = xhr.responseJSON.message;
-                } 
-                // 2. Cek jika ada error validasi Laravel (Input kosong, file terlalu besar, dll)
-                else if (xhr.status === 422 && xhr.responseJSON.errors) {
-                    let errors = xhr.responseJSON.errors;
-                    errorMsg = Object.values(errors)[0][0];
+            // Update tampilan nama file saat dipilih
+            $('#file_input').on('change', function() {
+                if (this.files.length > 0) {
+                    $('#file_name').text(this.files[0].name).addClass('text-blue-600 font-medium');
                 }
-
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: errorMsg,
-                    confirmButtonColor: '#3b82f6'
-                });
-            }
+            });
         });
-    });
-
-    // Update tampilan nama file saat dipilih
-    $('#file_input').on('change', function() {
-        if (this.files.length > 0) {
-            $('#file_name').text(this.files[0].name).addClass('text-blue-600 font-medium');
-        }
-    });
-});
     </script>
 </body>
 

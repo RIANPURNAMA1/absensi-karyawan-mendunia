@@ -86,15 +86,20 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge" style="background: linear-gradient(135deg, #71b280 0%, #134e5e 100%); padding: 6px 12px;">
-                                        <i class="ph ph-clock-clockwise"></i> {{ $shift->jam_masuk }}
+                                    <span class="badge"
+                                        style="background: linear-gradient(135deg, #71b280 0%, #134e5e 100%); padding: 6px 12px;">
+                                        <i class="ph ph-clock-clockwise"></i>
+                                        {{ \Carbon\Carbon::parse($shift->jam_masuk)->format('H:i') }}
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="badge" style="background: linear-gradient(135deg, #94716b 0%, #7a5d58 100%); padding: 6px 12px;">
-                                        <i class="ph ph-clock-counter-clockwise"></i> {{ $shift->jam_pulang }}
+                                    <span class="badge"
+                                        style="background: linear-gradient(135deg, #94716b 0%, #7a5d58 100%); padding: 6px 12px;">
+                                        <i class="ph ph-clock-counter-clockwise"></i>
+                                        {{ \Carbon\Carbon::parse($shift->jam_pulang)->format('H:i') }}
                                     </span>
                                 </td>
+
                                 <td>
                                     <strong>{{ $shift->total_jam ?? '8' }} Jam</strong>
                                 </td>
@@ -117,8 +122,7 @@
 
                                 <td class="text-center">
                                     <div class="btn-group" role="group">
-                                        <button class="btn btn-sm btn-info"
-                                            onclick="detailShift({{ $shift->id }})">
+                                        <button class="btn btn-sm btn-info" onclick="detailShift({{ $shift->id }})">
                                             <i class="ph ph-eye"></i>
                                         </button>
                                         <button class="btn btn-sm btn-warning"
@@ -151,7 +155,7 @@
 
     {{-- modal tambah & edit data --}}
     @include('shift.modal')
-    
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
