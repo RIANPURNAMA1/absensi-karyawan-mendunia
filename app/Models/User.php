@@ -28,7 +28,7 @@ class User extends Authenticatable
         'foto_profil',
         'tanggal_masuk',
         'status_kerja',
-        'foto_wajah'
+        'face_embedding'
     ];
 
     protected $hidden = [

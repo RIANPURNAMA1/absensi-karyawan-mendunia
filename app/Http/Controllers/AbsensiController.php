@@ -439,19 +439,54 @@ class AbsensiController extends Controller
         ]);
     }
 
-
-
     public function updateFace(Request $request)
     {
-        $request->validate([
-            'face_embedding' => 'required'
+        // 1. Ambil descriptor wajah baru dari request
+        $newDescriptor = json_decode($request->face_embedding);
+
+        if (!$newDescriptor) {
+            return response()->json(['status' => 'error', 'message' => 'Data wajah tidak valid'], 400);
+        }
+
+        // 2. Ambil semua user yang SUDAH punya data wajah (kecuali user yang sedang login)
+        $otherUsers = User::whereNotNull('face_embedding')
+            ->where('id', '!=', auth()->id())
+            ->get();
+
+        // 3. Bandingkan wajah baru dengan semua wajah di database
+        foreach ($otherUsers as $user) {
+            $existingDescriptor = json_decode($user->face_embedding);
+
+            // Hitung jarak Euclidean
+            $distance = $this->euclideanDistance($newDescriptor, $existingDescriptor);
+
+            // Threshold 0.45 (Semakin kecil semakin mirip/identik)
+            // Jika di bawah 0.45, sistem menganggap ini orang yang sama
+            if ($distance < 0.45) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Gagal! Wajah ini sudah terdaftar di sistem atas nama: ' . $user->name
+                ], 422); // Kirim status 422 (Unprocessable Entity)
+            }
+        }
+
+        // 4. Jika tidak ada kemiripan ditemukan, baru simpan ke akun user saat ini
+        auth()->user()->update([
+            'face_embedding' => $request->face_embedding
         ]);
 
-        $user = auth()->user();
-        // Simpan string JSON dari JS ke database
-        $user->face_embedding = $request->face_embedding;
-        $user->save();
-
         return response()->json(['status' => 'success', 'message' => 'Wajah berhasil didaftarkan']);
+    }
+
+    /**
+     * Fungsi menghitung jarak antara dua vektor wajah
+     */
+    private function euclideanDistance($arr1, $arr2)
+    {
+        $sum = 0;
+        for ($i = 0; $i < count($arr1); $i++) {
+            $sum += pow($arr1[$i] - $arr2[$i], 2);
+        }
+        return sqrt($sum);
     }
 }
