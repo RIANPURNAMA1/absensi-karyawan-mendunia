@@ -304,59 +304,92 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         let streamReg = null;
+        let isEngineReady = false;
+        // URL Model - Menggunakan JSDelivr agar lebih stabil daripada raw GitHub
+        const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
 
+        // 1. Jalankan Engine segera setelah halaman dimuat (Eager Loading)
         $(document).ready(async function() {
-            // 1. Cek apakah user sudah registrasi wajah (menggunakan data dari Laravel)
+            // Cek status registrasi dari Laravel
             const hasFace = @json(auth()->user()->face_embedding != null);
 
-            if (!hasFace) {
-                showModalRegistrasi();
-            }
+            // Mulai muat engine di background agar saat modal muncul, engine sudah siap
+            initFaceEngine().then(() => {
+                if (!hasFace) {
+                    showModalRegistrasi();
+                }
+            });
         });
+
+        async function initFaceEngine() {
+            try {
+                console.log("Memuat AI Engine...");
+                // Menggunakan TinyFaceDetector (Jauh lebih ringan & cepat dibanding SSDMobilenet)
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                ]);
+
+                isEngineReady = true;
+                console.log("AI Engine Siap!");
+
+                // Sembunyikan loader jika modal sudah terbuka
+                const loader = document.getElementById('loaderFace');
+                if (loader) loader.classList.add('hidden');
+
+            } catch (err) {
+                console.error("Gagal memuat engine:", err);
+                Swal.fire('Error', 'Gagal memuat engine AI. Pastikan koneksi internet lancar.', 'error');
+            }
+        }
 
         async function showModalRegistrasi() {
             const modal = document.getElementById('modalRegistrasiWajah');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
-            try {
-                // 2. Load Model Face-API
-                await Promise.all([
-                    faceapi.nets.ssdMobilenetv1.loadFromUri(
-                        'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(
-                        'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(
-                        'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights')
-                ]);
-
-                document.getElementById('loaderFace').classList.add('hidden');
+            // Jika engine sudah siap, langsung buka kamera
+            if (isEngineReady) {
+                const loader = document.getElementById('loaderFace');
+                if (loader) loader.classList.add('hidden');
                 startCameraReg();
-            } catch (err) {
-                console.error(err);
-                Swal.fire('Error', 'Gagal memuat engine AI. Pastikan internet stabil.', 'error');
             }
         }
 
         async function startCameraReg() {
             try {
                 streamReg = await navigator.mediaDevices.getUserMedia({
-                    video: true
+                    video: {
+                        width: {
+                            ideal: 640
+                        },
+                        height: {
+                            ideal: 480
+                        },
+                        facingMode: 'user'
+                    }
                 });
                 const video = document.getElementById('videoReg');
                 video.srcObject = streamReg;
 
-                // Enable button setelah kamera aktif
+                // Aktifkan tombol capture
                 const btn = document.getElementById('btnCaptureWajah');
                 btn.disabled = false;
                 btn.classList.remove('bg-gray-400');
                 btn.classList.add('bg-blue-600');
             } catch (err) {
+                console.error(err);
                 Swal.fire('Akses Ditolak', 'Kamera wajib diizinkan untuk registrasi wajah.', 'warning');
             }
         }
 
         async function prosesRegistrasiWajah() {
+            if (!isEngineReady) {
+                Swal.fire('Mohon Tunggu', 'Engine AI sedang disiapkan...', 'info');
+                return;
+            }
+
             const video = document.getElementById('videoReg');
 
             Swal.fire({
@@ -366,35 +399,36 @@
                 didOpen: () => Swal.showLoading()
             });
 
-            // 3. Deteksi Wajah & Ambil Descriptor (128 Angka)
-            const detection = await faceapi.detectSingleFace(video)
-                .withFaceLandmarks()
-                .withFaceDescriptor();
+            // Deteksi menggunakan opsi TinyFace (Sangat Cepat)
+            const detection = await faceapi.detectSingleFace(
+                video,
+                new faceapi.TinyFaceDetectorOptions()
+            ).withFaceLandmarks().withFaceDescriptor();
 
             if (!detection) {
-                Swal.fire('Gagal', 'Wajah tidak terdeteksi dengan jelas. Coba posisi lain.', 'error');
+                Swal.fire('Gagal', 'Wajah tidak terdeteksi. Pastikan wajah terlihat jelas dan terang.', 'error');
                 return;
             }
 
-            // Ambil descriptor (array angka)
             const faceDescriptor = Array.from(detection.descriptor);
 
-            // 4. Kirim ke Server Laravel
+            // Kirim ke Server
             $.ajax({
-                url: "{{ route('user.update-face') }}", // Buat route ini di web.php
+                url: "{{ route('user.update-face') }}",
                 method: 'POST',
                 data: {
                     _token: "{{ csrf_token() }}",
                     face_embedding: JSON.stringify(faceDescriptor)
                 },
                 success(res) {
-                    Swal.fire('Berhasil!', 'Wajah Anda telah terdaftar. Sekarang Anda bisa absen.', 'success')
+                    Swal.fire('Berhasil!', 'Wajah Anda telah terdaftar.', 'success')
                         .then(() => {
                             if (streamReg) streamReg.getTracks().forEach(track => track.stop());
                             location.reload();
                         });
                 },
                 error(xhr) {
+                    console.error(xhr);
                     Swal.fire('Error', 'Gagal menyimpan data ke server.', 'error');
                 }
             });
