@@ -48,14 +48,15 @@
                         </thead>
                         <tbody>
 
-                            @forelse ($absensis as $a)
+                            @foreach ($absensis as $a)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
 
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <img src="{{ $a->user->foto_profil ? asset('storage/foto-karyawan/' . $a->user->foto_profil) : asset('assets/images/avatar/avatar-1.jpg') }}"
-                                                class="rounded-circle" width="40" style="height: 40px; object-fit:cover">
+                                            <img src="{{ $a->user->foto_profil ? asset('foto-karyawan/' . $a->user->foto_profil) : asset('assets/images/avatar/avatar-1.jpg') }}"
+                                                class="rounded-circle" width="40" style="height: 40px; object-fit:cover"
+                                                alt="Foto {{ $a->user->name }}">
                                             <div>
                                                 <span class="fw-bold">{{ $a->user->name }}</span><br>
                                                 <small class="text-muted">{{ $a->user->nip }}</small>
@@ -105,14 +106,7 @@
                                     </td>
 
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="text-center text-muted py-4">
-                                        <i class="ph ph-calendar-x d-block fs-2 mb-2"></i>
-                                        Tidak ada data kehadiran
-                                    </td>
-                                </tr>
-                            @endforelse
+                            @endforeach
 
                         </tbody>
                     </table>

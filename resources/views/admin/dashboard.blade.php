@@ -135,67 +135,71 @@
             </div>
         </div>
 
-<!-- Peta Lokasi Absensi -->
-<div class="col-md-6 col-xl-7">
-    <div class="card">
-        <div class="card-header">
-            <h5>Peta Lokasi Absensi</h5>
+        <!-- Peta Lokasi Absensi -->
+        <div class="col-md-6 col-xl-7">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Peta Lokasi Absensi</h5>
+                </div>
+                <div class="card-body">
+                    <div id="world-map-markers" class="set-map" style="height: 365px; border-radius: 8px;"></div>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <div id="world-map-markers" class="set-map" style="height: 365px; border-radius: 8px;"></div>
-        </div>
-    </div>
-</div>
 
-<!-- Leaflet CSS & JS (jika belum ada) -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+        <!-- Leaflet CSS & JS (jika belum ada) -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-<script>
-    // Inisialisasi peta
-    var mapAbsensi = L.map('world-map-markers').setView([-6.2, 106.8], 12);
+        <script>
+            // Inisialisasi peta
+            var mapAbsensi = L.map('world-map-markers').setView([-6.2, 106.8], 12);
 
-    // Layer peta
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(mapAbsensi);
+            // Layer peta
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(mapAbsensi);
 
-    // Icon untuk absensi
-    var masukIcon = new L.Icon({
-        iconUrl: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
-        iconSize: [32, 32]
-    });
+            // Icon untuk absensi
+            var masukIcon = new L.Icon({
+                iconUrl: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
+                iconSize: [32, 32]
+            });
 
-    var pulangIcon = new L.Icon({
-        iconUrl: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-        iconSize: [32, 32]
-    });
+            var pulangIcon = new L.Icon({
+                iconUrl: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                iconSize: [32, 32]
+            });
 
-    // Marker absensi
-    @foreach ($absensis as $a)
-        @if($a->lat_masuk && $a->long_masuk)
-            L.marker([{{ $a->lat_masuk }}, {{ $a->long_masuk }}], {icon: masukIcon})
-                .addTo(mapAbsensi)
-                .bindPopup(`
+            // Marker absensi
+            @foreach ($absensis as $a)
+                @if ($a->lat_masuk && $a->long_masuk)
+                    L.marker([{{ $a->lat_masuk }}, {{ $a->long_masuk }}], {
+                            icon: masukIcon
+                        })
+                        .addTo(mapAbsensi)
+                        .bindPopup(`
                     <b>{{ $a->user->name }}</b><br>
                     Absen Masuk<br>
                     Jam: {{ $a->jam_masuk ?? '-' }}<br>
                     Cabang: {{ $a->cabang->nama_cabang ?? '-' }}
                 `);
-        @endif
+                @endif
 
-        @if($a->lat_pulang && $a->long_pulang)
-            L.marker([{{ $a->lat_pulang }}, {{ $a->long_pulang }}], {icon: pulangIcon})
-                .addTo(mapAbsensi)
-                .bindPopup(`
+                @if ($a->lat_pulang && $a->long_pulang)
+                    L.marker([{{ $a->lat_pulang }}, {{ $a->long_pulang }}], {
+                            icon: pulangIcon
+                        })
+                        .addTo(mapAbsensi)
+                        .bindPopup(`
                     <b>{{ $a->user->name }}</b><br>
                     Absen Pulang<br>
                     Jam: {{ $a->jam_keluar ?? '-' }}<br>
                     Cabang: {{ $a->cabang->nama_cabang ?? '-' }}
                 `);
-        @endif
-    @endforeach
-</script>
+                @endif
+            @endforeach
+        </script>
 
         <div class="col-md-6 col-xl-5">
             <div class="card">
@@ -252,8 +256,11 @@
                                 @forelse($absensis as $a)
                                     <tr>
                                         <td>
-                                            <img src="{{ $a->user->foto_profil && file_exists(public_path('storage/foto-karyawan/' . $a->user->foto_profil)) ? asset('storage/foto-karyawan/' . $a->user->foto_profil) : asset('assets/images/avatar/avatar-1.jpg') }}"
-                                                class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+                                            <img src="{{ $a->user->foto_profil && file_exists(public_path('foto-karyawan/' . $a->user->foto_profil))
+                                                ? asset('foto-karyawan/' . $a->user->foto_profil)
+                                                : asset('assets/images/avatar/avatar-1.jpg') }}"
+                                                class="rounded-circle" width="40" height="40"
+                                                style="object-fit: cover;" alt="Profil">
                                         </td>
                                         <td>{{ $a->user->nip }}</td>
                                         <td>{{ $a->user->name }}</td>

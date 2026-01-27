@@ -74,10 +74,11 @@
                         @foreach ($karyawan as $k)
                             <tr>
                                 <td>
-                                    <img src="{{ $k->foto_profil && file_exists(public_path('storage/foto-karyawan/' . $k->foto_profil))
-                                        ? asset('storage/foto-karyawan/' . $k->foto_profil)
+                                    <img src="{{ $k->foto_profil && file_exists(public_path('foto-karyawan/' . $k->foto_profil))
+                                        ? asset('foto-karyawan/' . $k->foto_profil)
                                         : asset('assets/images/avatar/avatar-1.jpg') }}"
-                                        class="rounded-circle" width="40" height="40" style="object-fit: cover">
+                                        class="rounded-circle" width="40" height="40" style="object-fit: cover"
+                                        alt="Foto {{ $k->name }}">
                                 </td>
 
                                 <td>{{ $k->nip }}</td>
@@ -169,7 +170,8 @@
 
     <script>
         // Pastikan urutan parameter sesuai dengan tombol di Blade
-        function editKaryawan(id, nip, name, jabatan, divisi_id,cabang_id, no_hp, email, tanggal_masuk, status_kerja, alamat,
+        function editKaryawan(id, nip, name, jabatan, divisi_id, cabang_id, no_hp, email, tanggal_masuk, status_kerja,
+            alamat,
             shift_id) {
 
             // Reset form dan masukkan data ke input modal

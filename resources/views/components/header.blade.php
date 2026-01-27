@@ -1,4 +1,3 @@
-
 <style>
     /* Header Hover Effects */
     .pc-head-link:hover {
@@ -93,53 +92,70 @@
         <!-- [Mobile Media Block end] -->
         <div class="ms-auto">
             <ul class="list-unstyled">
-                <!-- Notification Icon -->
                 <li class="dropdown pc-h-item">
                     <a class="pc-head-link dropdown-toggle arrow-none me-0 text-white" data-bs-toggle="dropdown"
                         href="#" role="button" aria-haspopup="false" aria-expanded="false"
                         style="position: relative; transition: all 0.3s;">
                         <i class="ph ph-bell" style="font-size: 22px;"></i>
-                        <span class="badge bg-danger rounded-pill"
-                            style="position: absolute; top: 8px; right: 8px; font-size: 10px; padding: 2px 5px;">3</span>
+                        @if ($countIzin > 0)
+                            <span class="badge bg-danger rounded-pill"
+                                style="position: absolute; top: 8px; right: 8px; font-size: 10px; padding: 2px 5px;">
+                                {{ $countIzin }}
+                            </span>
+                        @endif
                     </a>
                     <div class="dropdown-menu dropdown-menu-end pc-h-dropdown"
-                        style="background: #fff; border: 1px solid rgba(30, 60, 114, 0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 300px;">
+                        style="background: #fff; border: 1px solid rgba(30, 60, 114, 0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 320px;">
                         <div class="dropdown-header"
                             style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-bottom: 1px solid #dee2e6;">
-                            <h6 class="mb-0" style="color: #2a5298;">Notifikasi</h6>
+                            <h6 class="mb-0" style="color: #2a5298;">Notifikasi Pengajuan</h6>
                         </div>
-                        <div class="dropdown-body" style="max-height: 300px; overflow-y: auto;">
-                            <a href="#" class="dropdown-item"
-                                style="border-bottom: 1px solid #f1f3f5; padding: 12px 20px; transition: all 0.3s;">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <i class="ph ph-info text-primary" style="font-size: 24px;"></i>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <p class="mb-0" style="font-size: 13px; color: #495057;">Ada izin baru
-                                            menunggu approval</p>
-                                        <small class="text-muted">5 menit yang lalu</small>
-                                    </div>
+                        <div class="dropdown-body" style="max-height: 350px; overflow-y: auto;">
+                            @if ($notifIzin->count() > 0)
+                                @foreach ($notifIzin as $item)
+                                    {{-- Redirect ke /absensi/izin --}}
+                                    <a href="{{ url('/izin-cuti') }}" class="dropdown-item"
+                                        style="border-bottom: 1px solid #f1f3f5; padding: 12px 20px; transition: all 0.3s;">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                @php
+                                                    $iconColor =
+                                                        $item->jenis_izin == 'SAKIT'
+                                                            ? 'text-danger'
+                                                            : ($item->jenis_izin == 'CUTI'
+                                                                ? 'text-warning'
+                                                                : 'text-primary');
+                                                @endphp
+                                                <i class="ph ph-envelope-simple {{ $iconColor }}"
+                                                    style="font-size: 24px;"></i>
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <p class="mb-0"
+                                                    style="font-size: 13px; color: #495057; line-height: 1.4;">
+                                                    <strong>{{ $item->user->name }}</strong> mengajukan
+                                                    <strong>{{ $item->jenis_izin }}</strong>
+                                                </p>
+                                                <small class="text-muted" style="font-size: 11px;">
+                                                    <i
+                                                        class="ph ph-clock me-1"></i>{{ $item->created_at->diffForHumans() }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </a>
+                                @endforeach
+                            @else
+                                <div class="p-4 text-center">
+                                    <i class="ph ph-bell-slash text-muted" style="font-size: 30px;"></i>
+                                    <p class="text-muted mt-2 mb-0" style="font-size: 13px;">Tidak ada pengajuan baru
+                                    </p>
                                 </div>
-                            </a>
-                            <a href="#" class="dropdown-item"
-                                style="border-bottom: 1px solid #f1f3f5; padding: 12px 20px; transition: all 0.3s;">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <i class="ph ph-check-circle text-success" style="font-size: 24px;"></i>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <p class="mb-0" style="font-size: 13px; color: #495057;">Task "Design UI"
-                                            telah selesai</p>
-                                        <small class="text-muted">1 jam yang lalu</small>
-                                    </div>
-                                </div>
-                            </a>
+                            @endif
                         </div>
                         <div class="dropdown-footer text-center" style="border-top: 1px solid #dee2e6; padding: 10px;">
-                            <a href="#"
-                                style="color: #2a5298; text-decoration: none; font-size: 13px; font-weight: 500;">Lihat
-                                Semua Notifikasi</a>
+                            <a href="{{ url('/izin-cuti') }}"
+                                style="color: #2a5298; text-decoration: none; font-size: 13px; font-weight: 500;">
+                                Lihat Semua Pengajuan
+                            </a>
                         </div>
                     </div>
                 </li>
@@ -149,103 +165,80 @@
                     <a class="pc-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown" href="#"
                         role="button" aria-haspopup="false" data-bs-auto-close="outside" aria-expanded="false"
                         style="transition: all 0.3s;">
-                        <img src="../assets/images/user/avatar-2.jpg" alt="user-image" class="user-avtar"
-                            style="border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 2px 8px rgba(0,0,0,0.2);" />
+                        <img src="{{ Auth::user()->foto_profil ? asset('uploads/profil/' . Auth::user()->foto_profil) : asset('assets/images/user/avatar-2.jpg') }}"
+                            alt="user-image" class="user-avtar"
+                            style="border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 2px 8px rgba(0,0,0,0.2); width: 40px; height: 40px; object-fit: cover;" />
                     </a>
                     <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown"
                         style="background: #fff; border: 1px solid rgba(30, 60, 114, 0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
                         <div class="dropdown-header"
                             style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 20px; border-radius: 8px 8px 0 0;">
                             <div class="d-flex align-items-center">
-                                <img src="../assets/images/user/avatar-2.jpg" alt="user-image" class="rounded-circle"
-                                    style="width: 50px; height: 50px; border: 2px solid #fff;" />
+                                <img src="{{ Auth::user()->foto_profil ? asset('uploads/profil/' . Auth::user()->foto_profil) : asset('assets/images/user/avatar-2.jpg') }}"
+                                    alt="user-image" class="rounded-circle"
+                                    style="width: 50px; height: 50px; border: 2px solid #fff; object-fit: cover;" />
                                 <div class="ms-3">
-                                    <h6 class="mb-0 text-white">Admin User</h6>
-                                    <small class="text-white-50">admin@company.com</small>
+                                    <h6 class="mb-0 text-white">{{ Auth::user()->name }}</h6>
+                                    <small class="text-white-50">{{ Auth::user()->role }} |
+                                        {{ Auth::user()->email }}</small>
                                 </div>
                             </div>
                         </div>
-                        <div class="dropdown-body">
-                            <div class="profile-notification-scroll position-relative"
-                                style="max-height: calc(100vh - 225px)">
-                                <ul class="list-group list-group-flush w-100">
-                                    <li class="list-group-item" style="border: none; padding: 0;">
-                                        <a href="#" class="dropdown-item"
-                                            style="padding: 12px 20px; transition: all 0.3s; border-radius: 6px;">
-                                            <span class="d-flex align-items-center">
-                                                <i class="ph ph-user-circle"
-                                                    style="font-size: 20px; color: #2a5298;"></i>
-                                                <span class="ms-2" style="color: #495057;">Profil Saya</span>
-                                            </span>
-                                        </a>
-                                        <a href="#" class="dropdown-item"
-                                            style="padding: 12px 20px; transition: all 0.3s; border-radius: 6px;">
-                                            <span class="d-flex align-items-center">
-                                                <i class="ph ph-bell" style="font-size: 20px; color: #2a5298;"></i>
-                                                <span class="ms-2" style="color: #495057;">Notifikasi</span>
-                                            </span>
-                                        </a>
-                                        <a href="#" class="dropdown-item"
-                                            style="padding: 12px 20px; transition: all 0.3s; border-radius: 6px;">
-                                            <span class="d-flex align-items-center">
-                                                <i class="ph ph-gear-six"
-                                                    style="font-size: 20px; color: #2a5298;"></i>
-                                                <span class="ms-2" style="color: #495057;">Pengaturan</span>
-                                            </span>
-                                        </a>
-                                    </li>
-                                    <li class="list-group-item"
-                                        style="border-top: 1px solid #f1f3f5; padding: 8px 0; margin-top: 8px;">
-                                        <a href="#" class="dropdown-item" id="logoutBtn"
-                                            style="padding: 12px 20px; transition: all 0.3s; border-radius: 6px;">
-                                            <span class="d-flex align-items-center">
-                                                <i class="ph ph-power" style="font-size: 20px; color: #dc3545;"></i>
-                                                <span class="ms-2"
-                                                    style="color: #dc3545; font-weight: 500;">Logout</span>
-                                            </span>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
+
                     </div>
                 </li>
             </ul>
         </div>
     </div>
 </header>
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
     $(document).ready(function() {
-        $('#logoutBtn').on('click', function(e) {
+        $('#btnLogout').on('click', function(e) {
             e.preventDefault();
 
             Swal.fire({
-                title: 'Konfirmasi Logout',
-                text: "Apakah Anda yakin ingin keluar?",
+                title: 'Apakah Anda yakin?',
+                text: "Anda akan keluar dari sistem.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, keluar',
+                confirmButtonText: 'Ya, logout!',
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Jika menggunakan POST logout di Laravel
-                    $.post("{{ route('logout') }}", {
-                        _token: "{{ csrf_token() }}"
-                    }).done(function() {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil',
-                            text: 'Anda berhasil logout',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => {
-                            window.location.href = "{{ route('login') }}";
-                        });
+                    $.ajax({
+                        url: "{{ route('logout') }}",
+                        type: "POST",
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(res) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: res.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+
+                            // Redirect setelah timer selesai
+                            setTimeout(() => {
+                                window.location.href = res.redirect;
+                            }, 1500);
+                        },
+                        error: function(xhr) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: 'Terjadi kesalahan pada sistem.'
+                            });
+                        }
                     });
                 }
             });

@@ -57,7 +57,7 @@
                 <!-- FOTO PROFIL (DINAMIS DARI BACKEND) -->
                 <div class="w-10 h-10 rounded-full overflow-hidden border border-blue-500">
                     <img src="{{ auth()->user() && auth()->user()->foto_profil
-                        ? asset('storage/foto-karyawan/' . auth()->user()->foto_profil)
+                        ? asset('foto-karyawan/' . auth()->user()->foto_profil)
                         : asset('images/default-user.png') }}"
                         alt="Foto Karyawan" class="w-full h-full object-cover">
                 </div>
@@ -129,7 +129,8 @@
                             <p class="text-blue-100 text-sm">Status: {{ Auth::user()->shift->status }}</p>
                         </div>
                     </div>
-                    <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
+                    <button onclick="openAbsen()"
+                        class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
                         <i data-lucide="camera" class="w-5 h-5 text-blue-600"></i>
                     </button>
                 </div>
@@ -161,8 +162,8 @@
             <button class="text-blue-600 text-sm font-semibold">See All</button>
         </div>
 
-        <div class="grid grid-cols-5 gap-2">
-            <button onclick="location.href='/izin'"
+        <div class="grid grid-cols-4 gap-2">
+            <button onclick="location.href='/absensi/izin'"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
                 <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="file-text" class="w-5 h-5 text-indigo-600"></i>
@@ -186,7 +187,7 @@
                 <span class="text-[11px] font-medium text-gray-700">Lembur</span>
             </button>
 
-            <button onclick="location.href='/schedule'"
+            <button onclick="toggleModalJadwal(true)"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
                 <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="calendar-range" class="w-5 h-5 text-purple-600"></i>
@@ -194,13 +195,86 @@
                 <span class="text-[11px] font-medium text-gray-700">Jadwal</span>
             </button>
 
-            <button onclick="openAbsenManual()"
+            {{-- <button onclick="openAbsen()"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition border border-dashed border-blue-400">
                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i>
                 </div>
                 <span class="text-[11px] font-semibold text-blue-600">Manual Testing </span>
-            </button>
+            </button> --}}
+        </div>
+    </div>
+
+    {{-- Modal Jadwal Dinamis --}}
+    <div id="modalJadwal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="toggleModalJadwal(false)"></div>
+
+        <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[40px] p-6 shadow-2xl transition-transform duration-300 translate-y-full"
+            id="modalContent">
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-1.5 bg-gray-200 rounded-full mb-6"></div>
+
+                <div class="flex justify-between items-center w-full mb-6 text-center">
+                    <div class="text-left">
+                        <h2 class="text-lg font-black text-gray-900">Jadwal Shift Kerja</h2>
+                        <p class="text-[10px] text-gray-400">Daftar waktu operasional kantor</p>
+                    </div>
+                    <button onclick="toggleModalJadwal(false)" class="p-2 bg-gray-100 rounded-full text-gray-500">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <div class="w-full space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                    @forelse($shifts as $shift)
+                        @php
+                            // Cek apakah ini shift yang sedang berjalan (currentShift dari controller)
+                            $isCurrent = isset($currentShift) && $currentShift->id == $shift->id;
+                        @endphp
+
+                        <div
+                            class="flex items-center gap-4 p-4 {{ $isCurrent ? 'bg-indigo-50 border-indigo-100' : 'bg-gray-50 border-gray-100' }} rounded-2xl border transition-all">
+                            <div
+                                class="w-12 h-12 {{ $isCurrent ? 'bg-indigo-600 text-white' : 'bg-white text-gray-400 border border-gray-200' }} rounded-xl flex flex-col items-center justify-center shadow-sm">
+                                <span
+                                    class="text-[9px] font-bold uppercase">{{ substr($shift->nama_shift, 0, 3) }}</span>
+                                <i data-lucide="clock-4" class="w-5 h-5 mt-0.5"></i>
+                            </div>
+
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <p class="text-sm font-bold text-gray-800">{{ $shift->nama_shift }}</p>
+                                    @if ($isCurrent)
+                                        <span class="animate-pulse flex h-2 w-2 rounded-full bg-green-500"></span>
+                                    @endif
+                                </div>
+                                <p
+                                    class="text-[11px] {{ $isCurrent ? 'text-indigo-600' : 'text-gray-500' }} font-medium">
+                                    {{ \Carbon\Carbon::parse($shift->jam_masuk)->format('H:i') }} -
+                                    {{ \Carbon\Carbon::parse($shift->jam_pulang)->format('H:i') }}
+                                </p>
+                            </div>
+
+                            @if ($isCurrent)
+                                <span
+                                    class="text-[9px] font-black text-indigo-600 bg-white border border-indigo-100 px-2 py-1 rounded-lg uppercase tracking-wider">Aktif</span>
+                            @else
+                                <span
+                                    class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{{ $shift->total_jam }}
+                                    Jam</span>
+                            @endif
+                        </div>
+                    @empty
+                        <div class="text-center py-10">
+                            <p class="text-gray-400 text-xs">Belum ada data shift yang tersedia.</p>
+                        </div>
+                    @endforelse
+                </div>
+
+                <button onclick="toggleModalJadwal(false)"
+                    class="w-full mt-6 bg-gray-900 text-white py-4 rounded-2xl font-bold text-sm active:scale-95 transition">
+                    Tutup
+                </button>
+            </div>
         </div>
     </div>
 
@@ -214,7 +288,7 @@
         <div class="space-y-3">
             <div id="riwayatContainer">
                 @forelse ($riwayat as $a)
-                    <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4">
+                    <div class="bg-white rounded-2xl p-4 mb-2 shadow-sm flex items-center gap-4">
                         <a href="{{ route('absensi.riwayat') }}"
                             class="flex items-center gap-4 p-4 hover:bg-gray-50 transition w-full">
                             <div
@@ -350,241 +424,18 @@
         </div>
     </div>
 
-
-    <!-- 1. jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
-    <!-- 2. SweetAlert -->
+    <!-- Face API dan SweetAlert CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script>
-lucide.createIcons();
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
 
-const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
-let stream = null;
-let isEngineReady = false;
-let detectionInterval = null;
+    <!-- Lucide Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/lucide.min.js"></script>
 
-// Variabel untuk stabilitas wajah
-let stabilityScore = 0;
-const STABILITY_REQUIRED = 15; // ~1,5 detik wajah stabil
-let lastX = 0;
-let lastY = 0;
-let isCapturing = false;
-
-async function openAbsenManual() {
-    const modal = document.getElementById('modalAbsenManual');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-
-    await loadModels();
-    startCamera();
-}
-
-function closeAbsenManual() {
-    const modal = document.getElementById('modalAbsenManual');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-
-    if (stream) stream.getTracks().forEach(track => track.stop());
-    if (detectionInterval) clearInterval(detectionInterval);
-
-    // reset state
-    stabilityScore = 0;
-    isCapturing = false;
-    lastX = 0;
-    lastY = 0;
-    document.getElementById('instructionTextAbsen').textContent =
-        'Posisikan wajah di tengah lingkaran dan diam sebentar...';
-}
-
-async function loadModels() {
-    if (isEngineReady) return;
-    await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-    ]);
-    isEngineReady = true;
-}
-
-async function startCamera() {
-    const video = document.getElementById('videoStream');
-    const canvas = document.getElementById('canvasStream');
-
-    try {
-        stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user' }
-        });
-        video.srcObject = stream;
-        video.onloadedmetadata = () => {
-            video.play();
-            startRealtimeDetection(video, canvas);
-        };
-    } catch (err) {
-        console.error("Tidak bisa akses kamera:", err);
-        Swal.fire('Kamera Error', 'Izinkan akses kamera untuk absensi.', 'error');
-    }
-}
-
-function startRealtimeDetection(video, canvas) {
-    const displaySize = { width: video.clientWidth, height: video.clientHeight };
-    faceapi.matchDimensions(canvas, displaySize);
-
-    detectionInterval = setInterval(async () => {
-        if (!video.videoWidth || !isEngineReady || isCapturing) return;
-
-        const detection = await faceapi.detectSingleFace(video,
-            new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
-        ).withFaceLandmarks().withFaceDescriptor();
-
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        if (detection) {
-            const resized = faceapi.resizeResults(detection, displaySize);
-            const box = resized.detection.box;
-
-            // Logika stabilitas
-            const movement = Math.abs(box.x - lastX) + Math.abs(box.y - lastY);
-            stabilityScore = (movement < 7) ? stabilityScore + 1 : 0;
-
-            lastX = box.x;
-            lastY = box.y;
-
-            // Feedback visual
-            ctx.lineWidth = 4;
-            if (stabilityScore > 5) {
-                ctx.strokeStyle = '#3b82f6';
-                document.getElementById('instructionTextAbsen').textContent =
-                    'Tahan posisi, sedang memproses...';
-            } else {
-                ctx.strokeStyle = '#f87171';
-                document.getElementById('instructionTextAbsen').textContent =
-                    'Posisikan wajah dengan tenang...';
-            }
-            ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-            // Jika stabil cukup lama -> kirim absensi
-            if (stabilityScore >= STABILITY_REQUIRED) {
-                isCapturing = true;
-                clearInterval(detectionInterval);
-                document.getElementById('instructionTextAbsen').textContent =
-                    'Wajah Terdeteksi! Mengirim absensi...';
-
-                // Ambil geolokasi sebelum kirim
-                navigator.geolocation.getCurrentPosition(
-                    pos => {
-                        prosesAbsensiWajah(resized.descriptor, pos.coords.latitude, pos.coords.longitude);
-                    },
-                    err => {
-                        console.warn('Gagal mengambil lokasi, tetap lanjut tanpa koordinat');
-                        prosesAbsensiWajah(resized.descriptor, null, null);
-                    }
-                );
-            }
-        } else {
-            stabilityScore = 0;
-            document.getElementById('instructionTextAbsen').textContent = 'Wajah tidak terlihat...';
-        }
-    }, 100);
-}
-
-function prosesAbsensiWajah(faceEmbedding, latitude, longitude) {
-    $.ajax({
-        url: '/absensi/status', // endpoint baru untuk cek status otomatis
-        method: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            face_embedding: JSON.stringify(Array.from(faceEmbedding)),
-            latitude: latitude,
-            longitude: longitude
-        },
-        success: function(res) {
-            if (res.status === 'BELUM_MASUK') {
-                // Absen masuk otomatis
-                $.ajax({
-                    url: '/absensi/masuk',
-                    method: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        face_embedding: JSON.stringify(Array.from(faceEmbedding)),
-                        latitude: latitude,
-                        longitude: longitude
-                    },
-                    success: function(r) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Absensi Masuk Berhasil',
-                            text: r.message,
-                            timer: 2000,
-                            showConfirmButton: false
-                        }).then(() => closeAbsenManual());
-                    }
-                });
-            } else if (res.status === 'SUDAH_MASUK') {
-                // Absen pulang otomatis
-                $.ajax({
-                    url: '/absensi/pulang',
-                    method: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        face_embedding: JSON.stringify(Array.from(faceEmbedding)),
-                        latitude: latitude,
-                        longitude: longitude
-                    },
-                    success: function(r) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Absensi Pulang Berhasil',
-                            text: r.message,
-                            timer: 2000,
-                            showConfirmButton: false
-                        }).then(() => closeAbsenManual());
-                    }
-                });
-            } else {
-                Swal.fire({
-                    icon: 'info',
-                    title: 'Sudah Absen',
-                    text: 'Anda sudah melakukan absensi hari ini.',
-                    timer: 2000,
-                    showConfirmButton: false
-                }).then(() => closeAbsenManual());
-            }
-        },
-        error: function(xhr) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal Absensi',
-                text: xhr.responseJSON?.message || 'Terjadi kesalahan sistem.'
-            }).then(() => {
-                stabilityScore = 0;
-                isCapturing = false;
-                startCamera();
-            });
-        }
-    });
-}
-</script>
-
-
+    <!-- File JS eksternal absensi -->
+    <script src="{{ asset('js/absensi.js') }}" defer></script>
 
 
     <script>
-        let streamReg = null;
-        let isEngineReady = false;
-        let detectionIntervalReg = null;
-
-        // Variabel untuk logika stabilitas
-        let stabilityScore = 0;
-        const STABILITY_REQUIRED = 15; // Butuh ~1.5 detik posisi diam
-        let lastX = 0;
-        let lastY = 0;
-        let isCapturing = false;
-
-        // CDN URL untuk model
-        const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
-
         $(document).ready(async function() {
             // Ambil status face_embedding dari Laravel
             const hasFace = @json(auth()->user()->face_embedding != null);
@@ -596,181 +447,128 @@ function prosesAbsensiWajah(faceEmbedding, latitude, longitude) {
             });
         });
 
-        async function initFaceEngine() {
-            try {
-                console.log("🚀 Memuat AI Engine...");
-                await Promise.all([
-                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-                ]);
+        // 🔥 DATA CABANG DARI SERVER
+        const CABANG = {
+            nama: "{{ $namaCabang }}",
+            lat: {{ $cabangLat }},
+            long: {{ $cabangLong }},
+            radius: {{ $radiusMeter }}
+        };
 
-                isEngineReady = true;
-                $('#loaderFace').addClass('hidden');
-                $('#mainContentReg').removeClass('hidden').addClass('flex');
 
-                if (window.lucide) lucide.createIcons();
-            } catch (err) {
-                console.error("Gagal memuat model:", err);
-                document.getElementById('loaderFace').innerHTML =
-                    `<p class="text-red-500 text-sm">Gagal memuat AI. Periksa koneksi internet.</p>`;
-            }
-        }
+        window.routes = {
+            updateFace: "{{ route('user.update-face') }}",
+            absensiStatus: "{{ url('/absensi/status') }}",
+            absenMasuk: "{{ url('/absensi/masuk') }}",
+            absenPulang: "{{ url('/absensi/pulang') }}"
+        };
 
-        async function showModalRegistrasi() {
-            $('#modalRegistrasiWajah').removeClass('hidden').addClass('flex');
-            if (isEngineReady) await startCameraReg();
-        }
 
-        async function startCameraReg() {
-            try {
-                streamReg = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: 'user',
-                        width: 640,
-                        height: 480
-                    }
-                });
-                const video = document.getElementById('videoReg');
-                video.srcObject = streamReg;
-                video.onloadedmetadata = () => {
-                    video.play();
-                    startRealtimeDetectionReg();
-                };
-            } catch (err) {
-                Swal.fire('Kamera Error', 'Mohon izinkan akses kamera untuk verifikasi wajah.', 'error');
-            }
-        }
-
-        async function startRealtimeDetectionReg() {
-            const video = document.getElementById('videoReg');
-            const canvas = document.getElementById('canvasReg');
-            if (!video || !canvas) return;
-
-            const displaySize = {
-                width: 640,
-                height: 480
-            };
-            faceapi.matchDimensions(canvas, displaySize);
-
-            detectionIntervalReg = setInterval(async () => {
-                if (!video.videoWidth || !isEngineReady || isCapturing) return;
-
-                const detection = await faceapi.detectSingleFace(video,
-                        new faceapi.TinyFaceDetectorOptions({
-                            inputSize: 224,
-                            scoreThreshold: 0.5
-                        }))
-                    .withFaceLandmarks();
-
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                if (detection) {
-                    const resized = faceapi.resizeResults(detection, displaySize);
-                    const box = resized.detection.box;
-
-                    // Logika Stabilitas: Cek pergeseran wajah
-                    const movement = Math.abs(box.x - lastX) + Math.abs(box.y - lastY);
-
-                    if (movement < 7) {
-                        stabilityScore++;
-                    } else {
-                        stabilityScore = 0;
-                    }
-
-                    lastX = box.x;
-                    lastY = box.y;
-
-                    // Feedback Visual
-                    ctx.lineWidth = 4;
-                    if (stabilityScore > 5) {
-                        ctx.strokeStyle = '#3b82f6'; // Biru (Proses diam)
-                        $('#instructionText').text('Tahan posisi, sedang memproses...').addClass(
-                            'text-blue-600');
-                    } else {
-                        ctx.strokeStyle = '#f87171'; // Merah (Bergerak/Cari wajah)
-                        $('#instructionText').text('Posisikan wajah dengan tenang...').removeClass(
-                            'text-blue-600 text-green-600');
-                    }
-                    ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-                    // Jika sudah stabil cukup lama, lakukan capture
-                    if (stabilityScore >= STABILITY_REQUIRED) {
-                        isCapturing = true;
-                        clearInterval(detectionIntervalReg);
-
-                        $('#instructionText').text('Wajah Terdeteksi! Verifikasi...').addClass(
-                            'text-green-600');
-                        $('#btnCaptureWajah').removeClass('bg-gray-400').addClass('bg-green-600').text(
-                            'Memproses...');
-
-                        prosesRegistrasiWajah();
-                    }
-                } else {
-                    stabilityScore = 0;
-                    $('#instructionText').text('Wajah tidak terlihat...').removeClass('text-blue-600');
-                }
-            }, 100);
-        }
-
-        async function prosesRegistrasiWajah() {
-            const video = document.getElementById('videoReg');
-
-            // Ambil data wajah dengan akurasi tinggi
-            const detection = await faceapi.detectSingleFace(video,
-                    new faceapi.TinyFaceDetectorOptions({
-                        inputSize: 416
-                    }))
-                .withFaceLandmarks().withFaceDescriptor();
-
-            if (!detection) {
-                isCapturing = false;
-                stabilityScore = 0;
-                $('#instructionText').text('Gagal mengambil data, ulangi posisi diam...').addClass('text-red-500');
-                startRealtimeDetectionReg();
-                return;
-            }
-
+        function loadRiwayatRealtime() {
             $.ajax({
-                url: "{{ route('user.update-face') }}",
-                method: 'POST',
-                data: {
-                    _token: "{{ csrf_token() }}",
-                    face_embedding: JSON.stringify(Array.from(detection.descriptor))
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Verifikasi Berhasil',
-                        text: 'Data wajah Anda sudah tersimpan.',
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => location.reload());
-                },
-                error: function(xhr) {
-                    isCapturing = false;
-                    stabilityScore = 0;
+                url: "{{ route('absensi.riwayat.json') }}",
+                method: "GET",
+                cache: false, // penting biar gak ambil cache lama
+                success: function(data) {
 
-                    let msg = 'Terjadi kesalahan sistem.';
-                    if (xhr.status === 422) {
-                        msg = xhr.responseJSON.message; // Pesan: "Wajah sudah terdaftar di akun lain"
+                    let html = '';
+
+                    if (!data || data.length === 0) {
+                        html = `<div class="text-center text-gray-500 text-sm">
+                            Belum ada riwayat absensi
+                        </div>`;
+                    } else {
+
+                        data.forEach(a => {
+
+                            const date = new Date(a.tanggal);
+                            const day = date.toLocaleDateString('id-ID', {
+                                weekday: 'short'
+                            });
+                            const dayNumber = String(date.getDate()).padStart(2, '0');
+
+                            const jamMasuk = a.jam_masuk ? a.jam_masuk : '-';
+                            const jamKeluar = a.jam_keluar ? a.jam_keluar : '-';
+
+                            html += `
+                    <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4 animate-fadeIn">
+                        <a href="/absensi/riwayat"
+                           class="flex items-center gap-4 p-4 hover:bg-gray-50 transition w-full">
+
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
+                                <div class="text-center">
+                                    <div class="text-xs text-blue-600 font-medium">${day}</div>
+                                    <div class="text-xl font-bold text-blue-700">${dayNumber}</div>
+                                </div>
+                            </div>
+
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900 mb-1">${a.status}</h3>
+                                <div class="flex gap-4 text-xs text-gray-500">
+                                    <span>In: ${jamMasuk}</span>
+                                    <span>Out: ${jamKeluar}</span>
+                                </div>
+                            </div>
+
+                            <i class="w-5 h-5 text-gray-400" data-lucide="chevron-right"></i>
+                        </a>
+                    </div>`;
+                        });
                     }
 
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Gagal Terverifikasi',
-                        text: msg,
-                        confirmButtonText: 'Coba Lagi'
-                    }).then(() => {
-                        $('#instructionText').text('Posisikan wajah kembali...').removeClass(
-                            'text-green-600');
-                        startRealtimeDetectionReg();
+                    $('#riwayatContainer').fadeOut(100, function() {
+                        $(this).html(html).fadeIn(200);
+                        if (window.lucide) lucide.createIcons();
                     });
                 }
             });
         }
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ambil data dari Laravel Controller
+            const showNotif = "{{ $showNotification }}";
+            const message = "{{ $notifMessage }}";
+
+            console.log("Status Notifikasi:", showNotif); // Cek di F12 (Console)
+
+            if (showNotif == "1") {
+                // 1. Minta Izin ke User
+                if (Notification.permission === "default") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            playNotif(message);
+                        }
+                    });
+                }
+                // 2. Jika sudah diizinkan, langsung jalankan
+                else if (Notification.permission === "granted") {
+                    playNotif(message);
+                }
+                // 3. Jika diblokir
+                else {
+                    console.warn("Notifikasi diblokir oleh user.");
+                }
+            }
+        });
+
+        function playNotif(msg) {
+            const options = {
+                body: msg,
+                icon: "https://cdn-icons-png.flaticon.com/512/1827/1827347.png", // Icon sementara
+                vibrate: [200, 100, 200],
+                requireInteraction: true
+            };
+
+            const n = new Notification("PENGINGAT ABSENSI", options);
+
+            n.onclick = function() {
+                window.focus();
+                this.close();
+            };
+        }
+    </script>
+
     {{-- <script>
         function openAbsenManual() {
             const modal = document.getElementById('modalAbsenManual');
@@ -785,174 +583,7 @@ function prosesAbsensiWajah(faceEmbedding, latitude, longitude) {
         }
     </script> --}}
 
-
-
-
-    <script>
-        function loadRiwayatRealtime() {
-            $.get("{{ route('absensi.riwayat.json') }}", function(data) {
-
-                let html = '';
-
-                if (data.length === 0) {
-                    html = `<div class="text-center text-gray-500 text-sm">
-                            Belum ada riwayat absensi
-                        </div>`;
-                } else {
-                    data.forEach(a => {
-                        const date = new Date(a.tanggal);
-                        const day = date.toLocaleDateString('id-ID', {
-                            weekday: 'short'
-                        });
-                        const dayNumber = date.getDate();
-
-                        html += `
-                    <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4">
-                        <a href="/absensi/riwayat"
-                           class="flex items-center gap-4 p-4 hover:bg-gray-50 transition w-full">
-
-                            <div class="w-16 h-16 bg-gradient-to-br fromp-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
-                                <div class="text-center">
-                                    <div class="text-xs text-blue-600 font-medium">${day}</div>
-                                    <div class="text-xl font-bold text-blue-700">${dayNumber}</div>
-                                </div>
-                            </div>
-
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-gray-900 mb-1">${a.status}</h3>
-                                <div class="flex gap-4 text-xs text-gray-500">
-                                    <span>In: ${a.jam_masuk ?? '-'}</span>
-                                    <span>Out: ${a.jam_keluar ?? '-'}</span>
-                                </div>
-                            </div>
-
-                            <i class="w-5 h-5 text-gray-400" data-lucide="chevron-right"></i>
-                        </a>
-                    </div>`;
-                    });
-                }
-
-                $('#riwayatContainer').html(html);
-                lucide.createIcons();
-            });
-        }
-    </script>
-
-    <script>
-        // 🔥 DATA CABANG DARI SERVER
-        const CABANG = {
-            nama: "{{ $namaCabang }}",
-            lat: {{ $cabangLat }},
-            long: {{ $cabangLong }},
-            radius: {{ $radiusMeter }}
-        };
-
-        // Haversine formula: hitung jarak dalam meter
-        function hitungJarak(lat1, lon1, lat2, lon2) {
-            const R = 6371000; // radius bumi dalam meter
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-
-            const a = Math.sin(dLat / 2) ** 2 +
-                Math.cos(lat1 * Math.PI / 180) *
-                Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon / 2) ** 2;
-
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        }
-
-        // Submit absensi
-        function submitAbsen(type) {
-            Swal.fire({
-                title: 'Memverifikasi Lokasi...',
-                text: 'Harap tunggu, kami sedang memastikan posisi Anda tepat di radius cabang.',
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                didOpen: () => Swal.showLoading()
-            });
-
-            if (!navigator.geolocation) {
-                Swal.fire('Error', 'Perangkat/Browser Anda tidak mendukung GPS', 'error');
-                return;
-            }
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const userLat = position.coords.latitude;
-                    const userLong = position.coords.longitude;
-
-                    const jarak = hitungJarak(userLat, userLong, CABANG.lat, CABANG.long);
-                    console.log("Jarak ke cabang:", jarak, "meter");
-
-                    if (jarak > CABANG.radius) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Di Luar Area Cabang',
-                            html: `Anda berada <b>${Math.round(jarak)} meter</b> dari cabang <b>${CABANG.nama}</b>.<br>Radius absensi hanya <b>${CABANG.radius} meter</b>.`,
-                            confirmButtonColor: '#ef4444'
-                        });
-                        return;
-                    }
-
-                    // Kirim ke server
-                    sendToServer(type, userLat, userLong);
-                },
-                (error) => {
-                    let msg = "Gagal mengambil lokasi.";
-                    if (error.code == 1) msg =
-                        "Izin lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser Anda.";
-                    if (error.code == 2) msg = "Sinyal GPS tidak stabil.";
-                    if (error.code == 3) msg = "Waktu pencarian lokasi habis.";
-
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Lokasi Gagal diakses',
-                        text: msg,
-                        confirmButtonColor: '#ef4444'
-                    });
-                }, {
-                    enableHighAccuracy: false, // cukup akurat, lebih cepat
-                    timeout: 5000, // maksimal 5 detik
-                    maximumAge: 0
-                }
-            );
-        }
-
-        // AJAX ke server
-        function sendToServer(type, lat, long) {
-            const url = type === 'masuk' ? "{{ route('absen.masuk') }}" : "{{ route('absen.pulang') }}";
-
-            $.ajax({
-                url: url,
-                method: 'POST',
-                data: {
-                    _token: $('meta[name="csrf-token"]').attr('content'),
-                    latitude: lat,
-                    longitude: long
-                },
-                success(res) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Presensi Berhasil',
-                        text: res.message,
-                        confirmButtonColor: '#059669'
-                    }).then(() => location.reload());
-                },
-                error(xhr) {
-                    const errorMsg = xhr.responseJSON?.message ?? 'Terjadi kesalahan sistem';
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Akses Ditolak',
-                        text: errorMsg,
-                        confirmButtonColor: '#f97316'
-                    });
-                }
-            });
-        }
-    </script>
-
-    <script>
+    {{-- <script>
         const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
 
         async function startCamera(videoElement) {
@@ -1036,7 +667,7 @@ function prosesAbsensiWajah(faceEmbedding, latitude, longitude) {
                 video.srcObject.getTracks().forEach(track => track.stop());
             }
         }
-    </script>
+    </script> --}}
 
 </body>
 

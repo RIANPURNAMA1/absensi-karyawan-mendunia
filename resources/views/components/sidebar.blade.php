@@ -90,7 +90,7 @@
                          <span class="pc-mtext">Monitoring Lokasi</span>
                      </a>
                  </li>
-                 <li class="pc-item">
+                 {{-- <li class="pc-item">
                      <a href="/monitoring/wajah" class="pc-link">
                          <span class="pc-micon"><i class="ph ph-face-mask"></i></span>
                          <span class="pc-mtext">Verifikasi Wajah</span>
@@ -101,7 +101,7 @@
                          <span class="pc-micon"><i class="ph ph-clock"></i></span>
                          <span class="pc-mtext">Aktivitas Harian</span>
                      </a>
-                 </li>
+                 </li> --}}
              </ul>
          </li>
          <!-- MONITORING & PROJECT MANAGEMENT -->
@@ -191,14 +191,9 @@
          <li class="pc-item pc-caption">
              <label>Pengaturan</label>
          </li>
+    
          <li class="pc-item">
-             <a href="/pengaturan/cabang" class="pc-link">
-                 <span class="pc-micon"><i class="ph ph-buildings"></i></span>
-                 <span class="pc-mtext">Cabang & Lokasi</span>
-             </a>
-         </li>
-         <li class="pc-item">
-             <a href="/pengaturan/akun" class="pc-link">
+             <a href="/pengaturan" class="pc-link">
                  <span class="pc-micon"><i class="ph ph-user-gear"></i></span>
                  <span class="pc-mtext">Manajemen Akun</span>
              </a>

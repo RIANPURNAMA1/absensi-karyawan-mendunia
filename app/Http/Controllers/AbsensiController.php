@@ -17,31 +17,84 @@ class AbsensiController extends Controller
 {
     public function index()
     {
-        $user = Auth::user()->load('cabang');
+        // Load cabang dan shift user yang sedang login
+        $user = Auth::user()->load(['cabang', 'shift']);
 
-        // 🔒 Pengaman kalau user belum punya cabang
         if (!$user->cabang) {
             abort(403, 'User belum terdaftar di cabang manapun.');
         }
 
-        // Ambil 10 riwayat absensi terakhir
+        // 1. Ambil 10 riwayat terakhir
         $riwayat = Absensi::where('user_id', $user->id)
             ->orderBy('tanggal', 'desc')
             ->take(10)
             ->get();
 
-        // Pastikan data cabang valid
+        // 2. Ambil semua jadwal shift yang aktif
+        $allShifts = \App\Models\Shift::where('status', 'AKTIF')->get();
+
+        // --- LOGIKA NOTIFIKASI BROWSER ---
+        $showNotification = false;
+        $notifMessage = "";
+
+        if ($user->shift_id && $user->shift) {
+            $now = Carbon::now();
+            $today = Carbon::today()->toDateString();
+
+            // Perbaikan: Ambil H:i:s saja untuk mencegah error "Double date specification"
+            $jamHanya = Carbon::parse($user->shift->jam_masuk)->format('H:i:s');
+            $jamMasuk = Carbon::parse($today . ' ' . $jamHanya);
+
+            // Cek apakah sudah absen hari ini
+            $sudahAbsen = Absensi::where('user_id', $user->id)
+                ->where('tanggal', $today)
+                ->exists();
+
+            if (!$sudahAbsen) {
+                // false agar menghasilkan nilai negatif jika waktu sekarang sudah melewati jam masuk
+                $selisihMenit = $now->diffInMinutes($jamMasuk, false);
+
+                // Munculkan notifikasi jika waktu masuk sisa 1 - 30 menit lagi
+                if ($selisihMenit > 0 && $selisihMenit <= 30) {
+                    $showNotification = true;
+                    $notifMessage = "Waktunya bersiap! Jam masuk Anda pukul " . $jamMasuk->format('H:i') . " (" . $selisihMenit . " menit lagi).";
+                }
+            }
+        }
+        // ----------------------------------
+
+        // 3. Cari shift yang berlaku saat ini
+        $currentTime = now()->format('H:i:s');
+        $currentShift = \App\Models\Shift::where('status', 'AKTIF')
+            ->where('jam_masuk', '<=', $currentTime)
+            ->where('jam_pulang', '>=', $currentTime)
+            ->first();
+
         $cabang = $user->cabang;
 
         return view('absensi.index', [
-            'riwayat'     => $riwayat,
-            'cabangLat'   => $cabang->latitude ?? 0,
-            'cabangLong'  => $cabang->longitude ?? 0,
-            'radiusMeter' => $cabang->radius ?? 100,
-            'namaCabang'  => $cabang->nama_cabang ?? '-',
+            'riwayat'          => $riwayat,
+            'shifts'           => $allShifts,
+            'currentShift'     => $currentShift,
+            'cabangLat'        => $cabang->latitude ?? 0,
+            'cabangLong'       => $cabang->longitude ?? 0,
+            'radiusMeter'      => $cabang->radius ?? 100,
+            'namaCabang'       => $cabang->nama_cabang ?? '-',
+            // Kirim data notifikasi ke view
+            'showNotification' => $showNotification,
+            'notifMessage'     => $notifMessage
         ]);
     }
 
+    public function riwayatTerbaru()
+    {
+        $riwayat = Absensi::where('user_id', auth()->id())
+            ->orderBy('tanggal', 'desc')
+            ->take(5)
+            ->get();
+
+        return response()->json($riwayat);
+    }
 
 
     public function riwayatSemua()
@@ -54,7 +107,16 @@ class AbsensiController extends Controller
 
     public function profile()
     {
-        return view('absensi.profile');
+        $user = auth()->user()->load(['divisi']);
+
+        // Hitung statistik bulan ini
+        $stats = [
+            'hadir' => \App\Models\Absensi::where('user_id', $user->id)->whereMonth('tanggal', now()->month)->where('status', 'HADIR')->count(),
+            'izin' => \App\Models\Absensi::where('user_id', $user->id)->whereMonth('tanggal', now()->month)->where('status', 'IZIN')->count(),
+            'terlambat' => \App\Models\Absensi::where('user_id', $user->id)->whereMonth('tanggal', now()->month)->where('status', 'TERLAMBAT')->count(),
+        ];
+
+        return view('absensi.profile', compact('user', 'stats'));
     }
 
     // revisi
@@ -76,238 +138,251 @@ class AbsensiController extends Controller
 
 
 
- public function absenMasuk(Request $request)
-{
-    $today = Carbon::today()->toDateString();
-    $now = Carbon::now();
+    public function absenMasuk(Request $request)
+    {
+        $today = Carbon::today()->toDateString();
+        $now = Carbon::now();
 
-    // 0. Validasi input embedding wajah
-    if (!$request->has('face_embedding')) {
-        return response()->json(['message' => 'Face embedding diperlukan untuk absen'], 422);
-    }
-
-    $faceEmbeddingInput = json_decode($request->face_embedding); // array numeric
-
-    // 1. Cocokkan dengan embedding di database
-    $user = $this->cocokkanFaceEmbedding($faceEmbeddingInput);
-    if (!$user) {
-        return response()->json(['message' => 'Wajah tidak terdaftar atau tidak dikenali'], 422);
-    }
-
-    // 2. Cek apakah sudah absen hari ini
-    $cek = Absensi::where('user_id', $user->id)->where('tanggal', $today)->first();
-    if ($cek) return response()->json(['message' => 'Anda sudah absen masuk hari ini'], 422);
-
-    // 3. Ambil cabang & shift
-    $cabang = Cabang::find($user->cabang_id);
-    if (!$cabang) return response()->json(['message' => 'Cabang tidak ditemukan'], 422);
-
-    $shift = \App\Models\Shift::find($user->shift_id);
-    if (!$shift) return response()->json(['message' => 'Jadwal shift tidak ditemukan'], 422);
-
-    // 4. Validasi jarak
-    $jarak = $this->calculateDistance(
-        $request->latitude,
-        $request->longitude,
-        $cabang->latitude,
-        $cabang->longitude
-    );
-
-    if ($jarak > $cabang->radius) {
-        return response()->json([
-            'message' => 'Gagal! Jarak Anda ' . round($jarak) . 'm. Di luar radius ' . $cabang->radius . 'm.'
-        ], 422);
-    }
-
-    // 5. Logika terlambat
-    $status = 'HADIR';
-    $jamMasukShift = Carbon::parse($shift->jam_masuk);
-    $batasToleransi = $jamMasukShift->copy()->addMinutes($shift->toleransi);
-    if ($now->gt($batasToleransi)) {
-        $status = 'TERLAMBAT';
-    }
-
-    // 6. Simpan absensi
-    $absensi = Absensi::create([
-        'user_id'    => $user->id,
-        'cabang_id'  => $cabang->id,
-        'shift_id'   => $shift->id,
-        'tanggal'    => $today,
-        'jam_masuk'  => $now->toTimeString(),
-        'lat_masuk'  => $request->latitude,
-        'long_masuk' => $request->longitude,
-        'status'     => $status,
-    ]);
-
-    return response()->json([
-        'message' => 'Absen masuk berhasil. Status: ' . $status,
-        'absensi' => $absensi
-    ]);
-}
-
-/**
- * Fungsi mencocokkan embedding wajah input dengan database
- */
-private function cocokkanFaceEmbedding(array $embeddingInput)
-{
-    $users = \App\Models\User::whereNotNull('face_embedding')->get();
-
-    foreach ($users as $user) {
-        $embeddingDb = json_decode($user->face_embedding, true);
-
-        // Hitung similarity (cosine similarity)
-        if ($this->cosineSimilarity($embeddingDb, $embeddingInput) > 0.7) { // threshold 0.7 bisa disesuaikan
-            return $user;
+        // 0. Validasi input embedding wajah
+        if (!$request->has('face_embedding')) {
+            return response()->json(['message' => 'Face embedding diperlukan untuk absen'], 422);
         }
-    }
 
-    return null;
-}
+        $faceEmbeddingInput = json_decode($request->face_embedding); // array numeric
 
-/**
- * Hitung cosine similarity antara dua array embedding
- */
-private function cosineSimilarity(array $vecA, array $vecB)
-{
-    $dot = 0;
-    $normA = 0;
-    $normB = 0;
+        // 1. Cocokkan dengan embedding di database
+        $user = $this->cocokkanFaceEmbedding($faceEmbeddingInput);
+        if (!$user) {
+            return response()->json(['message' => 'Wajah tidak terdaftar atau tidak dikenali'], 422);
+        }
 
-    for ($i = 0; $i < count($vecA); $i++) {
-        $dot += $vecA[$i] * $vecB[$i];
-        $normA += pow($vecA[$i], 2);
-        $normB += pow($vecB[$i], 2);
-    }
+        // 2. Cek apakah sudah absen hari ini
+        $cek = Absensi::where('user_id', $user->id)->where('tanggal', $today)->first();
+        if ($cek) return response()->json(['message' => 'Anda sudah absen masuk hari ini'], 422);
 
-    $normA = sqrt($normA);
-    $normB = sqrt($normB);
+        // 3. Ambil cabang & shift
+        $cabang = Cabang::find($user->cabang_id);
+        if (!$cabang) return response()->json(['message' => 'Cabang tidak ditemukan'], 422);
 
-    if ($normA * $normB == 0) return 0;
+        $shift = \App\Models\Shift::find($user->shift_id);
+        if (!$shift) return response()->json(['message' => 'Jadwal shift tidak ditemukan'], 422);
 
-    return $dot / ($normA * $normB);
-}
+        // 4. Validasi jarak
+        $jarak = $this->calculateDistance(
+            $request->latitude,
+            $request->longitude,
+            $cabang->latitude,
+            $cabang->longitude
+        );
 
+        if ($jarak > $cabang->radius) {
+            return response()->json([
+                'message' => 'Gagal! Jarak Anda ' . round($jarak) . 'm. Di luar radius ' . $cabang->radius . 'm.'
+            ], 422);
+        }
 
- public function absenPulang(Request $request)
-{
-    $today = Carbon::today()->toDateString();
-    $now = Carbon::now();
+        // 5. Logika terlambat
+        $status = 'HADIR';
+        $jamMasukShift = Carbon::parse($shift->jam_masuk);
+        $batasToleransi = $jamMasukShift->copy()->addMinutes($shift->toleransi);
+        if ($now->gt($batasToleransi)) {
+            $status = 'TERLAMBAT';
+        }
 
-    // 0. Validasi input embedding wajah
-    if (!$request->has('face_embedding')) {
-        return response()->json(['message' => 'Face embedding diperlukan untuk absen'], 422);
-    }
+        // 6. Simpan absensi
+        $absensi = Absensi::create([
+            'user_id'    => $user->id,
+            'cabang_id'  => $cabang->id,
+            'shift_id'   => $shift->id,
+            'tanggal'    => $today,
+            'jam_masuk'  => $now->toTimeString(),
+            'lat_masuk'  => $request->latitude,
+            'long_masuk' => $request->longitude,
+            'status'     => $status,
+        ]);
 
-    $faceEmbeddingInput = json_decode($request->face_embedding);
-
-    // 1. Cocokkan dengan embedding di database
-    $user = $this->cocokkanFaceEmbedding($faceEmbeddingInput);
-    if (!$user) {
-        return response()->json(['message' => 'Wajah tidak terdaftar atau tidak dikenali'], 422);
-    }
-
-    // 2. Cari data absensi hari ini
-    $absensi = Absensi::with('shift')->where('user_id', $user->id)->where('tanggal', $today)->first();
-    if (!$absensi) return response()->json(['message' => 'Belum absen masuk'], 422);
-    if ($absensi->jam_keluar) return response()->json(['message' => 'Anda sudah absen pulang'], 422);
-    if (!$absensi->shift) return response()->json(['message' => 'Jadwal shift tidak ditemukan'], 422);
-
-    // 3. Validasi radius
-    $cabang = Cabang::find($user->cabang_id);
-    if (!$cabang) return response()->json(['message' => 'Data cabang tidak ditemukan'], 422);
-
-    $jarak = $this->calculateDistance(
-        $request->latitude,
-        $request->longitude,
-        $cabang->latitude,
-        $cabang->longitude
-    );
-
-    if ($jarak > $cabang->radius) {
         return response()->json([
-            'message' => 'Di luar radius! Jarak: ' . round($jarak) . 'm. Maks: ' . $cabang->radius . 'm.'
-        ], 422);
-    }
-
-    // 4. Logika status absen pulang
-    $statusBaru = $absensi->status;
-
-    $jamMasukShift = Carbon::parse($absensi->shift->jam_masuk);
-    $jamPulangShift = Carbon::parse($absensi->shift->jam_pulang);
-
-    if ($jamPulangShift->lt($jamMasukShift)) {
-        $jamPulangShift->addDay();
-    }
-
-    if ($now->lt($jamPulangShift) && $absensi->status !== 'TERLAMBAT') {
-        $statusBaru = 'PULANG LEBIH AWAL';
-    }
-
-    // 5. Simpan jam pulang
-    $absensi->update([
-        'jam_keluar'  => $now->toTimeString(),
-        'lat_pulang'  => $request->latitude,
-        'long_pulang' => $request->longitude,
-        'status'      => $statusBaru,
-    ]);
-
-    return response()->json([
-        'message'    => "Absen pulang berhasil. Status: $statusBaru",
-        'jam_keluar' => $now->toTimeString(),
-        'status'     => $statusBaru
-    ]);
-}
-
-
-public function statusAbsensi(Request $request)
-{
-    $today = Carbon::today()->toDateString();
-
-    if (!$request->has('face_embedding')) {
-        return response()->json(['message' => 'Face embedding diperlukan'], 422);
-    }
-
-    $faceEmbeddingInput = json_decode($request->face_embedding);
-
-    // 1. Cocokkan embedding dengan database
-    $user = $this->cocokkanFaceEmbedding($faceEmbeddingInput);
-    if (!$user) {
-        return response()->json(['message' => 'Wajah tidak terdaftar', 'status' => 'TIDAK_TERDAFTAR'], 422);
-    }
-
-    // 2. Ambil absensi hari ini
-    $absensi = Absensi::where('user_id', $user->id)
-        ->where('tanggal', $today)
-        ->first();
-
-    if (!$absensi) {
-        // Belum absen masuk
-        return response()->json([
-            'status' => 'BELUM_MASUK',
-            'user_id' => $user->id,
-            'user_name' => $user->name
+            'message' => 'Absen masuk berhasil. Status: ' . $status,
+            'absensi' => $absensi
         ]);
     }
 
-    if ($absensi->jam_keluar === null) {
-        // Sudah masuk tapi belum pulang
+    /**
+     * Fungsi mencocokkan embedding wajah input dengan database
+     */
+    /**
+     * Fungsi mencocokkan embedding wajah input dengan database
+     * Diperketat dengan Euclidean Distance dan Threshold rendah
+     */
+    private function cocokkanFaceEmbedding(array $embeddingInput)
+    {
+        // Ambil semua user yang sudah punya data wajah
+        $users = \App\Models\User::whereNotNull('face_embedding')->get();
+
+        $bestMatch = null;
+        $minDistance = 1.0; // Nilai awal (semakin kecil semakin cocok)
+
+        foreach ($users as $user) {
+            $embeddingDb = json_decode($user->face_embedding, true);
+
+            // Gunakan Euclidean Distance agar lebih akurat
+            $distance = $this->euclideanDistance($embeddingInput, $embeddingDb);
+
+            // Threshold 0.40 (Golden Standard untuk Face-API)
+            // Jika jarak di bawah 0.40, kita anggap itu orang yang sama
+            if ($distance < 0.40 && $distance < $minDistance) {
+                $minDistance = $distance;
+                $bestMatch = $user;
+            }
+        }
+
+        return $bestMatch;
+    }
+
+    /**
+     * Hitung cosine similarity antara dua array embedding
+     */
+    private function cosineSimilarity(array $vecA, array $vecB)
+    {
+        $dot = 0;
+        $normA = 0;
+        $normB = 0;
+
+        for ($i = 0; $i < count($vecA); $i++) {
+            $dot += $vecA[$i] * $vecB[$i];
+            $normA += pow($vecA[$i], 2);
+            $normB += pow($vecB[$i], 2);
+        }
+
+        $normA = sqrt($normA);
+        $normB = sqrt($normB);
+
+        if ($normA * $normB == 0) return 0;
+
+        return $dot / ($normA * $normB);
+    }
+
+
+    public function absenPulang(Request $request)
+    {
+        $today = Carbon::today()->toDateString();
+        $now = Carbon::now();
+
+        // 0. Validasi input embedding wajah
+        if (!$request->has('face_embedding')) {
+            return response()->json(['message' => 'Face embedding diperlukan untuk absen'], 422);
+        }
+
+        $faceEmbeddingInput = json_decode($request->face_embedding);
+
+        // 1. Cocokkan dengan embedding di database
+        $user = $this->cocokkanFaceEmbedding($faceEmbeddingInput);
+        if (!$user) {
+            return response()->json(['message' => 'Wajah tidak terdaftar atau tidak dikenali'], 422);
+        }
+
+        // 2. Cari data absensi hari ini
+        $absensi = Absensi::with('shift')->where('user_id', $user->id)->where('tanggal', $today)->first();
+        if (!$absensi) return response()->json(['message' => 'Belum absen masuk'], 422);
+        if ($absensi->jam_keluar) return response()->json(['message' => 'Anda sudah absen pulang'], 422);
+        if (!$absensi->shift) return response()->json(['message' => 'Jadwal shift tidak ditemukan'], 422);
+
+        // 3. Validasi radius
+        $cabang = Cabang::find($user->cabang_id);
+        if (!$cabang) return response()->json(['message' => 'Data cabang tidak ditemukan'], 422);
+
+        $jarak = $this->calculateDistance(
+            $request->latitude,
+            $request->longitude,
+            $cabang->latitude,
+            $cabang->longitude
+        );
+
+        if ($jarak > $cabang->radius) {
+            return response()->json([
+                'message' => 'Di luar radius! Jarak: ' . round($jarak) . 'm. Maks: ' . $cabang->radius . 'm.'
+            ], 422);
+        }
+
+        // 4. Logika status absen pulang
+        $statusBaru = $absensi->status;
+
+        $jamMasukShift = Carbon::parse($absensi->shift->jam_masuk);
+        $jamPulangShift = Carbon::parse($absensi->shift->jam_pulang);
+
+        if ($jamPulangShift->lt($jamMasukShift)) {
+            $jamPulangShift->addDay();
+        }
+
+        if ($now->lt($jamPulangShift) && $absensi->status !== 'TERLAMBAT') {
+            $statusBaru = 'PULANG LEBIH AWAL';
+        }
+
+        // 5. Simpan jam pulang
+        $absensi->update([
+            'jam_keluar'  => $now->toTimeString(),
+            'lat_pulang'  => $request->latitude,
+            'long_pulang' => $request->longitude,
+            'status'      => $statusBaru,
+        ]);
+
         return response()->json([
-            'status' => 'SUDAH_MASUK',
+            'message'    => "Absen pulang berhasil. Status: $statusBaru",
+            'jam_keluar' => $now->toTimeString(),
+            'status'     => $statusBaru
+        ]);
+    }
+
+
+    public function statusAbsensi(Request $request)
+    {
+        $today = Carbon::today()->toDateString();
+
+        if (!$request->has('face_embedding')) {
+            return response()->json(['message' => 'Face embedding diperlukan'], 422);
+        }
+
+        $faceEmbeddingInput = json_decode($request->face_embedding);
+
+        // 1. Cocokkan embedding dengan database
+        $user = $this->cocokkanFaceEmbedding($faceEmbeddingInput);
+        if (!$user) {
+            return response()->json(['message' => 'Wajah tidak terdaftar', 'status' => 'TIDAK_TERDAFTAR'], 422);
+        }
+
+        // 2. Ambil absensi hari ini
+        $absensi = Absensi::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->first();
+
+        if (!$absensi) {
+            // Belum absen masuk
+            return response()->json([
+                'status' => 'BELUM_MASUK',
+                'user_id' => $user->id,
+                'user_name' => $user->name
+            ]);
+        }
+
+        if ($absensi->jam_keluar === null) {
+            // Sudah masuk tapi belum pulang
+            return response()->json([
+                'status' => 'SUDAH_MASUK',
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'jam_masuk' => $absensi->jam_masuk
+            ]);
+        }
+
+        // Sudah absen masuk & pulang
+        return response()->json([
+            'status' => 'SUDAH_PULANG',
             'user_id' => $user->id,
             'user_name' => $user->name,
-            'jam_masuk' => $absensi->jam_masuk
+            'jam_masuk' => $absensi->jam_masuk,
+            'jam_keluar' => $absensi->jam_keluar
         ]);
     }
-
-    // Sudah absen masuk & pulang
-    return response()->json([
-        'status' => 'SUDAH_PULANG',
-        'user_id' => $user->id,
-        'user_name' => $user->name,
-        'jam_masuk' => $absensi->jam_masuk,
-        'jam_keluar' => $absensi->jam_keluar
-    ]);
-}
 
 
 
@@ -543,44 +618,38 @@ public function statusAbsensi(Request $request)
         ]);
     }
 
-    public function updateFace(Request $request)
-    {
-        // 1. Ambil descriptor wajah baru dari request
-        $newDescriptor = json_decode($request->face_embedding);
+ public function updateFace(Request $request)
+{
+    $newDescriptor = json_decode($request->face_embedding);
 
-        if (!$newDescriptor) {
-            return response()->json(['status' => 'error', 'message' => 'Data wajah tidak valid'], 400);
-        }
-
-        // 2. Ambil semua user yang SUDAH punya data wajah (kecuali user yang sedang login)
-        $otherUsers = User::whereNotNull('face_embedding')
-            ->where('id', '!=', auth()->id())
-            ->get();
-
-        // 3. Bandingkan wajah baru dengan semua wajah di database
-        foreach ($otherUsers as $user) {
-            $existingDescriptor = json_decode($user->face_embedding);
-
-            // Hitung jarak Euclidean
-            $distance = $this->euclideanDistance($newDescriptor, $existingDescriptor);
-
-            // Threshold 0.45 (Semakin kecil semakin mirip/identik)
-            // Jika di bawah 0.45, sistem menganggap ini orang yang sama
-            if ($distance < 0.45) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Gagal! Wajah ini sudah terdaftar di sistem atas nama: ' . $user->name
-                ], 422); // Kirim status 422 (Unprocessable Entity)
-            }
-        }
-
-        // 4. Jika tidak ada kemiripan ditemukan, baru simpan ke akun user saat ini
-        auth()->user()->update([
-            'face_embedding' => $request->face_embedding
-        ]);
-
-        return response()->json(['status' => 'success', 'message' => 'Wajah berhasil didaftarkan']);
+    if (!$newDescriptor) {
+        return response()->json(['status' => 'error', 'message' => 'Data wajah tidak valid'], 400);
     }
+
+    // Ambil user lain untuk pengecekan duplikasi wajah
+    $otherUsers = User::whereNotNull('face_embedding')
+        ->where('id', '!=', auth()->id())
+        ->get();
+
+    foreach ($otherUsers as $user) {
+        $existingDescriptor = json_decode($user->face_embedding);
+        $distance = $this->euclideanDistance($newDescriptor, $existingDescriptor);
+
+        // Jika distance < 0.40, berarti wajah ini "terlalu mirip" dengan orang lain
+        if ($distance < 0.40) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal! Wajah ini terdeteksi mirip dengan: ' . $user->name . '. Silakan ambil ulang dengan posisi lebih tegak.'
+            ], 422);
+        }
+    }
+
+    auth()->user()->update([
+        'face_embedding' => $request->face_embedding
+    ]);
+
+    return response()->json(['status' => 'success', 'message' => 'Wajah berhasil didaftarkan']);
+}
 
     /**
      * Fungsi menghitung jarak antara dua vektor wajah
@@ -591,6 +660,9 @@ public function statusAbsensi(Request $request)
         for ($i = 0; $i < count($arr1); $i++) {
             $sum += pow($arr1[$i] - $arr2[$i], 2);
         }
-        return sqrt($sum);
+        $distance = sqrt($sum);
+
+        // LOGIKA: Jika distance > 0.4, maka dianggap ORANG BERBEDA
+        return $distance;
     }
 }

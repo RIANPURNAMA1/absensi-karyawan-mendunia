@@ -36,4 +36,68 @@ class UserController extends Controller
             'message' => 'User berhasil dihapus.'
         ]);
     }
+
+
+    public function index()
+    {
+        // Hanya ambil HR dan MANAGER
+        $admins = User::whereIn('role', ['HR', 'MANAGER'])->get();
+        return view('pengaturan.user.index', compact('admins'));
+    }
+    
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:6',
+            'role' => 'required|in:HR,MANAGER',
+            'status' => 'required'
+        ]);
+
+        User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => $request->role,
+            'status' => $request->status,
+        ]);
+
+        return back()->with('success', 'Akun admin berhasil ditambahkan');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required|email|unique:users,email,'.$id,
+            'role' => 'required|in:HR,MANAGER',
+            'status' => 'required'
+        ]);
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->role = $request->role;
+        $user->status = $request->status;
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
+        return back()->with('success', 'Data akun berhasil diperbarui');
+    }
+
+    public function destroyAdmin($id)
+    {
+        $user = User::findOrFail($id);
+        $user->delete();
+        return response()->json(['status' => 'success']);
+    }
+
+
+    
 }

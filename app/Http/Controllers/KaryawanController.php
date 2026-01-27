@@ -25,7 +25,7 @@ class KaryawanController extends Controller
         $shifts = \App\Models\Shift::where('status', 'AKTIF')->get();
 
         // 4. Kirim $shifts ke dalam compact()
-        return view('karyawan.index', compact('karyawan', 'divisi','cabang', 'shifts'));
+        return view('karyawan.index', compact('karyawan', 'divisi', 'cabang', 'shifts'));
     }
 
     public function store(Request $request)
@@ -37,7 +37,7 @@ class KaryawanController extends Controller
             'jabatan'       => 'required|string|max:100',
             'divisi_id'     => 'required|exists:divisis,id',
             'cabang_id'     => 'required|exists:cabangs,id',
-            'shift_id'      => 'required|exists:shifts,id', // TAMBAHKAN VALIDASI SHIFT
+            'shift_id'      => 'required|exists:shifts,id',
             'no_hp'         => 'required|string|max:20',
             'alamat'        => 'nullable|string',
             'tanggal_masuk' => 'required|date',
@@ -48,8 +48,20 @@ class KaryawanController extends Controller
         $namaFoto = null;
         if ($request->hasFile('foto_profil')) {
             $file = $request->file('foto_profil');
+
+            // Buat nama file unik
             $namaFoto = time() . '_' . $file->getClientOriginalName();
-            $file->storeAs('foto-karyawan', $namaFoto, 'public');
+
+            // Tentukan path tujuan: public/uploads/foto-karyawan
+            $tujuanFolder = public_path('foto-karyawan');
+
+            // Buat folder jika belum ada
+            if (!file_exists($tujuanFolder)) {
+                mkdir($tujuanFolder, 0755, true);
+            }
+
+            // Pindahkan file langsung ke folder public
+            $file->move($tujuanFolder, $namaFoto);
         }
 
         // Simpan data user karyawan
@@ -61,7 +73,7 @@ class KaryawanController extends Controller
             'status'        => 'AKTIF',
             'divisi_id'     => $request->divisi_id,
             'cabang_id'     => $request->cabang_id,
-            'shift_id'      => $request->shift_id, // TAMBAHKAN SHIFT_ID
+            'shift_id'      => $request->shift_id,
             'nip'           => $request->nip,
             'jabatan'       => $request->jabatan,
             'no_hp'         => $request->no_hp,
@@ -82,61 +94,67 @@ class KaryawanController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
+   public function update(Request $request, $id)
+{
+    $user = User::findOrFail($id);
 
-        $request->validate([
-            'nip'           => 'required|unique:users,nip,' . $user->id,
-            'name'          => 'required|string|max:255',
-            'jabatan'       => 'required|string|max:255',
-            'divisi_id'     => 'required|exists:divisis,id',
-            'cabang_id'     => 'required|exists:cabangs,id',
-            'shift_id'      => 'required|exists:shifts,id', // TAMBAHKAN VALIDASI SHIFT
-            'no_hp'         => 'required|string|max:20',
-            'email'         => 'required|email|unique:users,email,' . $user->id,
-            'alamat'        => 'nullable|string',
-            'tanggal_masuk' => 'required|date',
-            'status_kerja'  => 'required|in:TETAP,KONTRAK,MAGANG',
-            'foto_profil'   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        ]);
+    $request->validate([
+        'nip'           => 'required|unique:users,nip,' . $user->id,
+        'name'          => 'required|string|max:255',
+        'jabatan'       => 'required|string|max:255',
+        'divisi_id'     => 'required|exists:divisis,id',
+        'cabang_id'     => 'required|exists:cabangs,id',
+        'shift_id'      => 'required|exists:shifts,id',
+        'no_hp'         => 'required|string|max:20',
+        'email'         => 'required|email|unique:users,email,' . $user->id,
+        'alamat'        => 'nullable|string',
+        'tanggal_masuk' => 'required|date',
+        'status_kerja'  => 'required|in:TETAP,KONTRAK,MAGANG',
+        'foto_profil'   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    ]);
 
-        $namaFoto = $user->foto_profil;
+    $namaFoto = $user->foto_profil;
+    $tujuanFolder = public_path('foto-karyawan');
 
-        if ($request->hasFile('foto_profil')) {
-            $file = $request->file('foto_profil');
-            $namaFoto = time() . '_' . $file->getClientOriginalName();
+    if ($request->hasFile('foto_profil')) {
+        $file = $request->file('foto_profil');
+        $namaFoto = time() . '_' . $file->getClientOriginalName();
 
-            // Hapus foto lama jika ada
-            if ($user->foto_profil && Storage::disk('public')->exists('foto-karyawan/' . $user->foto_profil)) {
-                Storage::disk('public')->delete('foto-karyawan/' . $user->foto_profil);
-            }
-
-            // Simpan file baru
-            $file->storeAs('foto-karyawan', $namaFoto, 'public');
+        // 1. Pastikan folder ada
+        if (!file_exists($tujuanFolder)) {
+            mkdir($tujuanFolder, 0755, true);
         }
 
-        $user->update([
-            'nip'           => $request->nip,
-            'name'          => $request->name,
-            'jabatan'       => $request->jabatan,
-            'divisi_id'     => $request->divisi_id,
-            'cabang_id'     => $request->cabang_id,
-            'shift_id'      => $request->shift_id, // TAMBAHKAN SHIFT_ID
-            'no_hp'         => $request->no_hp,
-            'email'         => $request->email,
-            'alamat'        => $request->alamat,
-            'tanggal_masuk' => $request->tanggal_masuk,
-            'status_kerja'  => $request->status_kerja,
-            'foto_profil'   => $namaFoto,
-        ]);
+        // 2. Hapus foto lama jika ada secara fisik di folder public
+        if ($user->foto_profil && file_exists($tujuanFolder . '/' . $user->foto_profil)) {
+            unlink($tujuanFolder . '/' . $user->foto_profil);
+        }
 
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Data karyawan berhasil diperbarui',
-            'data'    => $user
-        ]);
+        // 3. Pindahkan file baru
+        $file->move($tujuanFolder, $namaFoto);
     }
+
+    $user->update([
+        'nip'           => $request->nip,
+        'name'          => $request->name,
+        'jabatan'       => $request->jabatan,
+        'divisi_id'     => $request->divisi_id,
+        'cabang_id'     => $request->cabang_id,
+        'shift_id'      => $request->shift_id,
+        'no_hp'         => $request->no_hp,
+        'email'         => $request->email,
+        'alamat'        => $request->alamat,
+        'tanggal_masuk' => $request->tanggal_masuk,
+        'status_kerja'  => $request->status_kerja,
+        'foto_profil'   => $namaFoto,
+    ]);
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'Data karyawan berhasil diperbarui',
+        'data'    => $user
+    ]);
+}
 
 
     public function show($id)

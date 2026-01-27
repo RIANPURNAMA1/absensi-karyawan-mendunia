@@ -91,8 +91,225 @@
 
         </div>
     </div>
+    {{-- <script>
+        lucide.createIcons();
 
+        const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+        let stream = null;
+        let isEngineReady = false;
+        let detectionInterval = null;
 
+        // Variabel untuk stabilitas wajah
+        let stabilityScore = 0;
+        const STABILITY_REQUIRED = 15; // ~1,5 detik wajah stabil
+        let lastX = 0;
+        let lastY = 0;
+        let isCapturing = false;
+
+        async function openAbsenManual() {
+            const modal = document.getElementById('modalAbsenManual');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            await loadModels();
+            startCamera();
+        }
+
+        function closeAbsenManual() {
+            const modal = document.getElementById('modalAbsenManual');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+
+            if (stream) stream.getTracks().forEach(track => track.stop());
+            if (detectionInterval) clearInterval(detectionInterval);
+
+            // reset state
+            stabilityScore = 0;
+            isCapturing = false;
+            lastX = 0;
+            lastY = 0;
+            document.getElementById('instructionTextAbsen').textContent =
+                'Posisikan wajah di tengah lingkaran dan diam sebentar...';
+        }
+
+        async function loadModels() {
+            if (isEngineReady) return;
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]);
+            isEngineReady = true;
+        }
+
+        async function startCamera() {
+            const video = document.getElementById('videoStream');
+            const canvas = document.getElementById('canvasStream');
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user'
+                    }
+                });
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    startRealtimeDetection(video, canvas);
+                };
+            } catch (err) {
+                console.error("Tidak bisa akses kamera:", err);
+                Swal.fire('Kamera Error', 'Izinkan akses kamera untuk absensi.', 'error');
+            }
+        }
+
+        function startRealtimeDetection(video, canvas) {
+            const displaySize = {
+                width: video.clientWidth,
+                height: video.clientHeight
+            };
+            faceapi.matchDimensions(canvas, displaySize);
+
+            detectionInterval = setInterval(async () => {
+                if (!video.videoWidth || !isEngineReady || isCapturing) return;
+
+                const detection = await faceapi.detectSingleFace(video,
+                    new faceapi.TinyFaceDetectorOptions({
+                        inputSize: 224,
+                        scoreThreshold: 0.5
+                    })
+                ).withFaceLandmarks().withFaceDescriptor();
+
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (detection) {
+                    const resized = faceapi.resizeResults(detection, displaySize);
+                    const box = resized.detection.box;
+
+                    // Logika stabilitas
+                    const movement = Math.abs(box.x - lastX) + Math.abs(box.y - lastY);
+                    stabilityScore = (movement < 7) ? stabilityScore + 1 : 0;
+
+                    lastX = box.x;
+                    lastY = box.y;
+
+                    // Feedback visual
+                    ctx.lineWidth = 4;
+                    if (stabilityScore > 5) {
+                        ctx.strokeStyle = '#3b82f6';
+                        document.getElementById('instructionTextAbsen').textContent =
+                            'Tahan posisi, sedang memproses...';
+                    } else {
+                        ctx.strokeStyle = '#f87171';
+                        document.getElementById('instructionTextAbsen').textContent =
+                            'Posisikan wajah dengan tenang...';
+                    }
+                    ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+                    // Jika stabil cukup lama -> kirim absensi
+                    if (stabilityScore >= STABILITY_REQUIRED) {
+                        isCapturing = true;
+                        clearInterval(detectionInterval);
+                        document.getElementById('instructionTextAbsen').textContent =
+                            'Wajah Terdeteksi! Mengirim absensi...';
+
+                        // Ambil geolokasi sebelum kirim
+                        navigator.geolocation.getCurrentPosition(
+                            pos => {
+                                prosesAbsensiWajah(resized.descriptor, pos.coords.latitude, pos.coords
+                                    .longitude);
+                            },
+                            err => {
+                                console.warn('Gagal mengambil lokasi, tetap lanjut tanpa koordinat');
+                                prosesAbsensiWajah(resized.descriptor, null, null);
+                            }
+                        );
+                    }
+                } else {
+                    stabilityScore = 0;
+                    document.getElementById('instructionTextAbsen').textContent = 'Wajah tidak terlihat...';
+                }
+            }, 100);
+        }
+
+        function prosesAbsensiWajah(faceEmbedding, latitude, longitude) {
+            $.ajax({
+                url: '/absensi/status', // endpoint baru untuk cek status otomatis
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    face_embedding: JSON.stringify(Array.from(faceEmbedding)),
+                    latitude: latitude,
+                    longitude: longitude
+                },
+                success: function(res) {
+                    if (res.status === 'BELUM_MASUK') {
+                        // Absen masuk otomatis
+                        $.ajax({
+                            url: '/absensi/masuk',
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                face_embedding: JSON.stringify(Array.from(faceEmbedding)),
+                                latitude: latitude,
+                                longitude: longitude
+                            },
+                            success: function(r) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Absensi Masuk Berhasil',
+                                    text: r.message,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => closeAbsenManual());
+                            }
+                        });
+                    } else if (res.status === 'SUDAH_MASUK') {
+                        // Absen pulang otomatis
+                        $.ajax({
+                            url: '/absensi/pulang',
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                face_embedding: JSON.stringify(Array.from(faceEmbedding)),
+                                latitude: latitude,
+                                longitude: longitude
+                            },
+                            success: function(r) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Absensi Pulang Berhasil',
+                                    text: r.message,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => closeAbsenManual());
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Sudah Absen',
+                            text: 'Anda sudah melakukan absensi hari ini.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => closeAbsenManual());
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal Absensi',
+                        text: xhr.responseJSON?.message || 'Terjadi kesalahan sistem.'
+                    }).then(() => {
+                        stabilityScore = 0;
+                        isCapturing = false;
+                        startCamera();
+                    });
+                }
+            });
+        }
+    </script> --}}
 </body>
 
 </html>
