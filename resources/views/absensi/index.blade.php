@@ -250,6 +250,58 @@
         </div>
     </div>
 
+    {{-- modal camera --}}
+    <div id="camera-modal" class="fixed inset-0 z-[999] bg-black hidden flex-col">
+        <div class="relative flex-1 flex items-center justify-center overflow-hidden">
+            <video id="video" class="absolute w-full h-full object-cover" autoplay muted playsinline></video>
+
+            <div class="relative w-72 h-72 border-2 border-white/30 rounded-full flex items-center justify-center">
+                <div class="absolute inset-0 border-4 border-blue-500 rounded-full animate-pulse"></div>
+                <div class="w-full h-1 bg-blue-500 absolute top-0 animate-scan shadow-[0_0_15px_rgba(59,130,246,0.8)]">
+                </div>
+            </div>
+
+            <button onclick="closeCamera()"
+                class="absolute top-10 right-6 bg-black/50 text-white p-2 rounded-full hover:bg-black">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <div class="bg-white p-8 rounded-t-[2.5rem] text-center shadow-[0_-10px_25px_rgba(0,0,0,0.1)]">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+            <h3 id="status-title" class="font-bold text-xl text-gray-800 mb-1">Mencocokkan Wajah...</h3>
+            <p id="status-desc" class="text-sm text-gray-500 mb-8 px-10">Posisikan wajah Anda tepat di dalam lingkaran
+                biru.</p>
+
+            <button type="button" onclick="closeCamera()"
+                class="w-full py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold transition-all active:scale-95">
+                Batalkan Absensi
+            </button>
+        </div>
+    </div>
+
+    <style>
+        @keyframes scan {
+            0% {
+                top: 0;
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                top: 100%;
+                opacity: 0;
+            }
+        }
+
+        .animate-scan {
+            animation: scan 2s linear infinite;
+        }
+    </style>
+
     <!-- BOTTOM NAV -->
     @include('components.bottom_nav')
     {{-- modal absensi manual --}}
@@ -304,6 +356,220 @@
 
     <!-- 2. SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+lucide.createIcons();
+
+const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+let stream = null;
+let isEngineReady = false;
+let detectionInterval = null;
+
+// Variabel untuk stabilitas wajah
+let stabilityScore = 0;
+const STABILITY_REQUIRED = 15; // ~1,5 detik wajah stabil
+let lastX = 0;
+let lastY = 0;
+let isCapturing = false;
+
+async function openAbsenManual() {
+    const modal = document.getElementById('modalAbsenManual');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    await loadModels();
+    startCamera();
+}
+
+function closeAbsenManual() {
+    const modal = document.getElementById('modalAbsenManual');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+
+    if (stream) stream.getTracks().forEach(track => track.stop());
+    if (detectionInterval) clearInterval(detectionInterval);
+
+    // reset state
+    stabilityScore = 0;
+    isCapturing = false;
+    lastX = 0;
+    lastY = 0;
+    document.getElementById('instructionTextAbsen').textContent =
+        'Posisikan wajah di tengah lingkaran dan diam sebentar...';
+}
+
+async function loadModels() {
+    if (isEngineReady) return;
+    await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+    ]);
+    isEngineReady = true;
+}
+
+async function startCamera() {
+    const video = document.getElementById('videoStream');
+    const canvas = document.getElementById('canvasStream');
+
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' }
+        });
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+            video.play();
+            startRealtimeDetection(video, canvas);
+        };
+    } catch (err) {
+        console.error("Tidak bisa akses kamera:", err);
+        Swal.fire('Kamera Error', 'Izinkan akses kamera untuk absensi.', 'error');
+    }
+}
+
+function startRealtimeDetection(video, canvas) {
+    const displaySize = { width: video.clientWidth, height: video.clientHeight };
+    faceapi.matchDimensions(canvas, displaySize);
+
+    detectionInterval = setInterval(async () => {
+        if (!video.videoWidth || !isEngineReady || isCapturing) return;
+
+        const detection = await faceapi.detectSingleFace(video,
+            new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
+        ).withFaceLandmarks().withFaceDescriptor();
+
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (detection) {
+            const resized = faceapi.resizeResults(detection, displaySize);
+            const box = resized.detection.box;
+
+            // Logika stabilitas
+            const movement = Math.abs(box.x - lastX) + Math.abs(box.y - lastY);
+            stabilityScore = (movement < 7) ? stabilityScore + 1 : 0;
+
+            lastX = box.x;
+            lastY = box.y;
+
+            // Feedback visual
+            ctx.lineWidth = 4;
+            if (stabilityScore > 5) {
+                ctx.strokeStyle = '#3b82f6';
+                document.getElementById('instructionTextAbsen').textContent =
+                    'Tahan posisi, sedang memproses...';
+            } else {
+                ctx.strokeStyle = '#f87171';
+                document.getElementById('instructionTextAbsen').textContent =
+                    'Posisikan wajah dengan tenang...';
+            }
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+            // Jika stabil cukup lama -> kirim absensi
+            if (stabilityScore >= STABILITY_REQUIRED) {
+                isCapturing = true;
+                clearInterval(detectionInterval);
+                document.getElementById('instructionTextAbsen').textContent =
+                    'Wajah Terdeteksi! Mengirim absensi...';
+
+                // Ambil geolokasi sebelum kirim
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        prosesAbsensiWajah(resized.descriptor, pos.coords.latitude, pos.coords.longitude);
+                    },
+                    err => {
+                        console.warn('Gagal mengambil lokasi, tetap lanjut tanpa koordinat');
+                        prosesAbsensiWajah(resized.descriptor, null, null);
+                    }
+                );
+            }
+        } else {
+            stabilityScore = 0;
+            document.getElementById('instructionTextAbsen').textContent = 'Wajah tidak terlihat...';
+        }
+    }, 100);
+}
+
+function prosesAbsensiWajah(faceEmbedding, latitude, longitude) {
+    $.ajax({
+        url: '/absensi/status', // endpoint baru untuk cek status otomatis
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            face_embedding: JSON.stringify(Array.from(faceEmbedding)),
+            latitude: latitude,
+            longitude: longitude
+        },
+        success: function(res) {
+            if (res.status === 'BELUM_MASUK') {
+                // Absen masuk otomatis
+                $.ajax({
+                    url: '/absensi/masuk',
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        face_embedding: JSON.stringify(Array.from(faceEmbedding)),
+                        latitude: latitude,
+                        longitude: longitude
+                    },
+                    success: function(r) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Absensi Masuk Berhasil',
+                            text: r.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => closeAbsenManual());
+                    }
+                });
+            } else if (res.status === 'SUDAH_MASUK') {
+                // Absen pulang otomatis
+                $.ajax({
+                    url: '/absensi/pulang',
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        face_embedding: JSON.stringify(Array.from(faceEmbedding)),
+                        latitude: latitude,
+                        longitude: longitude
+                    },
+                    success: function(r) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Absensi Pulang Berhasil',
+                            text: r.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => closeAbsenManual());
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Sudah Absen',
+                    text: 'Anda sudah melakukan absensi hari ini.',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => closeAbsenManual());
+            }
+        },
+        error: function(xhr) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal Absensi',
+                text: xhr.responseJSON?.message || 'Terjadi kesalahan sistem.'
+            }).then(() => {
+                stabilityScore = 0;
+                isCapturing = false;
+                startCamera();
+            });
+        }
+    });
+}
+</script>
+
+
+
+
     <script>
         let streamReg = null;
         let isEngineReady = false;
@@ -505,7 +771,7 @@
             });
         }
     </script>
-    <script>
+    {{-- <script>
         function openAbsenManual() {
             const modal = document.getElementById('modalAbsenManual');
             modal.classList.remove('hidden');
@@ -517,7 +783,7 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
-    </script>
+    </script> --}}
 
 
 
@@ -571,229 +837,6 @@
             });
         }
     </script>
-
-    <script>
-        let stream = null;
-        let jenisAbsensi = null;
-
-        // Init icon
-        lucide.createIcons();
-
-        document.addEventListener('DOMContentLoaded', loadRiwayat);
-
-        // ===============================
-        // OPEN CAMERA
-        // ===============================
-        async function openCamera(type) {
-            jenisAbsensi = type;
-
-            document.getElementById('modalTitle').textContent =
-                `Absen ${type === 'masuk' ? 'Masuk' : 'Pulang'}`;
-
-            const modal = document.getElementById('modalKamera');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: 'user'
-                    },
-                    audio: false
-                });
-
-                const video = document.getElementById('video');
-                video.srcObject = stream;
-                video.play();
-
-            } catch (err) {
-                Swal.fire('Error', 'Kamera tidak dapat diakses', 'error');
-                stopCamera();
-            }
-
-            lucide.createIcons();
-        }
-
-        // ===============================
-        // STOP CAMERA
-        // ===============================
-        function stopCamera() {
-            if (stream) {
-                stream.getTracks().forEach(t => t.stop());
-                stream = null;
-            }
-
-            const modal = document.getElementById('modalKamera');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        // ===============================
-        // CAPTURE & AJAX SUBMIT
-        // ===============================
-        function capture() {
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
-
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-
-            const photoBase64 = canvas.toDataURL('image/jpeg', 0.9);
-
-            if (!photoBase64) {
-                Swal.fire('Error', 'Foto gagal diambil', 'error');
-                return;
-            }
-
-            stopCamera();
-            submitAbsen(photoBase64);
-        }
-
-        // ===============================
-        // AJAX ABSEN
-        // ===============================
-        // function submitAbsen(photo) {
-
-        //     const url = jenisAbsensi === 'masuk' ?
-        //         "{{ route('absen.masuk') }}" :
-        //         "{{ route('absen.pulang') }}";
-
-        //     $.ajax({
-        //         url: url,
-        //         method: 'POST',
-        //         data: {
-        //             _token: document.querySelector('meta[name="csrf-token"]').content,
-        //             photo: photo
-        //         },
-        //         beforeSend() {
-        //             Swal.fire({
-        //                 title: 'Menyimpan...',
-        //                 allowOutsideClick: false,
-        //                 didOpen: () => Swal.showLoading()
-        //             });
-        //         },
-        //         success(res) {
-        //             Swal.fire({
-        //                 icon: 'success',
-        //                 title: 'Berhasil',
-        //                 text: res.message,
-        //                 timer: 1500,
-        //                 showConfirmButton: false
-        //             });
-
-        //             loadRiwayat();
-        //         },
-        //         error(xhr) {
-        //             Swal.fire(
-        //                 'Gagal',
-        //                 xhr.responseJSON?.message ?? 'Terjadi kesalahan',
-        //                 'error'
-        //             );
-        //         }
-        //     });
-        // }
-    </script>
-
-
-    {{-- <script>
-        // Fungsi untuk MENUTUP Modal
-        function closeAbsenManual() {
-            const modal = document.getElementById('modalAbsenManual');
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-        }
-
-        // Menutup modal jika pengguna mengklik area hitam di luar modal (Overlay)
-        window.onclick = function(event) {
-            const modal = document.getElementById('modalAbsenManual');
-            if (event.target == modal) {
-                closeAbsenManual();
-            }
-        }
-
-        function submitAbsen(type) {
-            // 1. Alert awal agar user tahu proses sedang berjalan
-            Swal.fire({
-                title: 'Memverifikasi Lokasi...',
-                text: 'Harap tunggu, kami sedang memastikan posisi Anda tepat di radius cabang.',
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            // 2. Cek fitur Geolocation di Browser/HP
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const long = position.coords.longitude;
-
-                        // Kirim data koordinat ke server
-                        sendToServer(type, lat, long);
-                    },
-                    (error) => {
-                        let msg = "Gagal mengambil lokasi.";
-                        if (error.code == 1) msg =
-                            "Izin lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser Anda.";
-                        if (error.code == 2) msg = "Sinyal GPS tidak stabil.";
-                        if (error.code == 3) msg = "Waktu pencarian lokasi habis.";
-
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Lokasi Gagal diakses',
-                            text: msg,
-                            confirmButtonColor: '#ef4444'
-                        });
-                    }, {
-                        enableHighAccuracy: true, // Akurasi tinggi (GPS)
-                        timeout: 10000, // Maksimal 10 detik pencarian
-                        maximumAge: 0 // Jangan gunakan cache lokasi lama
-                    }
-                );
-            } else {
-                Swal.fire('Error', 'Perangkat/Browser Anda tidak mendukung GPS', 'error');
-            }
-        }
-
-        function sendToServer(type, lat, long) {
-            // URL disesuaikan dengan route Laravel Anda
-            const url = type === 'masuk' ? "{{ route('absen.masuk') }}" : "{{ route('absen.pulang') }}";
-
-            $.ajax({
-                url: url,
-                method: 'POST',
-                data: {
-                    _token: $('meta[name="csrf-token"]').attr('content'),
-                    latitude: lat,
-                    longitude: long
-                },
-                success(res) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Presensi Berhasil',
-                        text: res.message,
-                        confirmButtonColor: '#059669'
-                    }).then(() => {
-                        location.reload(); // Refresh halaman untuk update status
-                    });
-                },
-                error(xhr) {
-                    // Menangkap error radius dari controller (422/403)
-                    const errorMsg = xhr.responseJSON?.message ?? 'Terjadi kesalahan sistem';
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Akses Ditolak',
-                        text: errorMsg,
-                        confirmButtonColor: '#f97316'
-                    });
-                }
-            });
-        }
-    </script> --}}
-
 
     <script>
         // 🔥 DATA CABANG DARI SERVER
@@ -906,6 +949,92 @@
                     });
                 }
             });
+        }
+    </script>
+
+    <script>
+        const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+
+        async function startCamera(videoElement) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true
+                });
+                videoElement.srcObject = stream;
+            } catch (err) {
+                console.error("Gagal akses kamera:", err);
+            }
+        }
+
+
+        async function detectFace(videoElement) {
+            const canvas = faceapi.createCanvasFromMedia(videoElement);
+            videoElement.parentElement.appendChild(canvas);
+            const displaySize = {
+                width: videoElement.clientWidth,
+                height: videoElement.clientHeight
+            };
+            faceapi.matchDimensions(canvas, displaySize);
+
+            const interval = setInterval(async () => {
+                const detections = await faceapi.detectAllFaces(
+                    videoElement,
+                    new faceapi.TinyFaceDetectorOptions()
+                ).withFaceLandmarks().withFaceDescriptors();
+
+                // Tampilkan bounding box
+                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                faceapi.draw.drawDetections(canvas, resizedDetections);
+
+                if (detections.length > 0) {
+                    const faceEmbedding = detections[0].descriptor;
+
+                    // Kirim otomatis ke backend
+                    fetch('/absensi/masuk', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                face_embedding: JSON.stringify(faceEmbedding),
+                                latitude: null, // nanti bisa pakai geolocation
+                                longitude: null
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            console.log(data);
+                            if (data.absensi) {
+                                alert("Absen berhasil: " + data.message);
+                                videoElement.srcObject.getTracks().forEach(track => track.stop());
+                                clearInterval(interval);
+                            }
+                        })
+                        .catch(err => console.error(err));
+                }
+            }, 1000);
+        }
+
+        function openAbsenManual() {
+            const modal = document.getElementById('modalAbsenManual');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            const video = document.getElementById('videoStream');
+            startCamera(video);
+        }
+
+        function closeAbsenManual() {
+            const modal = document.getElementById('modalAbsenManual');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+
+            const video = document.getElementById('videoStream');
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
         }
     </script>
 

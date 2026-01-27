@@ -76,137 +76,241 @@ class AbsensiController extends Controller
 
 
 
-    // contrroller manual absensi 
-    public function absenMasuk(Request $request)
-    {
-        $user = Auth::user();
-        $today = Carbon::today()->toDateString();
-        $now = Carbon::now();
+ public function absenMasuk(Request $request)
+{
+    $today = Carbon::today()->toDateString();
+    $now = Carbon::now();
 
-        // 1. Cek apakah sudah absen hari ini
-        $cek = Absensi::where('user_id', $user->id)->where('tanggal', $today)->first();
-        if ($cek) return response()->json(['message' => 'Anda sudah absen masuk hari ini'], 422);
+    // 0. Validasi input embedding wajah
+    if (!$request->has('face_embedding')) {
+        return response()->json(['message' => 'Face embedding diperlukan untuk absen'], 422);
+    }
 
-        // 2. Ambil data cabang & Shift user (Penting untuk validasi status)
-        $cabang = Cabang::find($user->cabang_id);
-        if (!$cabang) return response()->json(['message' => 'Cabang tidak ditemukan'], 422);
+    $faceEmbeddingInput = json_decode($request->face_embedding); // array numeric
 
-        // Muat data shift user
-        $shift = \App\Models\Shift::find($user->shift_id);
-        if (!$shift) return response()->json(['message' => 'Jadwal shift tidak ditemukan'], 422);
+    // 1. Cocokkan dengan embedding di database
+    $user = $this->cocokkanFaceEmbedding($faceEmbeddingInput);
+    if (!$user) {
+        return response()->json(['message' => 'Wajah tidak terdaftar atau tidak dikenali'], 422);
+    }
 
-        // 3. Validasi Radius
-        $jarak = $this->calculateDistance(
-            $request->latitude,
-            $request->longitude,
-            $cabang->latitude,
-            $cabang->longitude
-        );
+    // 2. Cek apakah sudah absen hari ini
+    $cek = Absensi::where('user_id', $user->id)->where('tanggal', $today)->first();
+    if ($cek) return response()->json(['message' => 'Anda sudah absen masuk hari ini'], 422);
 
-        if ($jarak > $cabang->radius) {
-            return response()->json([
-                'message' => 'Gagal! Jarak Anda ' . round($jarak) . 'm. Di luar radius ' . $cabang->radius . 'm.'
-            ], 422);
-        }
+    // 3. Ambil cabang & shift
+    $cabang = Cabang::find($user->cabang_id);
+    if (!$cabang) return response()->json(['message' => 'Cabang tidak ditemukan'], 422);
 
-        // --- 4. LOGIKA CEK TERLAMBAT ---
-        $status = 'HADIR';
+    $shift = \App\Models\Shift::find($user->shift_id);
+    if (!$shift) return response()->json(['message' => 'Jadwal shift tidak ditemukan'], 422);
 
-        // Ambil jam masuk shift dan tambahkan toleransi (menit)
-        // Contoh: Jam masuk 08:00 + toleransi 15 menit = 08:15
-        $jamMasukShift = Carbon::parse($shift->jam_masuk);
-        $batasToleransi = $jamMasukShift->copy()->addMinutes($shift->toleransi);
+    // 4. Validasi jarak
+    $jarak = $this->calculateDistance(
+        $request->latitude,
+        $request->longitude,
+        $cabang->latitude,
+        $cabang->longitude
+    );
 
-        // Jika jam sekarang lebih besar dari batas toleransi
-        if ($now->gt($batasToleransi)) {
-            $status = 'TERLAMBAT';
-        }
-
-        // absenMasuk
-        Absensi::create([
-            'user_id'    => $user->id,
-            'cabang_id'  => $cabang->id,
-            'shift_id'   => $shift->id,
-            'tanggal'    => $today,
-            'jam_masuk'  => $now->toTimeString(),
-            'lat_masuk'  => $request->latitude,  // <=== SAMAKAN DENGAN JS
-            'long_masuk' => $request->longitude,
-            'status'     => $status,
-        ]);
-
-
-
+    if ($jarak > $cabang->radius) {
         return response()->json([
-            'message' => 'Absen masuk berhasil. Status: ' . $status
+            'message' => 'Gagal! Jarak Anda ' . round($jarak) . 'm. Di luar radius ' . $cabang->radius . 'm.'
+        ], 422);
+    }
+
+    // 5. Logika terlambat
+    $status = 'HADIR';
+    $jamMasukShift = Carbon::parse($shift->jam_masuk);
+    $batasToleransi = $jamMasukShift->copy()->addMinutes($shift->toleransi);
+    if ($now->gt($batasToleransi)) {
+        $status = 'TERLAMBAT';
+    }
+
+    // 6. Simpan absensi
+    $absensi = Absensi::create([
+        'user_id'    => $user->id,
+        'cabang_id'  => $cabang->id,
+        'shift_id'   => $shift->id,
+        'tanggal'    => $today,
+        'jam_masuk'  => $now->toTimeString(),
+        'lat_masuk'  => $request->latitude,
+        'long_masuk' => $request->longitude,
+        'status'     => $status,
+    ]);
+
+    return response()->json([
+        'message' => 'Absen masuk berhasil. Status: ' . $status,
+        'absensi' => $absensi
+    ]);
+}
+
+/**
+ * Fungsi mencocokkan embedding wajah input dengan database
+ */
+private function cocokkanFaceEmbedding(array $embeddingInput)
+{
+    $users = \App\Models\User::whereNotNull('face_embedding')->get();
+
+    foreach ($users as $user) {
+        $embeddingDb = json_decode($user->face_embedding, true);
+
+        // Hitung similarity (cosine similarity)
+        if ($this->cosineSimilarity($embeddingDb, $embeddingInput) > 0.7) { // threshold 0.7 bisa disesuaikan
+            return $user;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Hitung cosine similarity antara dua array embedding
+ */
+private function cosineSimilarity(array $vecA, array $vecB)
+{
+    $dot = 0;
+    $normA = 0;
+    $normB = 0;
+
+    for ($i = 0; $i < count($vecA); $i++) {
+        $dot += $vecA[$i] * $vecB[$i];
+        $normA += pow($vecA[$i], 2);
+        $normB += pow($vecB[$i], 2);
+    }
+
+    $normA = sqrt($normA);
+    $normB = sqrt($normB);
+
+    if ($normA * $normB == 0) return 0;
+
+    return $dot / ($normA * $normB);
+}
+
+
+ public function absenPulang(Request $request)
+{
+    $today = Carbon::today()->toDateString();
+    $now = Carbon::now();
+
+    // 0. Validasi input embedding wajah
+    if (!$request->has('face_embedding')) {
+        return response()->json(['message' => 'Face embedding diperlukan untuk absen'], 422);
+    }
+
+    $faceEmbeddingInput = json_decode($request->face_embedding);
+
+    // 1. Cocokkan dengan embedding di database
+    $user = $this->cocokkanFaceEmbedding($faceEmbeddingInput);
+    if (!$user) {
+        return response()->json(['message' => 'Wajah tidak terdaftar atau tidak dikenali'], 422);
+    }
+
+    // 2. Cari data absensi hari ini
+    $absensi = Absensi::with('shift')->where('user_id', $user->id)->where('tanggal', $today)->first();
+    if (!$absensi) return response()->json(['message' => 'Belum absen masuk'], 422);
+    if ($absensi->jam_keluar) return response()->json(['message' => 'Anda sudah absen pulang'], 422);
+    if (!$absensi->shift) return response()->json(['message' => 'Jadwal shift tidak ditemukan'], 422);
+
+    // 3. Validasi radius
+    $cabang = Cabang::find($user->cabang_id);
+    if (!$cabang) return response()->json(['message' => 'Data cabang tidak ditemukan'], 422);
+
+    $jarak = $this->calculateDistance(
+        $request->latitude,
+        $request->longitude,
+        $cabang->latitude,
+        $cabang->longitude
+    );
+
+    if ($jarak > $cabang->radius) {
+        return response()->json([
+            'message' => 'Di luar radius! Jarak: ' . round($jarak) . 'm. Maks: ' . $cabang->radius . 'm.'
+        ], 422);
+    }
+
+    // 4. Logika status absen pulang
+    $statusBaru = $absensi->status;
+
+    $jamMasukShift = Carbon::parse($absensi->shift->jam_masuk);
+    $jamPulangShift = Carbon::parse($absensi->shift->jam_pulang);
+
+    if ($jamPulangShift->lt($jamMasukShift)) {
+        $jamPulangShift->addDay();
+    }
+
+    if ($now->lt($jamPulangShift) && $absensi->status !== 'TERLAMBAT') {
+        $statusBaru = 'PULANG LEBIH AWAL';
+    }
+
+    // 5. Simpan jam pulang
+    $absensi->update([
+        'jam_keluar'  => $now->toTimeString(),
+        'lat_pulang'  => $request->latitude,
+        'long_pulang' => $request->longitude,
+        'status'      => $statusBaru,
+    ]);
+
+    return response()->json([
+        'message'    => "Absen pulang berhasil. Status: $statusBaru",
+        'jam_keluar' => $now->toTimeString(),
+        'status'     => $statusBaru
+    ]);
+}
+
+
+public function statusAbsensi(Request $request)
+{
+    $today = Carbon::today()->toDateString();
+
+    if (!$request->has('face_embedding')) {
+        return response()->json(['message' => 'Face embedding diperlukan'], 422);
+    }
+
+    $faceEmbeddingInput = json_decode($request->face_embedding);
+
+    // 1. Cocokkan embedding dengan database
+    $user = $this->cocokkanFaceEmbedding($faceEmbeddingInput);
+    if (!$user) {
+        return response()->json(['message' => 'Wajah tidak terdaftar', 'status' => 'TIDAK_TERDAFTAR'], 422);
+    }
+
+    // 2. Ambil absensi hari ini
+    $absensi = Absensi::where('user_id', $user->id)
+        ->where('tanggal', $today)
+        ->first();
+
+    if (!$absensi) {
+        // Belum absen masuk
+        return response()->json([
+            'status' => 'BELUM_MASUK',
+            'user_id' => $user->id,
+            'user_name' => $user->name
         ]);
     }
 
-    public function absenPulang(Request $request)
-    {
-        $user = Auth::user();
-        $now = Carbon::now();
-        $today = $now->toDateString();
-
-        // 1. Cari data absensi beserta relasi shift-nya
-        $absensi = Absensi::with('shift')
-            ->where('user_id', $user->id)
-            ->where('tanggal', $today)
-            ->first();
-
-        if (!$absensi) return response()->json(['message' => 'Belum absen masuk'], 422);
-        if ($absensi->jam_keluar) return response()->json(['message' => 'Anda sudah absen pulang'], 422);
-        if (!$absensi->shift) return response()->json(['message' => 'Jadwal shift tidak ditemukan'], 422);
-
-        // 2. VALIDASI RADIUS
-        $cabang = Cabang::find($user->cabang_id);
-        if (!$cabang) return response()->json(['message' => 'Data cabang tidak ditemukan'], 422);
-
-        $jarak = $this->calculateDistance(
-            $request->latitude,
-            $request->longitude,
-            $cabang->latitude,
-            $cabang->longitude
-        );
-
-        if ($jarak > $cabang->radius) {
-            return response()->json([
-                'message' => 'Di luar radius! Jarak: ' . round($jarak) . 'm. Maks: ' . $cabang->radius . 'm.'
-            ], 422);
-        }
-
-        // 3. LOGIKA STATUS WAKTU (Mendukung Shift Malam)
-        $statusBaru = $absensi->status; // Ambil status awal (Bisa HADIR atau TERLAMBAT)
-
-        $jamMasukShift = Carbon::parse($absensi->shift->jam_masuk);
-        $jamPulangShift = Carbon::parse($absensi->shift->jam_pulang);
-
-        // Jika shift melewati tengah malam
-        if ($jamPulangShift->lt($jamMasukShift)) {
-            $jamPulangShift->addDay();
-        }
-
-        // LOGIKA TAMBAHAN: 
-        // Jika sekarang belum jam pulang DAN status saat ini BUKAN TERLAMBAT
-        if ($now->lt($jamPulangShift) && $absensi->status !== 'TERLAMBAT') {
-            $statusBaru = 'PULANG LEBIH AWAL';
-        }
-        // Jika status saat ini TERLAMBAT, variabel $statusBaru tetap berisi 'TERLAMBAT' 
-        // karena tidak masuk ke dalam blok IF di atas.
-
-        // absenPulang
-        $absensi->update([
-            'jam_keluar'  => $now->toTimeString(),
-            'lat_pulang'  => $request->latitude,
-            'long_pulang' => $request->longitude,
-            'status'      => $statusBaru,
-        ]);
-
-
+    if ($absensi->jam_keluar === null) {
+        // Sudah masuk tapi belum pulang
         return response()->json([
-            'message' => "Absen pulang berhasil. Status: $statusBaru",
-            'jam_keluar' => $now->toTimeString()
+            'status' => 'SUDAH_MASUK',
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'jam_masuk' => $absensi->jam_masuk
         ]);
     }
+
+    // Sudah absen masuk & pulang
+    return response()->json([
+        'status' => 'SUDAH_PULANG',
+        'user_id' => $user->id,
+        'user_name' => $user->name,
+        'jam_masuk' => $absensi->jam_masuk,
+        'jam_keluar' => $absensi->jam_keluar
+    ]);
+}
+
+
+
 
 
 

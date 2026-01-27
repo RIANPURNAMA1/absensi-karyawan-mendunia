@@ -30,6 +30,7 @@ Route::middleware('guest')->group(
 );
 
 
+
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth', 'role:HR'])->group(function () {
     Route::get('/hr/dashboard', fn() => view('dashboard'))->name('hr.dashboard');
@@ -111,10 +112,14 @@ Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
         ->middleware('auth');
 });
 
+Route::post('/absensi/status', [AbsensiController::class, 'statusAbsensi']);
+
+
 // routes/web.php
 Route::middleware(['auth'])->group(function () {
     Route::post('/absen/masuk', [AbsensiController::class, 'absenMasuk'])->name('absen.masuk');
-    Route::post('/absen/pulang', [AbsensiController::class, 'absenPulang'])->name('absen.pulang');
+    Route::post('/absensi/masuk', [AbsensiController::class, 'absenMasuk']);
+    Route::post('/absensi/pulang', [AbsensiController::class, 'absenPulang'])->name('absen.pulang');
 });
 
 
