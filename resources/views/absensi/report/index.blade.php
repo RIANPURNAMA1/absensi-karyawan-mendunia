@@ -142,7 +142,7 @@
         </div>
     </div>
 
-   @include('components.bottom_nav')
+   @include('components.bottom_Nav')
 
     <script>
         lucide.createIcons();
