@@ -133,7 +133,7 @@
     </div>
 
     <!-- BOTTOM NAV -->
-    @include('components.bottom_nav')
+    @include('components.bottom_Nav')
 
     <script>
         // Initialize Lucide Icons

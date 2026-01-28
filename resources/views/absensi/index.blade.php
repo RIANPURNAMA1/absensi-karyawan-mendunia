@@ -399,7 +399,7 @@
     </style>
 
     <!-- BOTTOM NAV -->
-    @include('components.bottom_nav')
+    @include('components.bottom_Nav')
     {{-- modal absensi manual --}}
     @include('absensi.modal_manual')
 
