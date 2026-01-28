@@ -51,13 +51,14 @@ return new class extends Migration
             $table->decimal('lat_pulang', 10, 8)->nullable();
             $table->decimal('long_pulang', 11, 8)->nullable();
 
-            // Status absensi
+            // TAMBAHKAN 'LIBUR' di sini
             $table->enum('status', [
                 'HADIR',
                 'TERLAMBAT',
                 'IZIN',
                 'ALPA',
-                'PULANG LEBIH AWAL'
+                'PULANG LEBIH AWAL',
+                'LIBUR' 
             ])->default('HADIR');
 
             // Foto dari kamera

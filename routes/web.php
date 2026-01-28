@@ -16,6 +16,12 @@ use App\Http\Controllers\CabangController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ProfileController;
 
+
+
+
+Route::get('/keep-alive', function () {
+    return response()->json(['status' => 'active']);
+})->middleware('auth');
 /*
 |--------------------------------------------------------------------------
 | Authentication Routes
@@ -164,4 +170,23 @@ Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('/user/update-face', [AbsensiController::class, 'updateFace'])->name('user.update-face');
+});
+
+
+// hari libur
+use App\Http\Controllers\HariLiburController;
+
+    Route::get('/hari-libur', [HariLiburController::class, 'index'])->name('hari-libur.index');
+    Route::post('/hari-libur', [HariLiburController::class, 'store'])->name('hari-libur.store');
+    Route::delete('/hari-libur/{id}', [HariLiburController::class, 'destroy'])->name('hari-libur.destroy');
+
+
+    use App\Http\Controllers\ReportController;
+
+Route::middleware(['auth'])->group(function () {
+    // View Utama Report
+    Route::get('/report', [ReportController::class, 'index'])->name('report.index');
+    
+    // API untuk data kalender (jika diperlukan oleh script kalender)
+    Route::get('/api/report/calendar', [ReportController::class, 'getCalendarData'])->name('report.calendar');
 });

@@ -8,7 +8,7 @@
                 <span class="text-xs font-medium">Home</span>
             </a>
 
-            <button onclick="window.location='calendar'" class="flex flex-col items-center gap-1 text-gray-400">
+            <button onclick="window.location='/calendar'" class="flex flex-col items-center gap-1 text-gray-400">
                 <i data-lucide="calendar" class="w-6 h-6"></i>
                 <span class="text-xs font-medium">Calendar</span>
             </button>
@@ -21,7 +21,7 @@
                 <span class="text-xs font-medium text-gray-700 mt-2">Attedance</span>
             </button>
 
-            <button class="flex flex-col items-center gap-1 text-gray-400">
+            <button onclick="window.location='/report'" class="flex flex-col items-center gap-1 text-gray-400">
                 <i data-lucide="trending-up" class="w-6 h-6"></i>
                 <span class="text-xs font-medium">Report</span>
             </button>

@@ -5,20 +5,21 @@
 
 <head>
     <title>Absensi Mendunia </title>
+
     <!-- [Meta] -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
+    {{-- <link rel="icon" href="{{ asset('assets/compiled/png/LOGO/logo4.png') }}" type="image/x-icon"> --}}
     <meta name="description"
-        content="Gradient Able is trending dashboard template made using Bootstrap 5 design framework. Gradient Able is available in Bootstrap, React, CodeIgniter, Angular,  and .net Technologies." />
+    content="Gradient Able is trending dashboard template made using Bootstrap 5 design framework. Gradient Able is available in Bootstrap, React, CodeIgniter, Angular,  and .net Technologies." />
     <meta name="keywords"
-        content="Bootstrap admin template, Dashboard UI Kit, Dashboard Template, Backend Panel, react dashboard, angular dashboard" />
+    content="Bootstrap admin template, Dashboard UI Kit, Dashboard Template, Backend Panel, react dashboard, angular dashboard" />
     <meta name="author" content="codedthemes" />
+    
+    <link rel="icon" href="{{ asset('assets/images/logo/logo-sm.png') }}" type="image/png" style="width: 40px">
 
-    <!-- [Favicon] icon -->
-    <link rel="icon" href="../assets/images/favicon.svg" type="image/x-icon" />
 
     <!-- map-vector css -->
     <link rel="stylesheet" href="../assets/css/plugins/jsvectormap.min.css" />
@@ -36,7 +37,7 @@
     <!-- [Template CSS Files] -->
     <link rel="stylesheet" href="../assets/css/style.css" id="main-style-link" />
     <link rel="stylesheet" href="../assets/css/style-preset.css" />
-    <link rel="stylesheet" href="../assets/css/custom.css"  />
+    <link rel="stylesheet" href="../assets/css/custom.css" />
 
 </head>
 <!-- [Head] end -->
@@ -77,7 +78,7 @@
     <div class="pc-container">
         <div class="pc-content">
             <!-- [ Main Content ] start -->
-           @yield('content')
+            @yield('content')
             <!-- [ Main Content ] end -->
         </div>
     </div>
@@ -134,6 +135,13 @@
     <script src="../assets/js/theme.js"></script>
     <script src="../assets/js/plugins/feather.min.js"></script>
     <script>
+        // Menjaga session tetap aktif selama tab browser masih terbuka
+        setInterval(function() {
+            fetch('/keep-alive')
+                .then(response => response.json())
+                .then(data => console.log('Session refreshed'));
+        }, 15 * 60 * 1000); // Setiap 15 menit
+
         const ctxMonthly = document.getElementById('attendanceMonthlyChart').getContext('2d');
 
         new Chart(ctxMonthly, {

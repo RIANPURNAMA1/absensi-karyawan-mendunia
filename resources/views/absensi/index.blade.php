@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Absensi Karyawan</title>
+    {{-- <link rel="icon" href="{{ asset('assets/compiled/png/LOGO/logo4.png') }}" type="image/x-icon"> --}}
+    <link rel="icon" href="{{ asset('assets/images/logo/logo-sm.png') }}" type="image/png" style="width: 40px">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -40,7 +42,7 @@
     <!-- STATUS BAR -->
     <div class="bg-white px-4 pt-3 pb-2">
         <div class="flex items-center justify-between text-xs text-gray-600">
-            <span id="statusTime">9:41</span>
+            <span id="statusTime">--:--</span>
             <div class="flex gap-1">
                 <div class="w-4 h-3 border border-gray-400 rounded-sm relative">
                     <div class="absolute inset-0.5 bg-gray-800 rounded-sm"></div>
@@ -48,6 +50,24 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+
+            let hours = now.getHours().toString().padStart(2, '0');
+            let minutes = now.getMinutes().toString().padStart(2, '0');
+
+            document.getElementById("statusTime").textContent = `${hours}:${minutes}`;
+        }
+
+        // Jalankan pertama kali
+        updateTime();
+
+        // Update tiap 1 detik
+        setInterval(updateTime, 1000);
+    </script>
+
 
     <!-- HEADER -->
     <div class="bg-white px-5 pt-4 pb-6 shadow-sm">
@@ -329,8 +349,10 @@
         <div class="relative flex-1 flex items-center justify-center overflow-hidden">
             <video id="video" class="absolute w-full h-full object-cover" autoplay muted playsinline></video>
 
-            <div class="relative w-72 h-72 border-2 border-white/30 rounded-full flex items-center justify-center">
-                <div class="absolute inset-0 border-4 border-blue-500 rounded-full animate-pulse"></div>
+            <div class="relative w-72 h-72 border-2 border-white/20 rounded-full flex items-center justify-center">
+                <div id="scanner-ring" class="absolute inset-0 border-4 border-blue-500 rounded-full animate-pulse">
+                </div>
+
                 <div class="w-full h-1 bg-blue-500 absolute top-0 animate-scan shadow-[0_0_15px_rgba(59,130,246,0.8)]">
                 </div>
             </div>
@@ -343,13 +365,13 @@
 
         <div class="bg-white p-8 rounded-t-[2.5rem] text-center shadow-[0_-10px_25px_rgba(0,0,0,0.1)]">
             <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
-            <h3 id="status-title" class="font-bold text-xl text-gray-800 mb-1">Mencocokkan Wajah...</h3>
-            <p id="status-desc" class="text-sm text-gray-500 mb-8 px-10">Posisikan wajah Anda tepat di dalam lingkaran
-                biru.</p>
+            <h3 id="status-title" class="font-bold text-xl text-gray-800 mb-1">Siap Memindai</h3>
+            <p id="status-desc" class="text-sm text-gray-500 mb-8 px-10">Dekatkan wajah ke kamera untuk absensi
+                instan.</p>
 
             <button type="button" onclick="closeCamera()"
                 class="w-full py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold transition-all active:scale-95">
-                Batalkan Absensi
+                Batalkan
             </button>
         </div>
     </div>
@@ -434,8 +456,15 @@
     <!-- File JS eksternal absensi -->
     <script src="{{ asset('js/absensi.js') }}" defer></script>
 
-
     <script>
+        // Menjaga session tetap aktif selama tab browser masih terbuka
+        setInterval(function() {
+            fetch('/keep-alive')
+                .then(response => response.json())
+                .then(data => console.log('Session refreshed'));
+        }, 15 * 60 * 1000); // Setiap 15 menit
+
+
         $(document).ready(async function() {
             // Ambil status face_embedding dari Laravel
             const hasFace = @json(auth()->user()->face_embedding != null);

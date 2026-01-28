@@ -22,44 +22,43 @@ class AuthController extends Controller
 
 
     public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
+{
+    $credentials = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required'
+    ]);
 
-        if (!Auth::attempt($credentials, $request->remember)) {
-            return response()->json([
-                'message' => 'Email atau password salah'
-            ], 401);
-        }
+    // PAKSA TRUE: Ini akan membuat cookie 'remember_me' aktif selamanya
+    $remember = true; 
 
-        $user = Auth::user();
-
-        // Cek status
-        if ($user->status !== 'AKTIF') {
-            Auth::logout();
-            return response()->json([
-                'message' => 'Akun tidak aktif'
-            ], 403);
-        }
-
-        // Update last login
-        $user->update(['last_login' => now()]);
-
-        // Redirect berdasarkan role
-        $redirect = match ($user->role) {
-            'HR'       => route('dashboard'),
-            'MANAGER'  => route('dashboard'),
-            'KARYAWAN' => route('absensi.index'),
-            default    => route('login')
-        };
-
+    if (!Auth::attempt($credentials, $remember)) {
         return response()->json([
-            'message'  => 'Login berhasil sebagai ' . $user->role,
-            'redirect' => $redirect
-        ]);
+            'message' => 'Email atau password salah'
+        ], 401);
     }
+
+    $user = Auth::user();
+
+    if ($user->status !== 'AKTIF') {
+        Auth::logout();
+        return response()->json([
+            'message' => 'Akun tidak aktif'
+        ], 403);
+    }
+
+    $user->update(['last_login' => now()]);
+
+    $redirect = match ($user->role) {
+        'HR', 'MANAGER' => route('dashboard'),
+        'KARYAWAN'      => route('absensi.index'),
+        default         => route('login')
+    };
+
+    return response()->json([
+        'message'  => 'Login berhasil',
+        'redirect' => $redirect
+    ]);
+}
 
 
     public function register(Request $request)

@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Absensi;
 use App\Models\Cabang;
+use App\Models\HariLibur;
 use App\Models\Karyawan;
 use App\Models\JadwalKerja;
 use App\Models\User;
+use App\Models\Shift; // <--- TAMBAHKAN BARIS INI
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Facades\Auth;
@@ -88,7 +90,7 @@ class AbsensiController extends Controller
 
     public function riwayatTerbaru()
     {
-        $riwayat = Absensi::where('user_id', auth()->id())
+        $riwayat = Absensi::where('user_id', Auth::id())
             ->orderBy('tanggal', 'desc')
             ->take(5)
             ->get();
@@ -107,7 +109,7 @@ class AbsensiController extends Controller
 
     public function profile()
     {
-        $user = auth()->user()->load(['divisi']);
+        $user = Auth::user()->load(['divisi']);
 
         // Hitung statistik bulan ini
         $stats = [
@@ -143,14 +145,21 @@ class AbsensiController extends Controller
         $today = Carbon::today()->toDateString();
         $now = Carbon::now();
 
+        // --- VALIDASI HARI LIBUR ---
+        if (HariLibur::apakahLibur($today)) {
+            return response()->json([
+                'message' => 'Hari ini adalah hari libur (Weekend/Nasional). Absensi tidak dibuka.'
+            ], 403);
+        }
+
         // 0. Validasi input embedding wajah
         if (!$request->has('face_embedding')) {
             return response()->json(['message' => 'Face embedding diperlukan untuk absen'], 422);
         }
 
-        $faceEmbeddingInput = json_decode($request->face_embedding); // array numeric
+        $faceEmbeddingInput = json_decode($request->face_embedding);
 
-        // 1. Cocokkan dengan embedding di database
+        // 1. Cocokkan wajah
         $user = $this->cocokkanFaceEmbedding($faceEmbeddingInput);
         if (!$user) {
             return response()->json(['message' => 'Wajah tidak terdaftar atau tidak dikenali'], 422);
@@ -164,7 +173,7 @@ class AbsensiController extends Controller
         $cabang = Cabang::find($user->cabang_id);
         if (!$cabang) return response()->json(['message' => 'Cabang tidak ditemukan'], 422);
 
-        $shift = \App\Models\Shift::find($user->shift_id);
+        $shift = Shift::find($user->shift_id);
         if (!$shift) return response()->json(['message' => 'Jadwal shift tidak ditemukan'], 422);
 
         // 4. Validasi jarak
@@ -185,6 +194,7 @@ class AbsensiController extends Controller
         $status = 'HADIR';
         $jamMasukShift = Carbon::parse($shift->jam_masuk);
         $batasToleransi = $jamMasukShift->copy()->addMinutes($shift->toleransi);
+
         if ($now->gt($batasToleransi)) {
             $status = 'TERLAMBAT';
         }
@@ -214,31 +224,25 @@ class AbsensiController extends Controller
      * Fungsi mencocokkan embedding wajah input dengan database
      * Diperketat dengan Euclidean Distance dan Threshold rendah
      */
+    // --- HELPER METHODS ---
+
     private function cocokkanFaceEmbedding(array $embeddingInput)
     {
-        // Ambil semua user yang sudah punya data wajah
-        $users = \App\Models\User::whereNotNull('face_embedding')->get();
-
+        $users = User::whereNotNull('face_embedding')->get();
         $bestMatch = null;
-        $minDistance = 1.0; // Nilai awal (semakin kecil semakin cocok)
+        $minDistance = 1.0;
 
         foreach ($users as $user) {
             $embeddingDb = json_decode($user->face_embedding, true);
-
-            // Gunakan Euclidean Distance agar lebih akurat
             $distance = $this->euclideanDistance($embeddingInput, $embeddingDb);
 
-            // Threshold 0.40 (Golden Standard untuk Face-API)
-            // Jika jarak di bawah 0.40, kita anggap itu orang yang sama
             if ($distance < 0.40 && $distance < $minDistance) {
                 $minDistance = $distance;
                 $bestMatch = $user;
             }
         }
-
         return $bestMatch;
     }
-
     /**
      * Hitung cosine similarity antara dua array embedding
      */
@@ -343,20 +347,25 @@ class AbsensiController extends Controller
         }
 
         $faceEmbeddingInput = json_decode($request->face_embedding);
-
-        // 1. Cocokkan embedding dengan database
         $user = $this->cocokkanFaceEmbedding($faceEmbeddingInput);
+
         if (!$user) {
             return response()->json(['message' => 'Wajah tidak terdaftar', 'status' => 'TIDAK_TERDAFTAR'], 422);
         }
 
-        // 2. Ambil absensi hari ini
-        $absensi = Absensi::where('user_id', $user->id)
-            ->where('tanggal', $today)
-            ->first();
+        // --- CEK JIKA HARI INI LIBUR ---
+        if (HariLibur::apakahLibur($today)) {
+            return response()->json([
+                'status' => 'LIBUR',
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'message' => 'Hari ini libur. Selamat beristirahat!'
+            ]);
+        }
+
+        $absensi = Absensi::where('user_id', $user->id)->where('tanggal', $today)->first();
 
         if (!$absensi) {
-            // Belum absen masuk
             return response()->json([
                 'status' => 'BELUM_MASUK',
                 'user_id' => $user->id,
@@ -365,7 +374,6 @@ class AbsensiController extends Controller
         }
 
         if ($absensi->jam_keluar === null) {
-            // Sudah masuk tapi belum pulang
             return response()->json([
                 'status' => 'SUDAH_MASUK',
                 'user_id' => $user->id,
@@ -374,7 +382,6 @@ class AbsensiController extends Controller
             ]);
         }
 
-        // Sudah absen masuk & pulang
         return response()->json([
             'status' => 'SUDAH_PULANG',
             'user_id' => $user->id,
@@ -388,10 +395,9 @@ class AbsensiController extends Controller
 
 
 
-
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
-        $earthRadius = 6371000; // Meter
+        $earthRadius = 6371000;
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
         $a = sin($dLat / 2) * sin($dLat / 2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) * sin($dLon / 2);
@@ -618,38 +624,38 @@ class AbsensiController extends Controller
         ]);
     }
 
- public function updateFace(Request $request)
-{
-    $newDescriptor = json_decode($request->face_embedding);
+    public function updateFace(Request $request)
+    {
+        $newDescriptor = json_decode($request->face_embedding);
 
-    if (!$newDescriptor) {
-        return response()->json(['status' => 'error', 'message' => 'Data wajah tidak valid'], 400);
-    }
-
-    // Ambil user lain untuk pengecekan duplikasi wajah
-    $otherUsers = User::whereNotNull('face_embedding')
-        ->where('id', '!=', auth()->id())
-        ->get();
-
-    foreach ($otherUsers as $user) {
-        $existingDescriptor = json_decode($user->face_embedding);
-        $distance = $this->euclideanDistance($newDescriptor, $existingDescriptor);
-
-        // Jika distance < 0.40, berarti wajah ini "terlalu mirip" dengan orang lain
-        if ($distance < 0.40) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Gagal! Wajah ini terdeteksi mirip dengan: ' . $user->name . '. Silakan ambil ulang dengan posisi lebih tegak.'
-            ], 422);
+        if (!$newDescriptor) {
+            return response()->json(['status' => 'error', 'message' => 'Data wajah tidak valid'], 400);
         }
+
+        // Ambil user lain untuk pengecekan duplikasi wajah
+        $otherUsers = User::whereNotNull('face_embedding')
+            ->where('id', '!=', auth()->id())
+            ->get();
+
+        foreach ($otherUsers as $user) {
+            $existingDescriptor = json_decode($user->face_embedding);
+            $distance = $this->euclideanDistance($newDescriptor, $existingDescriptor);
+
+            // Jika distance < 0.40, berarti wajah ini "terlalu mirip" dengan orang lain
+            if ($distance < 0.40) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Gagal! Wajah ini terdeteksi mirip dengan: ' . $user->name . '. Silakan ambil ulang dengan posisi lebih tegak.'
+                ], 422);
+            }
+        }
+
+        auth()->user()->update([
+            'face_embedding' => $request->face_embedding
+        ]);
+
+        return response()->json(['status' => 'success', 'message' => 'Wajah berhasil didaftarkan']);
     }
-
-    auth()->user()->update([
-        'face_embedding' => $request->face_embedding
-    ]);
-
-    return response()->json(['status' => 'success', 'message' => 'Wajah berhasil didaftarkan']);
-}
 
     /**
      * Fungsi menghitung jarak antara dua vektor wajah

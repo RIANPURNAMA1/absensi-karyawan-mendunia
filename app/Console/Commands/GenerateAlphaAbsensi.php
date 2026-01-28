@@ -4,33 +4,23 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use App\Models\Absensi;
+use App\Models\HariLibur; // Tambahkan ini
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class GenerateAlphaAbsensi extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'absensi:generate-alpha';
+    protected $description = 'Otomatis set status ALPA atau LIBUR bagi karyawan';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Command description';
-
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
         $today = Carbon::today();
+        
+        // 1. Cek apakah hari ini Libur (Weekend atau Tanggal Merah)
+        $isLibur = HariLibur::apakahLibur($today);
 
-        // Ambil semua karyawan aktif yang punya shift
+        // Ambil karyawan aktif
         $users = User::where('role', 'KARYAWAN')
             ->where('status', 'AKTIF')
             ->whereNotNull('shift_id')
@@ -38,22 +28,22 @@ class GenerateAlphaAbsensi extends Command
             ->get();
 
         foreach ($users as $user) {
-
             $shift = $user->shift;
             if (!$shift) continue;
 
-            $jamMasukShift = Carbon::parse($shift->jam_masuk)->setDateFrom($today);
-            $batasHadir = $jamMasukShift->copy()->addMinutes($shift->toleransi);
+            // 2. Logic Tambahan: Jika hari ini LIBUR, kita set status LIBUR
+            // Jika hari ini KERJA, kita cek apakah sudah lewat batas hadir untuk set ALPA
+            if (!$isLibur) {
+                $jamMasukShift = Carbon::parse($shift->jam_masuk)->setDateFrom($today);
+                $batasHadir = $jamMasukShift->copy()->addMinutes($shift->toleransi);
 
-
-
-
-            // Kalau sekarang belum lewat batas → skip
-            if (Carbon::now()->lt($batasHadir)) {
-                continue;
+                // Jika belum lewat batas waktu toleransi, jangan di-ALPA dulu
+                if (Carbon::now()->lt($batasHadir)) {
+                    continue;
+                }
             }
 
-            // Cek apakah sudah ada absensi hari ini
+            // 3. Cek apakah sudah ada record absensi (biar tidak double)
             $sudahAbsen = Absensi::where('user_id', $user->id)
                 ->whereDate('tanggal', $today)
                 ->exists();
@@ -64,12 +54,15 @@ class GenerateAlphaAbsensi extends Command
                     'shift_id'  => $shift->id,
                     'cabang_id' => $user->cabang_id,
                     'tanggal'   => $today,
-                    'status'    => 'ALPA',
-                    'keterangan' => 'Tidak melakukan absensi sampai batas waktu'
+                    // Jika libur set LIBUR, jika tidak set ALPA
+                    'status'    => $isLibur ? 'LIBUR' : 'ALPA',
+                    'keterangan' => $isLibur 
+                        ? 'Libur otomatis (Weekend/Nasional)' 
+                        : 'Tidak melakukan absensi sampai batas waktu'
                 ]);
             }
         }
 
-        $this->info('Generate ALPA selesai');
+        $this->info('Generate status harian selesai: ' . ($isLibur ? 'Status LIBUR' : 'Status ALPA'));
     }
 }

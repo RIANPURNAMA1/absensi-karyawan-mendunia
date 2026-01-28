@@ -79,6 +79,12 @@
                      </a>
                  </li>
                  <li class="pc-item">
+                     <a href="/hari-libur" class="pc-link">
+                         <span class="pc-micon"><i class="ph ph-file-text"></i></span>
+                         <span class="pc-mtext">Hari Libur </span>
+                     </a>
+                 </li>
+                 <li class="pc-item">
                      <a href="/rekap-absensi" class="pc-link">
                          <span class="pc-micon"><i class="ph ph-chart-bar"></i></span>
                          <span class="pc-mtext">Rekap Absensi</span>

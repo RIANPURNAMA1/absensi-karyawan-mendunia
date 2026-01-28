@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profil Karyawan</title>
-
+    {{-- <link rel="icon" href="{{ asset('assets/compiled/png/LOGO/logo4.png') }}" type="image/x-icon"> --}}
+    <link rel="icon" href="{{ asset('assets/images/logo/logo-sm.png') }}" type="image/png" style="width: 40px">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -24,7 +25,7 @@
     <!-- STATUS BAR -->
     <div class="bg-white px-4 pt-3 pb-2">
         <div class="flex items-center justify-between text-xs text-gray-600">
-            <span id="statusTime">9:41</span>
+            <span id="statusTime">--:--</span>
             <div class="flex gap-1">
                 <div class="w-4 h-3 border border-gray-400 rounded-sm relative">
                     <div class="absolute inset-0.5 bg-gray-800 rounded-sm"></div>
@@ -32,6 +33,23 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+
+            let hours = now.getHours().toString().padStart(2, '0');
+            let minutes = now.getMinutes().toString().padStart(2, '0');
+
+            document.getElementById("statusTime").textContent = `${hours}:${minutes}`;
+        }
+
+        // Jalankan pertama kali
+        updateTime();
+
+        // Update tiap 1 detik
+        setInterval(updateTime, 1000);
+    </script>
 
     <!-- HEADER -->
     <div class="bg-white px-5 pt-4 pb-6 shadow-sm">
@@ -45,15 +63,15 @@
             </button>
         </div>
     </div>
-    
+
 
     <div class="px-5 py-5">
         <div class="bg-gradient-to-br from-[#00c0ff] to-blue-700 rounded-3xl p-6 text-white shadow-lg mb-5">
             <div class="flex items-center gap-4 mb-4">
                 <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white/30 shadow-inner">
                     <img id="previewFoto"
-     src="{{ auth()->user()->foto_profil ? asset('foto-karyawan/' . auth()->user()->foto_profil) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) }}"
-     class="w-full h-full object-cover">
+                        src="{{ auth()->user()->foto_profil ? asset('foto-karyawan/' . auth()->user()->foto_profil) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) }}"
+                        class="w-full h-full object-cover">
                 </div>
 
                 <div class="flex-1">
@@ -197,6 +215,13 @@
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
         <script>
+            // Menjaga session tetap aktif selama tab browser masih terbuka
+            setInterval(function() {
+                fetch('/keep-alive')
+                    .then(response => response.json())
+                    .then(data => console.log('Session refreshed'));
+            }, 15 * 60 * 1000); // Setiap 15 menit
+
             $(document).ready(function() {
 
                 $('#btnLogout').on('click', function(e) {

@@ -24,10 +24,10 @@
 
 <body class="bg-gray-50">
 
-
+ <!-- STATUS BAR -->
     <div class="bg-white px-4 pt-3 pb-2">
         <div class="flex items-center justify-between text-xs text-gray-600">
-            <span id="statusTime">9:41</span>
+            <span id="statusTime">--:--</span>
             <div class="flex gap-1">
                 <div class="w-4 h-3 border border-gray-400 rounded-sm relative">
                     <div class="absolute inset-0.5 bg-gray-800 rounded-sm"></div>
@@ -35,6 +35,23 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+
+            let hours = now.getHours().toString().padStart(2, '0');
+            let minutes = now.getMinutes().toString().padStart(2, '0');
+
+            document.getElementById("statusTime").textContent = `${hours}:${minutes}`;
+        }
+
+        // Jalankan pertama kali
+        updateTime();
+
+        // Update tiap 1 detik
+        setInterval(updateTime, 1000);
+    </script>
 
     <div class="bg-white px-5 pt-4 pb-6 shadow-sm border-b border-gray-100">
         <div class="flex items-center justify-between">

@@ -13,14 +13,10 @@ let stream = null;
 let isEngineReady = false;
 let detectionInterval = null;
 
-// Variabel untuk stabilitas wajah
-let stabilityScore = 0;
-const STABILITY_REQUIRED = 15; // ~1,5 detik wajah stabil
-let lastX = 0;
-let lastY = 0;
-let isCapturing = false;
-let absensiProcessing = false; // 🔥 kunci request server
-let detectionPaused = false; // 🔥 pause deteksi kamera
+// Variabel untuk deteksi otomatis
+let faceDetectedCount = 0;
+const DETECTION_THRESHOLD = 3; // Deteksi 3x berturut-turut untuk konfirmasi
+let absensiProcessing = false;
 
 window.openAbsen = async function () {
     const modal = document.getElementById("modalAbsenManual");
@@ -40,22 +36,27 @@ function closeAbsenManual() {
     if (detectionInterval) clearInterval(detectionInterval);
 
     // reset state
-    stabilityScore = 0;
-    isCapturing = false;
-    lastX = 0;
-    lastY = 0;
+    faceDetectedCount = 0;
+    absensiProcessing = false;
     document.getElementById("instructionTextAbsen").textContent =
-        "Posisikan wajah di tengah lingkaran dan diam sebentar...";
+        "Posisikan wajah Anda di depan kamera...";
 }
 
 async function loadModels() {
     if (isEngineReady) return;
+    
+    document.getElementById("instructionTextAbsen").textContent =
+        "Memuat model deteksi wajah...";
+    
     await Promise.all([
         faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
         faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
         faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
     ]);
     isEngineReady = true;
+    
+    document.getElementById("instructionTextAbsen").textContent =
+        "Posisikan wajah Anda di depan kamera...";
 }
 
 async function startCamera() {
@@ -66,11 +67,15 @@ async function startCamera() {
         stream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: "user",
+                width: { ideal: 640 },
+                height: { ideal: 480 }
             },
         });
         video.srcObject = stream;
         video.onloadedmetadata = () => {
             video.play();
+            document.getElementById("instructionTextAbsen").textContent =
+                "Mencari wajah...";
             startRealtimeDetection(video, canvas);
         };
     } catch (err) {
@@ -91,7 +96,8 @@ function startRealtimeDetection(video, canvas) {
     faceapi.matchDimensions(canvas, displaySize);
 
     detectionInterval = setInterval(async () => {
-        if (!video.videoWidth || !isEngineReady || isCapturing) return;
+        // Skip jika sedang memproses absensi
+        if (!video.videoWidth || !isEngineReady || absensiProcessing) return;
 
         const detection = await faceapi
             .detectSingleFace(
@@ -111,42 +117,46 @@ function startRealtimeDetection(video, canvas) {
             const resized = faceapi.resizeResults(detection, displaySize);
             const box = resized.detection.box;
 
-            // Logika stabilitas
-            const movement = Math.abs(box.x - lastX) + Math.abs(box.y - lastY);
-            stabilityScore = movement < 7 ? stabilityScore + 1 : 0;
+            // Increment counter jika wajah terdeteksi
+            faceDetectedCount++;
 
-            lastX = box.x;
-            lastY = box.y;
-
-            // Feedback visual
-            ctx.lineWidth = 4;
-            if (stabilityScore > 5) {
-                ctx.strokeStyle = "#3b82f6";
-                document.getElementById("instructionTextAbsen").textContent =
-                    "Tahan posisi, sedang memproses...";
-            } else {
-                ctx.strokeStyle = "#f87171";
-                document.getElementById("instructionTextAbsen").textContent =
-                    "Posisikan wajah dengan tenang...";
-            }
+            // Gambar kotak hijau di sekitar wajah yang terdeteksi
+            ctx.strokeStyle = "#10b981"; // Green color
+            ctx.lineWidth = 3;
             ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-            // Jika stabil cukup lama -> kirim absensi
-            // ... di dalam setInterval startRealtimeDetection ...
-            if (stabilityScore >= STABILITY_REQUIRED && !absensiProcessing) {
-                absensiProcessing = true; // Kunci agar tidak masuk ke sini lagi (stop spam)
-                isCapturing = true;
+            // Tambahkan indikator visual
+            ctx.fillStyle = "#10b981";
+            ctx.font = "16px Arial";
+            ctx.fillText("Wajah Terdeteksi", box.x, box.y - 10);
 
-                // Tampilkan loading agar user tahu proses sedang berjalan
+            // Update instruksi
+            if (faceDetectedCount >= DETECTION_THRESHOLD) {
+                document.getElementById("instructionTextAbsen").textContent =
+                    "Wajah terdeteksi! Memproses absensi...";
+            } else {
+                document.getElementById("instructionTextAbsen").textContent =
+                    `Wajah terdeteksi (${faceDetectedCount}/${DETECTION_THRESHOLD})...`;
+            }
+
+            // Jika sudah terdeteksi beberapa kali berturut-turut, proses absensi
+            if (faceDetectedCount >= DETECTION_THRESHOLD && !absensiProcessing) {
+                absensiProcessing = true;
+
+                // Hentikan interval deteksi
+                clearInterval(detectionInterval);
+
                 Swal.fire({
-                    title: "Sedang Memproses...",
+                    title: "Memproses Absensi...",
                     text: "Mohon tunggu sebentar",
                     allowOutsideClick: false,
+                    showConfirmButton: false,
                     didOpen: () => {
                         Swal.showLoading();
                     },
                 });
 
+                // Ambil lokasi GPS
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
                         prosesAbsensiWajah(
@@ -156,45 +166,43 @@ function startRealtimeDetection(video, canvas) {
                         );
                     },
                     (err) => {
-                        absensiProcessing = false; // Buka kunci jika error GPS
-                        isCapturing = false;
-                        Swal.fire(
-                            "Error Lokasi",
-                            "Gagal mengambil koordinat GPS.",
-                            "error",
-                        );
+                        absensiProcessing = false;
+                        faceDetectedCount = 0;
+                        
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error Lokasi",
+                            text: "Gagal mengambil koordinat GPS. Pastikan GPS aktif.",
+                            confirmButtonText: "Coba Lagi"
+                        }).then(() => {
+                            // Restart deteksi
+                            if ($("#modalAbsenManual").is(":visible")) {
+                                startRealtimeDetection(video, canvas);
+                            }
+                        });
                     },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
                 );
             }
         } else {
-            stabilityScore = 0;
+            // Reset counter jika wajah tidak terdeteksi
+            faceDetectedCount = 0;
             document.getElementById("instructionTextAbsen").textContent =
-                "Wajah tidak terlihat...";
+                "Posisikan wajah Anda di depan kamera...";
         }
-    }, 100);
+    }, 300); // Check setiap 300ms untuk performa lebih baik
 }
 
 function prosesAbsensiWajah(faceEmbedding, latitude, longitude) {
-    // 1. Kunci proses di awal agar tidak dipanggil berulang kali oleh interval
-    if (window.absensiProcessing) return;
-    window.absensiProcessing = true;
-
     const payload = {
         face_embedding: JSON.stringify(Array.from(faceEmbedding)),
         latitude: latitude,
         longitude: longitude,
     };
-
-    // Tampilkan loading agar user tahu proses sedang berjalan
-    Swal.fire({
-        title: "Memproses Absensi...",
-        text: "Mohon tunggu sebentar",
-        allowOutsideClick: false,
-        showConfirmButton: false,
-        didOpen: () => {
-            Swal.showLoading();
-        },
-    });
 
     $.ajax({
         url: window.routes.absensiStatus,
@@ -212,97 +220,81 @@ function prosesAbsensiWajah(faceEmbedding, latitude, longitude) {
                 titleText = "Absensi Pulang";
             } else {
                 // Kasus sudah absen semua
-                window.absensiProcessing = false; // Buka kunci
                 Swal.fire({
                     icon: "info",
                     title: "Sudah Absen",
-                    text: "Anda sudah melakukan absensi hari ini.",
-                    timer: 2000,
-                    showConfirmButton: false,
-                }).then(() => closeAbsenManual());
+                    text: "Anda sudah melakukan absensi masuk dan pulang hari ini.",
+                    confirmButtonText: "OK"
+                }).then(() => {
+                    closeAbsenManual();
+                });
                 return;
             }
 
-            // Jalankan AJAX kedua untuk submit data
+            // Submit absensi
             $.ajax({
                 url: targetUrl,
                 method: "POST",
                 data: payload,
                 success: function (r) {
-                    // Berhasil: Tidak perlu buka kunci karena biasanya reload/tutup
                     Swal.fire({
                         icon: "success",
-                        title: titleText + " Berhasil",
+                        title: titleText + " Berhasil!",
                         text: r.message,
-                        timer: 2000,
+                        timer: 2500,
                         showConfirmButton: false,
                     }).then(() => {
-                        window.absensiProcessing = false; // Reset sebelum pindah
                         closeAbsenManual();
-                        loadRiwayatRealtime();
+                        // Reload data jika ada fungsi loadRiwayatRealtime
+                        if (typeof loadRiwayatRealtime === 'function') {
+                            loadRiwayatRealtime();
+                        }
                     });
                 },
                 error: function (xhr) {
-                    window.absensiProcessing = false; // PENTING: Buka kunci jika gagal
-                    isCapturing = false;
-                    stabilityScore = 0;
-
-                    let pesanError =
-                        xhr.responseJSON?.message ??
-                        "Terjadi kesalahan pada sistem.";
-
-                    Swal.fire({
-                        icon: "error",
-                        title: "Absensi Gagal",
-                        text: pesanError,
-                        confirmButtonColor: "#d33",
-                        confirmButtonText: "Coba Lagi",
-                    }).then(() => {
-                        // Jalankan deteksi lagi hanya jika user menekan "Coba Lagi"
-                        if ($("#modalAbsenManual").is(":visible")) {
-                            startRealtimeDetection(
-                                document.getElementById("videoStream"),
-                                document.getElementById("canvasStream"),
-                            );
-                        }
-                    });
+                    handleError(xhr);
                 },
             });
         },
         error: function (xhr) {
-            window.absensiProcessing = false; // Buka kunci jika pengecekan status gagal
-            isCapturing = false;
-            stabilityScore = 0;
-
-            Swal.fire({
-                icon: "error",
-                title: "Gagal Koneksi",
-                text: xhr.responseJSON?.message ?? "Terjadi kesalahan sistem.",
-            });
+            handleError(xhr);
         },
     });
 }
 
 function handleError(xhr) {
     absensiProcessing = false;
-    isCapturing = false;
-    stabilityScore = 0;
+    faceDetectedCount = 0;
 
-    // 🔴 STOP semua proses deteksi
-    detectionPaused = true;
-    clearInterval(detectionInterval);
-
-    const video = document.getElementById("videoAbsen");
-    if (video.srcObject) {
-        video.srcObject.getTracks().forEach((track) => track.stop());
-        video.srcObject = null;
+    // Stop deteksi dan kamera
+    if (detectionInterval) {
+        clearInterval(detectionInterval);
     }
 
-    // TAMPILKAN PESAN ERROR SAJA
+    const pesanError =
+        xhr.responseJSON?.message ?? 
+        "Terjadi kesalahan pada sistem. Silakan coba lagi.";
+
     Swal.fire({
         icon: "error",
         title: "Absensi Gagal",
-        text: xhr.responseJSON?.message ?? "Lokasi Anda di luar area absensi.",
+        text: pesanError,
+        confirmButtonColor: "#ef4444",
+        confirmButtonText: "Coba Lagi",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Restart deteksi jika user ingin coba lagi
+            const video = document.getElementById("videoStream");
+            const canvas = document.getElementById("canvasStream");
+            
+            if ($("#modalAbsenManual").is(":visible") && video.srcObject) {
+                startRealtimeDetection(video, canvas);
+            } else {
+                closeAbsenManual();
+            }
+        } else {
+            closeAbsenManual();
+        }
     });
 }
 
@@ -348,6 +340,9 @@ async function startCameraReg() {
         video.srcObject = streamReg;
         video.onloadedmetadata = () => {
             video.play();
+            $("#instructionText")
+                .text("Mencari wajah...")
+                .removeClass("text-blue-600 text-green-600 text-red-500");
             startRealtimeDetectionReg();
         };
     } catch (err) {
@@ -358,6 +353,11 @@ async function startCameraReg() {
         );
     }
 }
+
+// Variabel untuk deteksi otomatis
+let faceDetectedCountReg = 0;
+const DETECTION_THRESHOLD_REG = 3; // Deteksi 3x berturut-turut
+let isProcessingReg = false;
 
 async function startRealtimeDetectionReg() {
     const video = document.getElementById("videoReg");
@@ -371,7 +371,8 @@ async function startRealtimeDetectionReg() {
     faceapi.matchDimensions(canvas, displaySize);
 
     detectionIntervalReg = setInterval(async () => {
-        if (!video.videoWidth || !isEngineReady || isCapturing) return;
+        // Skip jika sedang memproses
+        if (!video.videoWidth || !isEngineReady || isProcessingReg) return;
 
         const detection = await faceapi
             .detectSingleFace(
@@ -390,72 +391,67 @@ async function startRealtimeDetectionReg() {
             const resized = faceapi.resizeResults(detection, displaySize);
             const box = resized.detection.box;
 
-            // Logika Stabilitas: Cek pergeseran wajah
-            const movement = Math.abs(box.x - lastX) + Math.abs(box.y - lastY);
+            // Increment counter jika wajah terdeteksi
+            faceDetectedCountReg++;
 
-            if (movement < 7) {
-                stabilityScore++;
-            } else {
-                stabilityScore = 0;
-            }
-
-            lastX = box.x;
-            lastY = box.y;
-
-            // Feedback Visual
-            ctx.lineWidth = 4;
-            if (stabilityScore > 5) {
-                ctx.strokeStyle = "#3b82f6"; // Biru (Proses diam)
-                $("#instructionText")
-                    .text("Tahan posisi, sedang memproses...")
-                    .addClass("text-blue-600");
-            } else {
-                ctx.strokeStyle = "#f87171"; // Merah (Bergerak/Cari wajah)
-                $("#instructionText")
-                    .text("Posisikan wajah dengan tenang...")
-                    .removeClass("text-blue-600 text-green-600");
-            }
+            // Gambar kotak hijau di sekitar wajah yang terdeteksi
+            ctx.strokeStyle = "#10b981"; // Green color
+            ctx.lineWidth = 3;
             ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-            // Jika sudah stabil cukup lama, lakukan capture
-            if (stabilityScore >= STABILITY_REQUIRED) {
-                isCapturing = true;
-                clearInterval(detectionIntervalReg);
+            // Tambahkan indikator visual
+            ctx.fillStyle = "#10b981";
+            ctx.font = "16px Arial";
+            ctx.fillText("Wajah Terdeteksi", box.x, box.y - 10);
 
+            // Update instruksi
+            if (faceDetectedCountReg >= DETECTION_THRESHOLD_REG) {
                 $("#instructionText")
-                    .text("Wajah Terdeteksi! Verifikasi...")
+                    .text("Wajah terdeteksi! Memproses verifikasi...")
+                    .removeClass("text-red-500")
                     .addClass("text-green-600");
+                
                 $("#btnCaptureWajah")
                     .removeClass("bg-gray-400")
                     .addClass("bg-green-600")
                     .text("Memproses...");
+            } else {
+                $("#instructionText")
+                    .text(`Wajah terdeteksi (${faceDetectedCountReg}/${DETECTION_THRESHOLD_REG})...`)
+                    .removeClass("text-red-500 text-green-600")
+                    .addClass("text-blue-600");
+            }
+
+            // Jika sudah terdeteksi beberapa kali berturut-turut, proses registrasi
+            if (faceDetectedCountReg >= DETECTION_THRESHOLD_REG && !isProcessingReg) {
+                isProcessingReg = true;
+                clearInterval(detectionIntervalReg);
+
+                $("#instructionText")
+                    .text("Wajah Terdeteksi! Memverifikasi...")
+                    .addClass("text-green-600");
 
                 prosesRegistrasiWajah();
             }
         } else {
-            stabilityScore = 0;
+            // Reset counter jika wajah tidak terdeteksi
+            faceDetectedCountReg = 0;
             $("#instructionText")
-                .text("Wajah tidak terlihat...")
-                .removeClass("text-blue-600");
+                .text("Posisikan wajah Anda di depan kamera...")
+                .removeClass("text-blue-600 text-green-600");
         }
-    }, 100);
+    }, 300); // Check setiap 300ms
 }
 
-// 1. Tambahkan variabel pengunci di luar fungsi (global scope di file js Anda)
-let isProcessingReg = false;
-
 async function prosesRegistrasiWajah() {
-    // 2. CEK: Jika sedang memproses, jangan jalankan fungsi ini lagi (anti-spam)
-    if (isProcessingReg) return;
-    isProcessingReg = true; // Kunci proses
-
     const video = document.getElementById("videoReg");
 
     // Tampilkan loading agar user tahu proses sedang berjalan
     Swal.fire({
-        title: "Sedang Memproses...",
+        title: "Memproses Verifikasi...",
         text: "Mohon tunggu sebentar",
         allowOutsideClick: false,
+        showConfirmButton: false,
         didOpen: () => {
             Swal.showLoading();
         },
@@ -470,14 +466,27 @@ async function prosesRegistrasiWajah() {
         .withFaceDescriptor();
 
     if (!detection) {
-        isProcessingReg = false; // Buka kunci karena gagal deteksi
-        isCapturing = false;
-        stabilityScore = 0;
-        Swal.close();
-        $("#instructionText")
-            .text("Gagal mengambil data, ulangi posisi diam...")
-            .addClass("text-red-500");
-        startRealtimeDetectionReg();
+        isProcessingReg = false;
+        faceDetectedCountReg = 0;
+        
+        Swal.fire({
+            icon: "error",
+            title: "Gagal Deteksi",
+            text: "Wajah tidak terdeteksi dengan jelas. Silakan coba lagi.",
+            confirmButtonText: "Coba Lagi"
+        }).then(() => {
+            $("#instructionText")
+                .text("Posisikan wajah Anda di depan kamera...")
+                .removeClass("text-green-600 text-blue-600")
+                .addClass("text-red-500");
+            
+            $("#btnCaptureWajah")
+                .removeClass("bg-green-600")
+                .addClass("bg-gray-400")
+                .text("Menunggu Wajah...");
+            
+            startRealtimeDetectionReg();
+        });
         return;
     }
 
@@ -488,34 +497,46 @@ async function prosesRegistrasiWajah() {
             face_embedding: JSON.stringify(Array.from(detection.descriptor)),
         },
         success: function (response) {
-            // Jika berhasil, tidak perlu buka kunci karena halaman akan reload
             Swal.fire({
                 icon: "success",
-                title: "Verifikasi Berhasil",
-                text: "Data wajah Anda sudah tersimpan.",
-                timer: 2000,
+                title: "Verifikasi Berhasil!",
+                text: "Data wajah Anda berhasil tersimpan.",
+                timer: 2500,
                 showConfirmButton: false,
-            }).then(() => location.reload());
+            }).then(() => {
+                // Stop kamera sebelum reload
+                if (streamReg) {
+                    streamReg.getTracks().forEach(track => track.stop());
+                }
+                location.reload();
+            });
         },
         error: function (xhr) {
             console.error(xhr.responseText);
 
-            // 3. PENTING: Buka kunci kembali agar user bisa mencoba lagi setelah klik "Coba Lagi"
+            // Buka kunci agar user bisa mencoba lagi
             isProcessingReg = false;
-            isCapturing = false;
-            stabilityScore = 0;
+            faceDetectedCountReg = 0;
 
             let msg = xhr.responseJSON?.message ?? "Terjadi kesalahan sistem.";
 
             Swal.fire({
                 icon: "warning",
-                title: "Gagal Terverifikasi",
+                title: "Verifikasi Gagal",
                 text: msg,
+                confirmButtonColor: "#ef4444",
                 confirmButtonText: "Coba Lagi",
             }).then(() => {
                 $("#instructionText")
-                    .text("Posisikan wajah kembali...")
-                    .removeClass("text-green-600");
+                    .text("Posisikan wajah Anda kembali...")
+                    .removeClass("text-green-600 text-blue-600")
+                    .addClass("text-red-500");
+                
+                $("#btnCaptureWajah")
+                    .removeClass("bg-green-600")
+                    .addClass("bg-gray-400")
+                    .text("Menunggu Wajah...");
+                
                 startRealtimeDetectionReg();
             });
         },
