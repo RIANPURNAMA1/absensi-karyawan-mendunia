@@ -35,7 +35,7 @@
 
 <body class="font-poppins bg-white min-h-screen flex items-center justify-center">
 
-    <div class="w-full max-w-md h-screen h-[100dvh] mx-auto flex flex-col justify-between px-6 py-6 overflow-hidden">
+    <div class="w-full max-w-md h-screen mx-auto flex flex-col justify-between px-6 py-6 overflow-hidden">
         <div class="flex-1 flex flex-col justify-center">
 
             <div class="relative w-full">
