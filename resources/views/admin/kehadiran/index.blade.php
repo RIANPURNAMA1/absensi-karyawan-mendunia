@@ -136,7 +136,10 @@
                             <option value="IZIN">IZIN</option>
                             <option value="ALPA">ALPA</option>
                             <option value="PULANG LEBIH AWAL">PULANG LEBIH AWAL</option>
+                            <option value="TIDAK ABSEN PULANG">TIDAK ABSEN PULANG</option>
+                            <option value="LIBUR">LIBUR</option>
                         </select>
+
 
                         <div class="alert alert-warning mt-3 small">
                             Perubahan status akan tercatat sebagai revisi admin.

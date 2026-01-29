@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('absensis', function (Blueprint $table) {
             $table->id();
-
             // Relasi user
             $table->foreignId('user_id')
                 ->constrained('users')
@@ -58,7 +57,8 @@ return new class extends Migration
                 'IZIN',
                 'ALPA',
                 'PULANG LEBIH AWAL',
-                'LIBUR' 
+                'TIDAK ABSEN PULANG',
+                'LIBUR'
             ])->default('HADIR');
 
             // Foto dari kamera

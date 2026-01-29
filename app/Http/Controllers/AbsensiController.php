@@ -270,30 +270,34 @@ class AbsensiController extends Controller
     public function absenPulang(Request $request)
     {
         $today = Carbon::today()->toDateString();
-        $now = Carbon::now();
+        $now   = Carbon::now();
 
-        // 0. Validasi input embedding wajah
+        // 0️⃣ Validasi wajah
         if (!$request->has('face_embedding')) {
-            return response()->json(['message' => 'Face embedding diperlukan untuk absen'], 422);
+            return response()->json(['message' => 'Face embedding diperlukan'], 422);
         }
 
         $faceEmbeddingInput = json_decode($request->face_embedding);
 
-        // 1. Cocokkan dengan embedding di database
+        // 1️⃣ Cocokkan wajah
         $user = $this->cocokkanFaceEmbedding($faceEmbeddingInput);
         if (!$user) {
-            return response()->json(['message' => 'Wajah tidak terdaftar atau tidak dikenali'], 422);
+            return response()->json(['message' => 'Wajah tidak dikenali'], 422);
         }
 
-        // 2. Cari data absensi hari ini
-        $absensi = Absensi::with('shift')->where('user_id', $user->id)->where('tanggal', $today)->first();
-        if (!$absensi) return response()->json(['message' => 'Belum absen masuk'], 422);
-        if ($absensi->jam_keluar) return response()->json(['message' => 'Anda sudah absen pulang'], 422);
-        if (!$absensi->shift) return response()->json(['message' => 'Jadwal shift tidak ditemukan'], 422);
+        // 2️⃣ Ambil absensi hari ini
+        $absensi = Absensi::with('shift')
+            ->where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->first();
 
-        // 3. Validasi radius
+        if (!$absensi) return response()->json(['message' => 'Belum absen masuk'], 422);
+        if ($absensi->jam_keluar) return response()->json(['message' => 'Sudah absen pulang'], 422);
+        if (!$absensi->shift) return response()->json(['message' => 'Shift tidak ditemukan'], 422);
+
+        // 3️⃣ Validasi lokasi
         $cabang = Cabang::find($user->cabang_id);
-        if (!$cabang) return response()->json(['message' => 'Data cabang tidak ditemukan'], 422);
+        if (!$cabang) return response()->json(['message' => 'Cabang tidak ditemukan'], 422);
 
         $jarak = $this->calculateDistance(
             $request->latitude,
@@ -304,25 +308,43 @@ class AbsensiController extends Controller
 
         if ($jarak > $cabang->radius) {
             return response()->json([
-                'message' => 'Di luar radius! Jarak: ' . round($jarak) . 'm. Maks: ' . $cabang->radius . 'm.'
+                'message' => 'Di luar radius! Jarak: ' . round($jarak) . 'm'
             ], 422);
         }
 
-        // 4. Logika status absen pulang
-        $statusBaru = $absensi->status;
-
-        $jamMasukShift = Carbon::parse($absensi->shift->jam_masuk);
+        // 4️⃣ Jam shift + tanggal
+        $jamMasukShift  = Carbon::parse($absensi->shift->jam_masuk);
         $jamPulangShift = Carbon::parse($absensi->shift->jam_pulang);
 
+
         if ($jamPulangShift->lt($jamMasukShift)) {
-            $jamPulangShift->addDay();
+            $jamPulangShift->addDay(); // shift malam
         }
+
+        // 🔥 Batas akhir (MODE TEST 3 menit)
+        $batasAkhir = $jamPulangShift->copy()->addMinutes(3);
+
+        // ⛔ Sudah lewat batas → langsung tandai
+        if ($now->greaterThan($batasAkhir)) {
+
+            $absensi->update([
+                'status' => 'TIDAK ABSEN PULANG',
+                'keterangan' => 'Terlambat absen pulang (>3 menit)'
+            ]);
+
+            return response()->json([
+                'message' => 'Waktu habis. Anda dianggap TIDAK ABSEN PULANG.'
+            ], 422);
+        }
+
+        // 5️⃣ Status normal
+        $statusBaru = $absensi->status;
 
         if ($now->lt($jamPulangShift) && $absensi->status !== 'TERLAMBAT') {
             $statusBaru = 'PULANG LEBIH AWAL';
         }
 
-        // 5. Simpan jam pulang
+        // 6️⃣ Simpan
         $absensi->update([
             'jam_keluar'  => $now->toTimeString(),
             'lat_pulang'  => $request->latitude,
@@ -331,11 +353,11 @@ class AbsensiController extends Controller
         ]);
 
         return response()->json([
-            'message'    => "Absen pulang berhasil. Status: $statusBaru",
-            'jam_keluar' => $now->toTimeString(),
-            'status'     => $statusBaru
+            'message' => "Absen pulang berhasil",
+            'status'  => $statusBaru
         ]);
     }
+
 
 
     public function statusAbsensi(Request $request)

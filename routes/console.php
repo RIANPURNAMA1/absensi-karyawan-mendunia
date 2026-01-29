@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('absensi:generate-alpha')->everyMinute();
+Schedule::command('app:cek-absen-pulang')->everyTenMinutes();

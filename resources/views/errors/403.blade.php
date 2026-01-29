@@ -39,7 +39,7 @@
         <div class="flex flex-col gap-3">
             <a href="/absensi"
                class="py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium transition">
-                Kembali
+                Kembali Ke Dashboard
             </a>
 
         </div>
