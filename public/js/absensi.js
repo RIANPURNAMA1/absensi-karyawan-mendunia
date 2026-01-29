@@ -354,14 +354,10 @@ async function startCameraReg() {
     }
 }
 
-// Variabel untuk deteksi otomatis
-let faceDetectedCountReg = 0;
-const DETECTION_THRESHOLD_REG = 3; // Deteksi 3x berturut-turut
 let isProcessingReg = false;
-
 let holdStartTime = null;
-const HOLD_DURATION = 2000; // 2 detik harus diam
-const GUIDE_BOX = { x: 170, y: 90, width: 300, height: 300 }; // kotak biru tengah
+const HOLD_DURATION = 3000; // 3 detik
+const TILT_TOLERANCE = 0.15; // toleransi kemiringan kepala (radians)
 
 async function startRealtimeDetectionReg() {
     const video = document.getElementById("videoReg");
@@ -377,14 +373,6 @@ async function startRealtimeDetectionReg() {
         const ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // 🔵 GAMBAR GUIDE BOX BIRU
-        ctx.strokeStyle = "#3b82f6";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(GUIDE_BOX.x, GUIDE_BOX.y, GUIDE_BOX.width, GUIDE_BOX.height);
-        ctx.fillStyle = "#3b82f6";
-        ctx.font = "16px Arial";
-        ctx.fillText("Posisikan wajah di dalam kotak", GUIDE_BOX.x, GUIDE_BOX.y - 10);
-
         const detection = await faceapi
             .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
                 inputSize: 224,
@@ -395,32 +383,36 @@ async function startRealtimeDetectionReg() {
         if (detection) {
             const resized = faceapi.resizeResults(detection, displaySize);
             const box = resized.detection.box;
+            const landmarks = resized.landmarks;
 
             // gambar kotak wajah
             ctx.strokeStyle = "#10b981";
+            ctx.lineWidth = 2;
             ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-            // 🧠 CEK APAKAH WAJAH DI DALAM GUIDE BOX
-            const insideGuide =
-                box.x > GUIDE_BOX.x &&
-                box.y > GUIDE_BOX.y &&
-                box.x + box.width < GUIDE_BOX.x + GUIDE_BOX.width &&
-                box.y + box.height < GUIDE_BOX.y + GUIDE_BOX.height;
+            // 🔹 CEK APAKAH KEPALA LURUS
+            const leftEye = landmarks.getLeftEye();
+            const rightEye = landmarks.getRightEye();
 
-            if (insideGuide) {
+            const eyeSlope = (rightEye[0].y - leftEye[0].y) / (rightEye[0].x - leftEye[0].x);
+
+            const headIsStraight = Math.abs(eyeSlope) < TILT_TOLERANCE;
+
+            if (headIsStraight) {
                 if (!holdStartTime) holdStartTime = Date.now();
                 const holdTime = Date.now() - holdStartTime;
+                const remainingTime = Math.max(0, Math.ceil((HOLD_DURATION - holdTime) / 1000));
 
-                $("#instructionText")
-                    .text(`Tahan posisi... ${Math.ceil((HOLD_DURATION - holdTime)/1000)} detik`)
-                    .removeClass("text-red-500")
-                    .addClass("text-blue-600");
-
-                // ⏳ Jika sudah diam cukup lama
-                if (holdTime >= HOLD_DURATION) {
+                // progres instruksi
+                if (holdTime < HOLD_DURATION) {
                     $("#instructionText")
-                        .text("Wajah stabil! Memproses...")
-                        .removeClass("text-blue-600")
+                        .text(`Tahan kepala lurus... ${remainingTime} detik`)
+                        .removeClass("text-red-500 text-green-600")
+                        .addClass("text-blue-600");
+                } else {
+                    $("#instructionText")
+                        .text("Kepala stabil! Memproses...")
+                        .removeClass("text-blue-600 text-red-500")
                         .addClass("text-green-600");
 
                     isProcessingReg = true;
@@ -430,8 +422,8 @@ async function startRealtimeDetectionReg() {
             } else {
                 holdStartTime = null;
                 $("#instructionText")
-                    .text("Arahkan wajah ke dalam kotak biru")
-                    .removeClass("text-green-600")
+                    .text("Kepala miring, luruskan kepala")
+                    .removeClass("text-green-600 text-blue-600")
                     .addClass("text-red-500");
             }
 
@@ -443,8 +435,9 @@ async function startRealtimeDetectionReg() {
                 .addClass("text-red-500");
         }
 
-    }, 200);
+    }, 150); // lebih responsif
 }
+
 
 
 async function prosesRegistrasiWajah() {
