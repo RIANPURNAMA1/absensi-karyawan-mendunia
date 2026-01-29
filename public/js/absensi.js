@@ -359,89 +359,93 @@ let faceDetectedCountReg = 0;
 const DETECTION_THRESHOLD_REG = 3; // Deteksi 3x berturut-turut
 let isProcessingReg = false;
 
+let holdStartTime = null;
+const HOLD_DURATION = 2000; // 2 detik harus diam
+const GUIDE_BOX = { x: 170, y: 90, width: 300, height: 300 }; // kotak biru tengah
+
 async function startRealtimeDetectionReg() {
     const video = document.getElementById("videoReg");
     const canvas = document.getElementById("canvasReg");
     if (!video || !canvas) return;
 
-    const displaySize = {
-        width: 640,
-        height: 480,
-    };
+    const displaySize = { width: 640, height: 480 };
     faceapi.matchDimensions(canvas, displaySize);
 
     detectionIntervalReg = setInterval(async () => {
-        // Skip jika sedang memproses
         if (!video.videoWidth || !isEngineReady || isProcessingReg) return;
-
-        const detection = await faceapi
-            .detectSingleFace(
-                video,
-                new faceapi.TinyFaceDetectorOptions({
-                    inputSize: 224,
-                    scoreThreshold: 0.5,
-                }),
-            )
-            .withFaceLandmarks();
 
         const ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 🔵 GAMBAR GUIDE BOX BIRU
+        ctx.strokeStyle = "#3b82f6";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(GUIDE_BOX.x, GUIDE_BOX.y, GUIDE_BOX.width, GUIDE_BOX.height);
+        ctx.fillStyle = "#3b82f6";
+        ctx.font = "16px Arial";
+        ctx.fillText("Posisikan wajah di dalam kotak", GUIDE_BOX.x, GUIDE_BOX.y - 10);
+
+        const detection = await faceapi
+            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
+                inputSize: 224,
+                scoreThreshold: 0.5,
+            }))
+            .withFaceLandmarks();
 
         if (detection) {
             const resized = faceapi.resizeResults(detection, displaySize);
             const box = resized.detection.box;
 
-            // Increment counter jika wajah terdeteksi
-            faceDetectedCountReg++;
-
-            // Gambar kotak hijau di sekitar wajah yang terdeteksi
-            ctx.strokeStyle = "#10b981"; // Green color
-            ctx.lineWidth = 3;
+            // gambar kotak wajah
+            ctx.strokeStyle = "#10b981";
             ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-            // Tambahkan indikator visual
-            ctx.fillStyle = "#10b981";
-            ctx.font = "16px Arial";
-            ctx.fillText("Wajah Terdeteksi", box.x, box.y - 10);
+            // 🧠 CEK APAKAH WAJAH DI DALAM GUIDE BOX
+            const insideGuide =
+                box.x > GUIDE_BOX.x &&
+                box.y > GUIDE_BOX.y &&
+                box.x + box.width < GUIDE_BOX.x + GUIDE_BOX.width &&
+                box.y + box.height < GUIDE_BOX.y + GUIDE_BOX.height;
 
-            // Update instruksi
-            if (faceDetectedCountReg >= DETECTION_THRESHOLD_REG) {
+            if (insideGuide) {
+                if (!holdStartTime) holdStartTime = Date.now();
+                const holdTime = Date.now() - holdStartTime;
+
                 $("#instructionText")
-                    .text("Wajah terdeteksi! Memproses verifikasi...")
+                    .text(`Tahan posisi... ${Math.ceil((HOLD_DURATION - holdTime)/1000)} detik`)
                     .removeClass("text-red-500")
-                    .addClass("text-green-600");
-                
-                $("#btnCaptureWajah")
-                    .removeClass("bg-gray-400")
-                    .addClass("bg-green-600")
-                    .text("Memproses...");
-            } else {
-                $("#instructionText")
-                    .text(`Wajah terdeteksi (${faceDetectedCountReg}/${DETECTION_THRESHOLD_REG})...`)
-                    .removeClass("text-red-500 text-green-600")
                     .addClass("text-blue-600");
-            }
 
-            // Jika sudah terdeteksi beberapa kali berturut-turut, proses registrasi
-            if (faceDetectedCountReg >= DETECTION_THRESHOLD_REG && !isProcessingReg) {
-                isProcessingReg = true;
-                clearInterval(detectionIntervalReg);
+                // ⏳ Jika sudah diam cukup lama
+                if (holdTime >= HOLD_DURATION) {
+                    $("#instructionText")
+                        .text("Wajah stabil! Memproses...")
+                        .removeClass("text-blue-600")
+                        .addClass("text-green-600");
 
+                    isProcessingReg = true;
+                    clearInterval(detectionIntervalReg);
+                    prosesRegistrasiWajah();
+                }
+            } else {
+                holdStartTime = null;
                 $("#instructionText")
-                    .text("Wajah Terdeteksi! Memverifikasi...")
-                    .addClass("text-green-600");
-
-                prosesRegistrasiWajah();
+                    .text("Arahkan wajah ke dalam kotak biru")
+                    .removeClass("text-green-600")
+                    .addClass("text-red-500");
             }
+
         } else {
-            // Reset counter jika wajah tidak terdeteksi
-            faceDetectedCountReg = 0;
+            holdStartTime = null;
             $("#instructionText")
-                .text("Posisikan wajah Anda di depan kamera...")
-                .removeClass("text-blue-600 text-green-600");
+                .text("Wajah tidak terdeteksi")
+                .removeClass("text-blue-600 text-green-600")
+                .addClass("text-red-500");
         }
-    }, 300); // Check setiap 300ms
+
+    }, 200);
 }
+
 
 async function prosesRegistrasiWajah() {
     const video = document.getElementById("videoReg");
