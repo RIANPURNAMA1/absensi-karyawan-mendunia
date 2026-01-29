@@ -176,7 +176,7 @@
     </form>
 
 
-    @include('components.bottom_Nav')
+      @include('components.bottom_Nav')
     <script>
         lucide.createIcons();
 

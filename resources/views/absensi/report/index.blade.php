@@ -117,6 +117,7 @@
         <a href="/calendar" class="text-xs font-bold text-slate-500 uppercase">Lihat Kalender</a>
     </div>
 
+<<<<<<< HEAD
     <div class="space-y-3">
         @forelse($riwayatTerakhir as $r)
         <div class="bg-white p-4 rounded-2xl border border-gray-50 shadow-sm flex items-center justify-between">
@@ -131,6 +132,9 @@
                     </p>
                 </div>
             </div>
+=======
+   @include('components.bottom_Nav')
+>>>>>>> 2226c3d01b8f4a0b406b9db8f537db8f6a2b847a
 
             @if($r->status == 'HADIR')
                 <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-500"></i>
