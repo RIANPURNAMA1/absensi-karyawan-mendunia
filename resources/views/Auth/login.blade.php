@@ -33,93 +33,97 @@
     </script>
 </head>
 
-<body class="font-poppins bg-gradient-to-br from-slate-100 to-slate-200 min-h-screen flex items-center justify-center">
+<body class="font-poppins bg-white min-h-screen flex items-center justify-center">
 
-    <div class="w-full max-w-md">
-        <div
-            class="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] px-8 py-10 border border-gray-50 relative overflow-hidden">
+    <div class="w-full max-w-md min-h-screen flex flex-col justify-center px-6 py-8 sm:px-0">
+        <div class="relative">
 
-            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
+            <div class="absolute -top-10 -left-10 w-40 h-40 bg-blue-100/50 rounded-full blur-3xl -z-10"></div>
+            <div class="absolute top-20 -right-10 w-32 h-32 bg-indigo-100/40 rounded-full blur-2xl -z-10"></div>
 
-            <div class="text-center mb-10 relative">
-                <img src="{{ asset('assets/images/logo/logo.png') }}" class="mx-auto w-44 drop-shadow-sm">
-                <h2 class="mt-4 text-xl font-bold text-gray-800 tracking-tight">Selamat Datang</h2>
-                <p class="text-gray-400 text-xs mt-1">Silakan masuk untuk akses absensi</p>
+            <div class="text-center mb-12">
+                <img src="{{ asset('assets/images/logo/logo.png') }}" class="mx-auto w-40 mb-6 drop-shadow-sm">
+                <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Selamat Datang</h2>
+                <p class="text-gray-500 text-sm mt-2">Silakan masuk untuk mencatat kehadiran Anda hari ini.</p>
             </div>
 
-            <form id="login" action="/login/process" method="POST" class="space-y-6 relative">
+            <form id="login" action="/login/process" method="POST" class="space-y-5">
                 @csrf
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-bold text-gray-500 uppercase ml-1 tracking-wider">Email
-                        Perusahaan</label>
+                <div class="space-y-2">
+                    <label class="text-[11px] font-bold text-gray-500 uppercase ml-1 tracking-[0.1em]">Email
+                    </label>
                     <div class="relative group">
-                        <div
-                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
-                            <i data-lucide="mail" class="w-5 h-5"></i>
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="mail"
+                                class="w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
                         </div>
                         <input type="email" name="email" required
-                            class="w-full h-14 pl-12 pr-4 rounded-2xl bg-gray-50 border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
-                            placeholder="email@perusahaan.com">
+                            class="w-full h-15 py-4 pl-12 pr-4 bg-gray-50/50 border border-gray-100 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-300 text-sm font-semibold text-gray-700 placeholder:text-gray-300 placeholder:font-normal shadow-sm"
+                            placeholder="nama@perusahaan.com">
                     </div>
-                </div>
+        </div>
 
-                <div class="space-y-1.5">
-                    <div class="flex justify-between items-center px-1">
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Password</label>
-                        <a href="#" class="text-[10px] font-bold text-blue-600 hover:underline">Lupa?</a>
-                    </div>
-                    <div class="relative group">
-                        <div
-                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
-                            <i data-lucide="lock" class="w-5 h-5"></i>
-                        </div>
-                        <input type="password" name="password" id="password" required
-                            class="w-full h-14 pl-12 pr-12 rounded-2xl bg-gray-50 border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
-                            placeholder="••••••••">
-                        <button type="button" onclick="togglePassword()"
-                            class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-blue-500 transition-colors">
-                            <i data-lucide="eye" id="eyeIcon" class="w-5 h-5"></i>
-                        </button>
-                    </div>
+        <div class="space-y-2">
+            <div class="flex justify-between items-center px-1">
+                <label class="text-[11px] font-bold text-gray-500 uppercase tracking-[0.1em]">Password</label>
+                <a href="#" class="text-[11px] font-bold text-blue-600 hover:text-blue-700">LUPA PASSWORD?</a>
+            </div>
+            <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i data-lucide="lock"
+                        class="w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
                 </div>
+                <input type="password" name="password" id="password" required
+                    class="w-full h-15 py-4 pl-12 pr-12 bg-gray-50/50 border border-gray-100 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-300 text-sm font-semibold text-gray-700 placeholder:text-gray-300 placeholder:font-normal shadow-sm"
+                    placeholder="••••••••">
 
-                <div class="flex items-center px-1">
-                    <label class="flex items-center cursor-pointer group">
-                        <input type="checkbox" name="remember"
-                            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all">
-                        <span
-                            class="ml-2 text-xs font-medium text-gray-500 group-hover:text-gray-700 transition-colors">Ingat
-                            saya di perangkat ini</span>
-                    </label>
-                </div>
-
-                <div class="pt-2">
-                    <button type="submit" id="btnLogin"
-                        class="w-full h-14 rounded-2xl font-bold text-white
-                               bg-blue-600 shadow-[0_10px_20px_rgba(37,99,235,0.2)]
-                               hover:bg-blue-700 hover:shadow-none active:scale-95 transition-all duration-200">
-                        Masuk Ke Akun
-                    </button>
-                </div>
-            </form>
-
-            <div class="mt-10 flex items-center justify-center gap-4">
-                <div class="flex items-center gap-1.5 opacity-40">
-                    <i data-lucide="scan-face" class="w-4 h-4"></i>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-600">Face ID</span>
-                </div>
-                <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
-                <div class="flex items-center gap-1.5 opacity-40">
-                    <i data-lucide="map-pin" class="w-4 h-4"></i>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-600">GPS Verified</span>
-                </div>
+                <button type="button" onclick="togglePassword()"
+                    class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 active:scale-90 transition-transform">
+                    <i data-lucide="eye" id="eyeIcon" class="w-5 h-5"></i>
+                </button>
             </div>
         </div>
 
-        <p class="text-center text-gray-400 text-[10px] font-medium mt-8 uppercase tracking-[0.2em]">
-            &copy; 2026 Mendunia Absensi System
-        </p>
+        <div class="flex items-center justify-between px-1">
+            <label class="flex items-center cursor-pointer group">
+                <div class="relative">
+                    <input type="checkbox" name="remember" class="peer sr-only">
+                    <div
+                        class="w-5 h-5 bg-gray-100 border border-gray-200 rounded-md peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all">
+                    </div>
+                    <i data-lucide="check"
+                        class="absolute inset-0 w-3 h-3 m-auto text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                </div>
+                <span
+                    class="ml-3 text-xs font-bold text-gray-500 group-hover:text-gray-700 transition-colors uppercase tracking-tight">Ingat
+                    Saya</span>
+            </label>
+        </div>
+        <div class="pt-6">
+            <button type="submit" id="btnLogin"
+                class="w-full h-15 py-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] shadow-lg shadow-blue-200 transition-all duration-200 text-lg">
+                Masuk Sekarang
+            </button>
+        </div>
+        </form>
+
+        <div class="mt-12 flex items-center justify-center gap-6">
+            <div class="flex items-center gap-2 opacity-60">
+                <i data-lucide="scan-face" class="w-4 h-4 text-blue-600"></i>
+                <span class="text-[10px] font-bold uppercase tracking-tighter text-gray-600">Face ID</span>
+            </div>
+            <div class="w-1.5 h-1.5 bg-gray-200 rounded-full"></div>
+            <div class="flex items-center gap-2 opacity-60">
+                <i data-lucide="map-pin" class="w-4 h-4 text-blue-600"></i>
+                <span class="text-[10px] font-bold uppercase tracking-tighter text-gray-600">GPS Verified</span>
+            </div>
+        </div>
+    </div>
+
+    <p class="text-center text-gray-400 text-[10px] font-medium mt-auto pt-10 uppercase tracking-[0.2em]">
+        &copy; 2026 Mendunia Absensi System
+    </p>
     </div>
 
     <!-- jQuery -->
