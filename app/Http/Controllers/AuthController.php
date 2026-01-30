@@ -24,7 +24,7 @@ class AuthController extends Controller
    // Tampilkan form lupa password
     public function show()
     {
-        return view('auth.forgot-password');
+        return view('Auth.forgot-password');
     }
 
     // Reset password langsung
