@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 class AuthController extends Controller
 {
@@ -19,46 +20,68 @@ class AuthController extends Controller
         return view('Auth.register');
     }
 
+   
+   // Tampilkan form lupa password
+    public function show()
+    {
+        return view('auth.forgot-password');
+    }
+
+    // Reset password langsung
+    public function reset(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return redirect()->route('login')->with('status', 'Password berhasil diubah. Silakan login.');
+    }
+
 
 
     public function login(Request $request)
-{
-    $credentials = $request->validate([
-        'email' => 'required|email',
-        'password' => 'required'
-    ]);
+    {
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
 
-    // PAKSA TRUE: Ini akan membuat cookie 'remember_me' aktif selamanya
-    $remember = true; 
+        // PAKSA TRUE: Ini akan membuat cookie 'remember_me' aktif selamanya
+        $remember = true;
 
-    if (!Auth::attempt($credentials, $remember)) {
+        if (!Auth::attempt($credentials, $remember)) {
+            return response()->json([
+                'message' => 'Email atau password salah'
+            ], 401);
+        }
+
+        $user = Auth::user();
+
+        if ($user->status !== 'AKTIF') {
+            Auth::logout();
+            return response()->json([
+                'message' => 'Akun tidak aktif'
+            ], 403);
+        }
+
+        $user->update(['last_login' => now()]);
+
+        $redirect = match ($user->role) {
+            'HR', 'MANAGER' => route('dashboard'),
+            'KARYAWAN'      => route('absensi.index'),
+            default         => route('login')
+        };
+
         return response()->json([
-            'message' => 'Email atau password salah'
-        ], 401);
+            'message'  => 'Login berhasil',
+            'redirect' => $redirect
+        ]);
     }
-
-    $user = Auth::user();
-
-    if ($user->status !== 'AKTIF') {
-        Auth::logout();
-        return response()->json([
-            'message' => 'Akun tidak aktif'
-        ], 403);
-    }
-
-    $user->update(['last_login' => now()]);
-
-    $redirect = match ($user->role) {
-        'HR', 'MANAGER' => route('dashboard'),
-        'KARYAWAN'      => route('absensi.index'),
-        default         => route('login')
-    };
-
-    return response()->json([
-        'message'  => 'Login berhasil',
-        'redirect' => $redirect
-    ]);
-}
 
 
     public function register(Request $request)

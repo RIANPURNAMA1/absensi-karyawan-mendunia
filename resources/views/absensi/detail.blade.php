@@ -231,6 +231,7 @@
     </div>
 
      @include('components.bottom_Nav')
+    <!-- File JS eksternal absensi -->
 
     <script>
         lucide.createIcons();

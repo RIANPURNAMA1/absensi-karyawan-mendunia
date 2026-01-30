@@ -147,7 +147,9 @@
 </div>
 
 @include('components.bottom_Nav')
-
+    <!-- File JS eksternal absensi -->
+ <!-- File JS eksternal absensi -->
+    <script src="{{ asset('js/absensi.js') }}" defer></script>
 <script>
 lucide.createIcons();
 setInterval(() => {

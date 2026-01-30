@@ -199,13 +199,14 @@
                 <span class="text-[11px] font-medium text-gray-700">Riwayat</span>
             </button>
 
-            <button onclick="location.href='/overtime'"
+            <button id="btnOvertime"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
                 <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="clock-alert" class="w-5 h-5 text-red-600"></i>
                 </div>
                 <span class="text-[11px] font-medium text-gray-700">Lembur</span>
             </button>
+
 
             <button onclick="toggleModalJadwal(true)"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
@@ -343,39 +344,7 @@
 
         </div>
     </div>
-
-    {{-- modal camera --}}
-    <div id="camera-modal" class="fixed inset-0 z-[999] bg-black hidden flex-col">
-        <div class="relative flex-1 flex items-center justify-center overflow-hidden">
-            <video id="video" class="absolute w-full h-full object-cover" autoplay muted playsinline></video>
-
-            <div class="relative w-72 h-72 border-2 border-white/20 rounded-full flex items-center justify-center">
-                <div id="scanner-ring" class="absolute inset-0 border-4 border-blue-500 rounded-full animate-pulse">
-                </div>
-
-                <div class="w-full h-1 bg-blue-500 absolute top-0 animate-scan shadow-[0_0_15px_rgba(59,130,246,0.8)]">
-                </div>
-            </div>
-
-            <button onclick="closeCamera()"
-                class="absolute top-10 right-6 bg-black/50 text-white p-2 rounded-full hover:bg-black">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-
-        <div class="bg-white p-8 rounded-t-[2.5rem] text-center shadow-[0_-10px_25px_rgba(0,0,0,0.1)]">
-            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
-            <h3 id="status-title" class="font-bold text-xl text-gray-800 mb-1">Siap Memindai</h3>
-            <p id="status-desc" class="text-sm text-gray-500 mb-8 px-10">Dekatkan wajah ke kamera untuk absensi
-                instan.</p>
-
-            <button type="button" onclick="closeCamera()"
-                class="w-full py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold transition-all active:scale-95">
-                Batalkan
-            </button>
-        </div>
-    </div>
-
+  
     <style>
         @keyframes scan {
             0% {
@@ -400,8 +369,7 @@
 
     <!-- BOTTOM NAV -->
     @include('components.bottom_Nav')
-    {{-- modal absensi manual --}}
-    @include('absensi.modal_manual')
+  
 
 
     {{-- MODAL REGISTRASI WAJAH --}}
@@ -457,6 +425,26 @@
     <script src="{{ asset('js/absensi.js') }}" defer></script>
 
     <script>
+        // Tangkap tombol
+        const btnOvertime = document.getElementById('btnOvertime');
+
+        btnOvertime.addEventListener('click', function(e) {
+            e.preventDefault(); // cegah redirect / href
+
+            Swal.fire({
+                icon: 'info',
+                title: 'Fitur Dalam Pengembangan',
+                text: 'Fitur Lembur sedang dikembangkan, silakan coba nanti.',
+                confirmButtonText: 'Oke',
+                confirmButtonColor: '#2563eb',
+                customClass: {
+                    popup: 'rounded-2xl',
+                    title: 'text-lg font-bold',
+                    htmlContainer: 'text-sm'
+                }
+            });
+        });
+
         // Menjaga session tetap aktif selama tab browser masih terbuka
         setInterval(function() {
             fetch('/keep-alive')

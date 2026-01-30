@@ -32,3 +32,5 @@
             </a>
         </div>
     </div>
+      {{-- modal absensi manual --}}
+    @include('absensi.modal_manual')

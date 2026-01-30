@@ -28,6 +28,13 @@ Route::get('/keep-alive', function () {
 |--------------------------------------------------------------------------
 */
 
+
+// Tampilkan form lupa password / ubah password
+Route::get('/forgot-password', [AuthController::class, 'show'])->name('password.request');
+
+// Proses ubah password langsung (submit email + password baru)
+Route::post('/forgot-password', [AuthController::class, 'reset'])->name('password.update');
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'loginForm'])->name('login');
     Route::post('/login/process', [AuthController::class, 'login'])->name('login.process');

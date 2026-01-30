@@ -14,11 +14,12 @@
                    <div class="modal-body">
                        <div class="row g-3">
 
-                           <!-- NIP -->
                            <div class="col-md-6">
                                <label class="form-label">NIP</label>
-                               <input type="text" name="nip" class="form-control" required>
+                               <input type="text" name="nip" class="form-control" readonly
+                                   placeholder="Otomatis akan terisi setelah simpan">
                            </div>
+
 
                            <!-- NAMA -->
                            <div class="col-md-6">
