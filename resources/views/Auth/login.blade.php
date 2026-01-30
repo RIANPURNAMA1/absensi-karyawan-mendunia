@@ -39,7 +39,7 @@
         }
 
         .gradient-bg {
-            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+            background: linear-gradient(135deg, #d8d6d6 0%, #ffffff 100%);
         }
 
         .glass-effect {
@@ -138,7 +138,7 @@
     </style>
 </head>
 
-<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+<body class="gradient-bg min-h-screen flex items-center justify-center mb-5 p-4">
 
 
 
@@ -197,8 +197,7 @@
         @endif
         <!-- Login Card -->
         <div class="glass-effect rounded-3xl shadow-2xl p-8 relative overflow-hidden">
-            <!-- Decorative Gradient Bar -->
-            <div class="absolute top-0 left-0 right-0 h-1.5 gradient-bg"></div>
+            
 
             <!-- Logo & Header -->
             <div class="text-center mb-8 mt-2">
@@ -321,14 +320,14 @@
 
         <!-- Footer -->
         <div class="mt-8 text-center">
-            <p class="text-white/80 text-xs font-medium">
+            <p class="text-black text-xs font-medium">
                 &copy; 2026 Mendunia Absensi System. All rights reserved.
             </p>
             <div class="flex items-center justify-center gap-4 mt-3">
                 <a href="#"
-                    class="text-white/60 hover:text-white text-xs font-medium transition-colors">Kebijakan Privasi</a>
-                <span class="text-white/40">•</span>
-                <a href="#" class="text-white/60 hover:text-white text-xs font-medium transition-colors">Syarat
+                    class="text-black hover:text-white text-xs font-medium transition-colors">Kebijakan Privasi</a>
+                <span class="text-black">•</span>
+                <a href="#" class="text-black hover:text-white text-xs font-medium transition-colors">Syarat
                     & Ketentuan</a>
             </div>
         </div>
