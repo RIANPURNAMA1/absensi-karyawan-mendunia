@@ -322,7 +322,7 @@ class AbsensiController extends Controller
         }
 
         // 🔥 Batas akhir (MODE TEST 3 menit)
-        $batasAkhir = $jamPulangShift->copy()->addMinutes(3);
+        $batasAkhir = $jamPulangShift->copy()->addHours(5);
 
         // ⛔ Sudah lewat batas → langsung tandai
         if ($now->greaterThan($batasAkhir)) {

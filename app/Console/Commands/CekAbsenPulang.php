@@ -31,7 +31,8 @@ class CekAbsenPulang extends Command
                 $jamPulangShift->addDay();
             }
 
-            $batasAkhir = $jamPulangShift->copy()->addMinutes(3);
+        $batasAkhir = $jamPulangShift->copy()->addHours(5);
+
 
 
             if ($now->greaterThan($batasAkhir)) {
