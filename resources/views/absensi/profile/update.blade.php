@@ -81,7 +81,7 @@
                 <div class="relative">
                     <div class="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg bg-gray-200">
                         <img id="previewFoto"
-                            src="{{ auth()->user()->foto_profil ? asset('foto-karyawan/' . auth()->user()->foto_profil) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) }}"
+                            src="{{ auth()->user()->foto_profil ? asset('uploads/foto_profil/' . auth()->user()->foto_profil) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) }}"
                             class="w-full h-full object-cover">
                     </div>
                     <label for="foto_profil"
