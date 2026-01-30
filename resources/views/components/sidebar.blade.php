@@ -110,6 +110,14 @@
                  </li> --}}
              </ul>
          </li>
+
+
+         @php
+             $roleUser = auth()->user()->role; // ambil role user yang login
+         @endphp
+
+
+@if($roleUser !== 'HR')
          <!-- MONITORING & PROJECT MANAGEMENT -->
          <li class="pc-item pc-caption">
              <label>Monitoring & Project</label>
@@ -147,7 +155,7 @@
                  </li>
              </ul>
          </li>
-
+@endif
 
 
          {{-- <!-- LAPORAN -->
@@ -166,6 +174,8 @@
                  <span class="pc-mtext">Laporan Bulanan</span>
              </a>
          </li> --}}
+
+         @if($roleUser !== 'HR')
 
          <!-- BLOG WEBSITE -->
          <li class="pc-item pc-caption">
@@ -192,12 +202,13 @@
                  </li>
              </ul>
          </li>
+         @endif
 
          <!-- PENGATURAN -->
          <li class="pc-item pc-caption">
              <label>Pengaturan</label>
          </li>
-    
+
          <li class="pc-item">
              <a href="/pengaturan" class="pc-link">
                  <span class="pc-micon"><i class="ph ph-user-gear"></i></span>
