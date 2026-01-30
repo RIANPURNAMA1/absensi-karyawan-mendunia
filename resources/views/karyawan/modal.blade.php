@@ -7,19 +7,18 @@
                    <h5 class="modal-title">Tambah Karyawan</h5>
                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                </div>
-
                <form id="formTambahKaryawan" enctype="multipart/form-data">
                    @csrf
 
                    <div class="modal-body">
                        <div class="row g-3">
 
+                           <!-- NIP -->
                            <div class="col-md-6">
                                <label class="form-label">NIP</label>
                                <input type="text" name="nip" class="form-control" readonly
                                    placeholder="Otomatis akan terisi setelah simpan">
                            </div>
-
 
                            <!-- NAMA -->
                            <div class="col-md-6">
@@ -33,7 +32,7 @@
                                <input type="text" name="jabatan" class="form-control" required>
                            </div>
 
-                           <!-- DEPARTEMEN -->
+                           <!-- DIVISI -->
                            <div class="col-md-6">
                                <label class="form-label">Divisi</label>
                                <select name="divisi_id" class="form-select" required>
@@ -43,6 +42,7 @@
                                    @endforeach
                                </select>
                            </div>
+
                            <!-- CABANG -->
                            <div class="col-md-6">
                                <label class="form-label">Cabang</label>
@@ -54,16 +54,26 @@
                                </select>
                            </div>
 
+                           <!-- SHIFT -->
+                           <div class="col-md-6">
+                               <label class="form-label">Shift Kerja</label>
+                               <select name="shift_id" class="form-select" required>
+                                   @foreach ($shifts as $s)
+                                       <option value="{{ $s->id }}">{{ $s->nama_shift }}</option>
+                                   @endforeach
+                               </select>
+                           </div>
 
                            <!-- NO HP -->
                            <div class="col-md-6">
                                <label class="form-label">No HP</label>
                                <input type="text" name="no_hp" class="form-control" required>
                            </div>
-                           <!-- email -->
+
+                           <!-- EMAIL -->
                            <div class="col-md-6">
                                <label class="form-label">Email</label>
-                               <input type="text" name="email" class="form-control" required>
+                               <input type="email" name="email" class="form-control" required>
                            </div>
 
                            <!-- TANGGAL MASUK -->
@@ -83,18 +93,83 @@
                                </select>
                            </div>
 
+                           <!-- TEMPAT LAHIR -->
                            <div class="col-md-6">
-                               <label class="form-label">Shift Kerja <span class="text-danger">*</span></label>
-                               <select name="shift_id" id="edit_shift_id" class="form-select" required>
-                                   @foreach ($shifts as $s)
-                                       <option value="{{ $s->id }}">{{ $s->nama_shift }}</option>
-                                   @endforeach
+                               <label class="form-label">Tempat Lahir</label>
+                               <input type="text" name="tempat_lahir" class="form-control">
+                           </div>
+
+                           <!-- TANGGAL LAHIR -->
+                           <div class="col-md-6">
+                               <label class="form-label">Tanggal Lahir</label>
+                               <input type="date" name="tanggal_lahir" class="form-control">
+                           </div>
+
+                           <!-- JENIS KELAMIN -->
+                           <div class="col-md-6">
+                               <label class="form-label">Jenis Kelamin</label>
+                               <select name="jenis_kelamin" class="form-select">
+                                   <option value="">-- Pilih Jenis Kelamin --</option>
+                                   <option value="L">Laki-laki</option>
+                                   <option value="P">Perempuan</option>
                                </select>
                            </div>
-                           <!-- FOTO -->
+
+                           <!-- AGAMA -->
+                           <div class="col-md-6">
+                               <label class="form-label">Agama</label>
+                               <select name="agama" class="form-select">
+                                   <option value="">-- Pilih Agama --</option>
+                                   <option value="ISLAM">Islam</option>
+                                   <option value="KRISTEN">Kristen</option>
+                                   <option value="KATOLIK">Katolik</option>
+                                   <option value="HINDU">Hindu</option>
+                                   <option value="BUDDHA">Buddha</option>
+                                   <option value="KONGHUCU">Konghucu</option>
+                               </select>
+                           </div>
+
+                           <!-- STATUS PERNIKAHAN -->
+                           <div class="col-md-6">
+                               <label class="form-label">Status Pernikahan</label>
+                               <select name="status_pernikahan" class="form-select">
+                                   <option value="">-- Pilih Status --</option>
+                                   <option value="BELUM_MENIKAH">Belum Menikah</option>
+                                   <option value="MENIKAH">Menikah</option>
+                                   <option value="CERAI">Cerai</option>
+                               </select>
+                           </div>
+
+                           <!-- FOTO PROFIL -->
                            <div class="col-md-6">
                                <label class="form-label">Foto Profil</label>
                                <input type="file" name="foto_profil" class="form-control">
+                           </div>
+
+                           <!-- FILE TAMBAHAN -->
+                           <div class="col-md-6">
+                               <label class="form-label">Foto KTP</label>
+                               <input type="file" name="foto_ktp" class="form-control">
+                           </div>
+
+                           <div class="col-md-6">
+                               <label class="form-label">Foto Ijazah</label>
+                               <input type="file" name="foto_ijazah" class="form-control">
+                           </div>
+
+                           <div class="col-md-6">
+                               <label class="form-label">Foto KK</label>
+                               <input type="file" name="foto_kk" class="form-control">
+                           </div>
+
+                           <div class="col-md-6">
+                               <label class="form-label">CV</label>
+                               <input type="file" name="cv_file" class="form-control">
+                           </div>
+
+                           <div class="col-md-6">
+                               <label class="form-label">Sertifikat</label>
+                               <input type="file" name="sertifikat_file" class="form-control">
                            </div>
 
                            <!-- ALAMAT -->
@@ -115,6 +190,7 @@
                        </button>
                    </div>
                </form>
+
 
 
            </div>
@@ -141,26 +217,28 @@
                    <div class="modal-body p-4">
                        <div class="row g-3">
 
+                           <!-- NIP -->
                            <div class="col-md-6">
                                <label class="form-label fw-semibold">NIP <span class="text-danger">*</span></label>
                                <input type="text" name="nip" id="edit_nip" class="form-control bg-light"
-                                   placeholder="Masukkan NIP" required>
+                                   required>
                            </div>
 
+                           <!-- NAMA -->
                            <div class="col-md-6">
                                <label class="form-label fw-semibold">Nama Lengkap <span
                                        class="text-danger">*</span></label>
-                               <input type="text" name="name" id="edit_name" class="form-control"
-                                   placeholder="Nama Lengkap" required>
+                               <input type="text" name="name" id="edit_name" class="form-control" required>
                            </div>
 
+                           <!-- JABATAN -->
                            <div class="col-md-6">
                                <label class="form-label fw-semibold">Jabatan <span
                                        class="text-danger">*</span></label>
-                               <input type="text" name="jabatan" id="edit_jabatan" class="form-control"
-                                   placeholder="Contoh: Staff IT" required>
+                               <input type="text" name="jabatan" id="edit_jabatan" class="form-control" required>
                            </div>
 
+                           <!-- DIVISI -->
                            <div class="col-md-6">
                                <label class="form-label fw-semibold">Divisi <span class="text-danger">*</span></label>
                                <select name="divisi_id" id="edit_divisi" class="form-select" required>
@@ -170,9 +248,11 @@
                                    @endforeach
                                </select>
                            </div>
+
+                           <!-- CABANG -->
                            <div class="col-md-6">
                                <label class="form-label fw-semibold">Cabang <span class="text-danger">*</span></label>
-                               <select name="cabang_id" id="edit_divisi" class="form-select" required>
+                               <select name="cabang_id" id="edit_cabang" class="form-select" required>
                                    <option value="">-- Pilih Cabang --</option>
                                    @foreach ($cabang as $c)
                                        <option value="{{ $c->id }}">{{ $c->nama_cabang }}</option>
@@ -180,6 +260,7 @@
                                </select>
                            </div>
 
+                           <!-- SHIFT -->
                            <div class="col-md-6">
                                <label class="form-label fw-bold text-primary">Shift Kerja <span
                                        class="text-danger">*</span></label>
@@ -196,6 +277,7 @@
                                </select>
                            </div>
 
+                           <!-- STATUS KERJA -->
                            <div class="col-md-6">
                                <label class="form-label fw-semibold">Status Kerja <span
                                        class="text-danger">*</span></label>
@@ -206,34 +288,111 @@
                                </select>
                            </div>
 
+                           <!-- NO HP -->
                            <div class="col-md-6">
                                <label class="form-label fw-semibold">No. HP / WhatsApp</label>
-                               <input type="text" name="no_hp" id="edit_no_hp" class="form-control"
-                                   placeholder="0812xxxx">
+                               <input type="text" name="no_hp" id="edit_no_hp" class="form-control">
                            </div>
 
+                           <!-- EMAIL -->
                            <div class="col-md-6">
                                <label class="form-label fw-semibold">Email Perusahaan</label>
-                               <input type="email" name="email" id="edit_email" class="form-control"
-                                   placeholder="email@perusahaan.com">
+                               <input type="email" name="email" id="edit_email" class="form-control">
                            </div>
 
+                           <!-- TANGGAL MASUK -->
                            <div class="col-md-6">
                                <label class="form-label fw-semibold">Tanggal Masuk</label>
                                <input type="date" name="tanggal_masuk" id="edit_tanggal_masuk"
                                    class="form-control">
                            </div>
 
+                           <!-- TEMPAT LAHIR -->
+                           <div class="col-md-6">
+                               <label class="form-label fw-semibold">Tempat Lahir</label>
+                               <input type="text" name="tempat_lahir" id="edit_tempat_lahir"
+                                   class="form-control">
+                           </div>
+
+                           <!-- TANGGAL LAHIR -->
+                           <div class="col-md-6">
+                               <label class="form-label fw-semibold">Tanggal Lahir</label>
+                               <input type="date" name="tanggal_lahir" id="edit_tanggal_lahir"
+                                   class="form-control">
+                           </div>
+
+                           <!-- JENIS KELAMIN -->
+                           <div class="col-md-6">
+                               <label class="form-label fw-semibold">Jenis Kelamin</label>
+                               <select name="jenis_kelamin" id="edit_jenis_kelamin" class="form-select">
+                                   <option value="">-- Pilih Jenis Kelamin --</option>
+                                   <option value="L">Laki-laki</option>
+                                   <option value="P">Perempuan</option>
+                               </select>
+                           </div>
+
+                           <!-- AGAMA -->
+                           <div class="col-md-6">
+                               <label class="form-label fw-semibold">Agama</label>
+                               <select name="agama" id="edit_agama" class="form-select">
+                                   <option value="">-- Pilih Agama --</option>
+                                   <option value="ISLAM">Islam</option>
+                                   <option value="KRISTEN">Kristen</option>
+                                   <option value="KATOLIK">Katolik</option>
+                                   <option value="HINDU">Hindu</option>
+                                   <option value="BUDDHA">Buddha</option>
+                                   <option value="KONGHUCU">Konghucu</option>
+                               </select>
+                           </div>
+
+                           <!-- STATUS PERNIKAHAN -->
+                           <div class="col-md-6">
+                               <label class="form-label fw-semibold">Status Pernikahan</label>
+                               <select name="status_pernikahan" id="edit_status_pernikahan" class="form-select">
+                                   <option value="">-- Pilih Status --</option>
+                                   <option value="BELUM_MENIKAH">Belum Menikah</option>
+                                   <option value="MENIKAH">Menikah</option>
+                                   <option value="CERAI">Cerai</option>
+                               </select>
+                           </div>
+
+                           <!-- FOTO PROFIL -->
                            <div class="col-md-6">
                                <label class="form-label fw-semibold">Foto Profil (Opsional)</label>
-                               <input type="file" name="foto_profil" class="form-control" accept="image/*">
+                               <input type="file" name="foto_profil" accept="image/*" class="form-control">
                                <small class="text-muted">Format: JPG, PNG. Maksimal 2MB</small>
                            </div>
 
+                           <!-- FILE TAMBAHAN -->
+                           <div class="col-md-6">
+                               <label class="form-label fw-semibold">Foto KTP</label>
+                               <input type="file" name="foto_ktp" class="form-control">
+                           </div>
+
+                           <div class="col-md-6">
+                               <label class="form-label fw-semibold">Foto Ijazah</label>
+                               <input type="file" name="foto_ijazah" class="form-control">
+                           </div>
+
+                           <div class="col-md-6">
+                               <label class="form-label fw-semibold">Foto KK</label>
+                               <input type="file" name="foto_kk" class="form-control">
+                           </div>
+
+                           <div class="col-md-6">
+                               <label class="form-label fw-semibold">CV</label>
+                               <input type="file" name="cv_file" class="form-control">
+                           </div>
+
+                           <div class="col-md-6">
+                               <label class="form-label fw-semibold">Sertifikat</label>
+                               <input type="file" name="sertifikat_file" class="form-control">
+                           </div>
+
+                           <!-- ALAMAT -->
                            <div class="col-md-12">
                                <label class="form-label fw-semibold">Alamat Lengkap</label>
-                               <textarea name="alamat" id="edit_alamat" class="form-control" rows="3"
-                                   placeholder="Alamat lengkap sesuai KTP/Domisili"></textarea>
+                               <textarea name="alamat" id="edit_alamat" class="form-control" rows="3"></textarea>
                            </div>
 
                        </div>
@@ -248,6 +407,7 @@
                        </button>
                    </div>
                </form>
+
            </div>
        </div>
    </div>

@@ -13,18 +13,38 @@ class Karyawan extends Model
     protected $table = 'karyawan';
 
     protected $fillable = [
-        'user_id',
-        'divisi_id',
-        'nip',
+        // Login & role
         'name',
-        'jabatan',
-        'departemen',
-        'no_hp',
         'email',
+        'password',
+        'role',
+        'status',
+        'last_login',
+        'cabang_id',
+
+        // Info karyawan
+        'divisi_id',
+        'shift_id',
+        'nip',
+        'jabatan',
+        'no_hp',
         'alamat',
         'foto_profil',
         'tanggal_masuk',
-        'status_kerja'
+        'status_kerja',
+        'face_embedding',
+
+        // Data tambahan
+        'foto_ktp',
+        'foto_ijazah',
+        'foto_kk',
+        'cv_file',
+        'sertifikat_file',
+        'tempat_lahir',
+        'tanggal_lahir',
+        'jenis_kelamin',
+        'agama',
+        'status_pernikahan'
     ];
 
 
@@ -51,5 +71,4 @@ class Karyawan extends Model
     {
         return $this->hasMany(JadwalKerja::class, 'karyawan_id', 'id');
     }
-
 }

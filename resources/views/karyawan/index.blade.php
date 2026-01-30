@@ -61,12 +61,17 @@
                             <th>NIP</th>
                             <th>Nama</th>
                             <th>Jabatan</th>
-                            <th>Departemen</th>
+                            <th>Divisi</th>
                             <th>Cabang</th>
                             <th>Shift</th>
                             <th>No HP</th>
                             <th>Email</th>
                             <th>Status Kerja</th>
+                            <th>Tempat Lahir</th>
+                            <th>Tanggal Lahir</th>
+                            <th>Jenis Kelamin</th>
+                            <th>Agama</th>
+                            <th>Status Pernikahan</th>
                             <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
@@ -74,18 +79,19 @@
                         @foreach ($karyawan as $k)
                             <tr>
                                 <td>
-                                    <img src="{{ $k->foto_profil && file_exists(public_path('foto-karyawan/' . $k->foto_profil))
-                                        ? asset('foto-karyawan/' . $k->foto_profil)
+                                    <img src="{{ $k->foto_profil && file_exists(public_path('uploads/foto_profil/' . $k->foto_profil))
+                                        ? asset('uploads/foto_profil/' . $k->foto_profil)
                                         : asset('assets/images/avatar/avatar-1.jpg') }}"
                                         class="rounded-circle" width="40" height="40" style="object-fit: cover"
                                         alt="Foto {{ $k->name }}">
+
                                 </td>
 
                                 <td>{{ $k->nip }}</td>
                                 <td>{{ $k->name }}</td>
                                 <td>{{ $k->jabatan }}</td>
-                                <td>{{ $k->divisi->nama_divisi }}</td>
-                                <td>{{ $k->cabang->nama_cabang }}</td>
+                                <td>{{ $k->divisi?->nama_divisi ?? '-' }}</td>
+                                <td>{{ $k->cabang?->nama_cabang ?? '-' }}</td>
 
                                 <td class="text-center">
                                     @if ($k->shift)
@@ -117,23 +123,35 @@
                                     @endif
                                 </td>
 
+                                <td>{{ $k->tempat_lahir ?? '-' }}</td>
+                                <td>{{ $k->tanggal_lahir ? \Carbon\Carbon::parse($k->tanggal_lahir)->format('d-m-Y') : '-' }}
+                                </td>
+                                <td>{{ $k->jenis_kelamin ?? '-' }}</td>
+                                <td>{{ $k->agama ?? '-' }}</td>
+                                <td>{{ $k->status_pernikahan ?? '-' }}</td>
+
                                 <td class="text-center">
                                     <div class="d-flex gap-1 justify-content-center">
                                         <button type="button" class="btn btn-sm btn-warning"
                                             onclick="editKaryawan(
-                                                '{{ $k->id }}', 
-                                                '{{ $k->nip }}', 
-                                                '{{ $k->name }}', 
-                                                '{{ $k->jabatan }}', 
-                                                '{{ $k->divisi_id }}', 
-                                                '{{ $k->cabang_id }}', 
-                                                '{{ $k->no_hp }}', 
-                                                '{{ $k->email }}', 
-                                                '{{ $k->tanggal_masuk }}', 
-                                                '{{ $k->status_kerja }}', 
-                                                '{{ $k->alamat }}',
-                                                '{{ $k->shift_id }}'
-                                            )">
+                                '{{ $k->id }}',
+                                '{{ $k->nip }}',
+                                '{{ $k->name }}',
+                                '{{ $k->jabatan }}',
+                                '{{ $k->divisi_id }}',
+                                '{{ $k->cabang_id }}',
+                                '{{ $k->shift_id }}',
+                                '{{ $k->status_kerja }}',
+                                '{{ $k->no_hp }}',
+                                '{{ $k->email }}',
+                                '{{ $k->tanggal_masuk }}',
+                                '{{ $k->tempat_lahir }}',
+                                '{{ $k->tanggal_lahir }}',
+                                '{{ $k->jenis_kelamin }}',
+                                '{{ $k->agama }}',
+                                '{{ $k->status_pernikahan }}',
+                                '{{ $k->alamat }}'
+                            )">
                                             <i class="ph ph-note-pencil"></i>
                                         </button>
 
@@ -151,6 +169,7 @@
                         @endforeach
                     </tbody>
                 </table>
+
             </div>
         </div>
     </div>
@@ -169,11 +188,13 @@
 
 
     <script>
-        // Pastikan urutan parameter sesuai dengan tombol di Blade
-        function editKaryawan(id, nip, name, jabatan, divisi_id, cabang_id, no_hp, email, tanggal_masuk, status_kerja,
-            alamat,
-            shift_id) {
-
+        // Pastikan urutan parameter sama dengan tombol di Blade
+        function editKaryawan(
+            id, nip, name, jabatan, divisi_id, cabang_id, shift_id, status_kerja,
+            no_hp, email, tanggal_masuk,
+            tempat_lahir, tanggal_lahir, jenis_kelamin, agama, status_pernikahan,
+            alamat
+        ) {
             // Reset form dan masukkan data ke input modal
             $('#edit_id').val(id);
             $('#edit_nip').val(nip);
@@ -181,18 +202,25 @@
             $('#edit_jabatan').val(jabatan);
             $('#edit_divisi').val(divisi_id);
             $('#edit_cabang').val(cabang_id);
+            $('#edit_shift_id').val(shift_id);
+            $('#edit_status_kerja').val(status_kerja);
             $('#edit_no_hp').val(no_hp);
             $('#edit_email').val(email);
             $('#edit_tanggal_masuk').val(tanggal_masuk);
-            $('#edit_status_kerja').val(status_kerja);
-            $('#edit_alamat').val(alamat);
 
-            // PERBAIKAN: Gunakan variabel shift_id langsung dari parameter fungsi
-            $('#edit_shift_id').val(shift_id);
+            // Field tambahan
+            $('#edit_tempat_lahir').val(tempat_lahir);
+            $('#edit_tanggal_lahir').val(tanggal_lahir);
+            $('#edit_jenis_kelamin').val(jenis_kelamin);
+            $('#edit_agama').val(agama);
+            $('#edit_status_pernikahan').val(status_pernikahan);
+
+            $('#edit_alamat').val(alamat);
 
             // Tampilkan modal
             $('#modalEditKaryawan').modal('show');
         }
+
         $(document).ready(function() {
             $('#karyawanTable').DataTable({
                 responsive: true,

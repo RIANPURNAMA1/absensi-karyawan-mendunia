@@ -35,6 +35,19 @@ return new class extends Migration
             $table->enum('status_kerja', ['TETAP', 'KONTRAK', 'MAGANG'])->nullable();
             $table->json('face_embedding')->nullable();
 
+            // new data 
+            $table->string('foto_ktp')->nullable();           // Scan KTP
+            $table->string('foto_ijazah')->nullable();        // Scan ijazah
+            $table->string('foto_kk')->nullable();            // Kartu keluarga
+            $table->string('cv_file')->nullable();            // CV
+            $table->string('sertifikat_file')->nullable();    // Sertifikat pendukung
+            $table->string('tempat_lahir')->nullable();
+            $table->date('tanggal_lahir')->nullable();
+            $table->enum('jenis_kelamin', ['L', 'P'])->nullable();
+            $table->enum('agama', ['ISLAM', 'KRISTEN', 'KATOLIK', 'HINDU', 'BUDDHA', 'KONGHUCU'])->nullable();
+            $table->enum('status_pernikahan', ['BELUM_MENIKAH', 'MENIKAH', 'CERAI'])->nullable();
+
+
 
             $table->timestamps();
         });

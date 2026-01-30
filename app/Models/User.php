@@ -16,20 +16,28 @@ class User extends Authenticatable
         'role',
         'divisi_id',
         'cabang_id',
-        'shift_id', // PASTIKAN ADA INI
+        'shift_id',      // PASTIKAN ADA
         'status',
         'nip',
-        'name',
         'jabatan',
-        'departemen',
         'no_hp',
-        'email',
         'alamat',
         'foto_profil',
         'tanggal_masuk',
         'status_kerja',
-        'face_embedding'
+        'face_embedding',
+        'foto_ktp',
+        'foto_ijazah',
+        'foto_kk',
+        'cv_file',
+        'sertifikat_file',
+        'tempat_lahir',
+        'tanggal_lahir',
+        'jenis_kelamin',
+        'agama',
+        'status_pernikahan'
     ];
+
 
     protected $hidden = [
         'password',
