@@ -438,8 +438,8 @@
                         @forelse($absensis as $a)
                             <tr class="hover:bg-slate-50/50 transition-colors">
                                 <td class="px-6 py-4">
-                                    <img src="{{ $a->user->foto_profil && file_exists(public_path('foto-karyawan/' . $a->user->foto_profil))
-                                        ? asset('foto-karyawan/' . $a->user->foto_profil)
+                                    <img src="{{ $a->user->foto_profil && file_exists(public_path('uploads/foto_profil/' . $a->user->foto_profil))
+                                        ? asset('uploads/foto_profil/' . $a->user->foto_profil)
                                         : asset('assets/images/avatar/avatar-1.jpg') }}"
                                         class="w-10 h-10 rounded-full object-cover border border-gray-100 shadow-sm"
                                         alt="{{ $a->user->name }}">
