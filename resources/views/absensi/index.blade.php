@@ -191,7 +191,7 @@
                 <span class="text-[11px] font-medium text-gray-700">Absen Foto</span>
             </button>
 
-            <button onclick="location.href='/absensi/scan'"
+            <button type="button" onclick="openScannerModal()"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="qr-code" class="w-5 h-5 text-blue-600"></i>
@@ -305,7 +305,7 @@
             </div>
         </div>
     </div>
-    
+
 
     <!-- RIWAYAT ABSENSI -->
     <div class="px-5 pb-24">
@@ -375,11 +375,197 @@
         }
     </style>
 
+    {{-- modal qr --}}
+    <!-- Modal Scan QR Code - COMPLETE VERSION -->
+    <div class="modal fade" id="modalScanQR" tabindex="-1" aria-labelledby="modalScanQRLabel" aria-hidden="true"
+        data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <!-- Header -->
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title" id="modalScanQRLabel">
+                        <i data-lucide="qr-code" class="w-5 h-5 inline-block mr-2"></i>
+                        Scan QR Code
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body">
+                    <!-- Scanner Container -->
+                    <div id="reader" class="rounded-lg overflow-hidden bg-black"
+                        style="width: 100%; min-height: 300px; position: relative;"></div>
+
+                    <!-- Loading State (hidden by default) -->
+                    <div id="scanner-loading" class="text-center py-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted mt-2 mb-0">Memuat kamera...</p>
+                    </div>
+
+                    <!-- Error State (hidden by default) -->
+                    <div id="scanner-error" class="alert alert-danger mt-3" style="display: none;" role="alert">
+                        <i data-lucide="alert-circle" class="w-4 h-4 inline-block mr-1"></i>
+                        <span id="scanner-error-message">Kamera tidak dapat diakses</span>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="mt-3 text-center">
+                        <p class="text-sm text-muted mb-2">
+                            <i data-lucide="camera" class="w-4 h-4 inline-block"></i>
+                            Arahkan kamera ke QR Code
+                        </p>
+                        <div class="d-flex gap-2 justify-content-center flex-wrap">
+                            <span class="badge bg-light text-dark">
+                                <i data-lucide="zap" class="w-3 h-3 inline-block"></i>
+                                Auto-detect
+                            </span>
+                            <span class="badge bg-light text-dark">
+                                <i data-lucide="map-pin" class="w-3 h-3 inline-block"></i>
+                                GPS Required
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Manual Input Alternative -->
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-sm btn-outline-secondary w-100"
+                            onclick="showManualInput()">
+                            <i data-lucide="keyboard" class="w-4 h-4 inline-block mr-1"></i>
+                            Input Manual (jika scan gagal)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Manual Input (Backup) -->
+    <div id="modalScanQR"
+        class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 class="text-lg font-bold text-gray-800">Scan QR Absensi</h3>
+                <button onclick="closeScannerModal()" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <div class="p-4">
+                <div id="reader" class="w-full bg-black rounded-xl overflow-hidden shadow-inner"
+                    style="min-height: 300px;"></div>
+
+                <div id="scanner-loading" class="hidden text-center py-10">
+                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
+                    <p class="text-gray-500 mt-4 text-sm">Menghubungkan kamera...</p>
+                </div>
+
+                <div class="mt-4 text-center text-sm text-gray-500">
+                    Arahkan kamera ke QR Code di lokasi cabang
+                </div>
+            </div>
+
+            <div class="p-4 bg-gray-50 flex justify-end">
+                <button onclick="closeScannerModal()"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+
     <!-- BOTTOM NAV -->
     @include('components.bottom_Nav')
-    @include('absensi.modal_absen_foto')
+
+    <!-- Modal Kamera Absensi - FIXED VERSION -->
+    <div id="modalKameraAbsen" class="fixed inset-0 z-[9999] bg-black hidden items-center justify-center">
+
+        <!-- Video Preview - PERBAIKAN: Hapus absolute, gunakan relative -->
+        <video id="videoPreviewAbsen" class="w-full h-full object-cover transform scale-x-[-1]" autoplay playsinline
+            muted>
+        </video>
 
 
+
+        <!-- UI Controls Overlay -->
+        <div class="absolute inset-0 flex flex-col justify-between items-center p-6 pointer-events-none">
+
+            <!-- Top Bar - Close Button -->
+            <div class="w-full flex justify-end pointer-events-auto">
+                <button onclick="hentikanKameraAbsen()"
+                    class="bg-black/50 backdrop-blur-md p-3 rounded-full text-white shadow-lg hover:bg-black/70 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Bottom Bar - Instruction & Shutter -->
+            <div class="flex flex-col items-center gap-6 pb-12 pointer-events-auto">
+                <!-- Instruction Text -->
+                <!-- Shutter Button -->
+                <button id="btnShutterAbsen" onclick="eksekusiAmbilFoto()"
+                    class="group relative w-20 h-20 bg-white rounded-full p-1 shadow-[0_0_30px_rgba(255,255,255,0.6)] active:scale-95 transition-transform">
+                    <div
+                        class="w-full h-full rounded-full border-[3px] border-gray-800 group-active:border-gray-600 transition-colors">
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Canvas tersembunyi untuk capture -->
+    <canvas id="canvasSimpanFoto" class="hidden"></canvas>
+
+    <style>
+        /* Pastikan video selalu tampil penuh */
+        #videoPreviewAbsen {
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+        }
+
+        /* Animasi untuk shutter button */
+        @keyframes pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+            }
+        }
+
+        #btnShutterAbsen:hover {
+            animation: pulse-ring 1.5s infinite;
+        }
+
+        /* Smooth transitions */
+        #modalKameraAbsen {
+            transition: opacity 0.3s ease;
+        }
+
+        #modalKameraAbsen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #modalKameraAbsen:not(.hidden) {
+            opacity: 1;
+        }
+    </style>
     {{-- MODAL REGISTRASI WAJAH --}}
     <div id="modalRegistrasiWajah"
         class="hidden fixed inset-0 bg-black/80 items-center justify-center z-[60] p-4 backdrop-blur-sm">
@@ -421,6 +607,21 @@
         </div>
     </div>
 
+
+    {{-- modal scanner barcode --}}
+
+    <div class="modal-body">
+        <div id="reader"
+            style="width: 100%; min-height: 250px; background: #000; border-radius: 10px; overflow: hidden;"></div>
+
+        <div class="mt-3 text-center">
+            <p class="text-sm text-muted">Arahkan kamera ke QR Code di lokasi cabang</p>
+        </div>
+    </div>
+
+
+    <!-- IMPORTANT: Include Html5Qrcode Library BEFORE your script -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <!-- Face API dan SweetAlert CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
@@ -432,6 +633,218 @@
     <script src="{{ asset('js/absensi.js') }}" defer></script>
 
     <script>
+        // ============================================
+        // QR CODE SCANNER - TAILWIND VERSION (NO BOOTSTRAP)
+        // ============================================
+
+        let html5QrCode = null;
+        let isScanning = false;
+
+        /**
+         * Fungsi Kontrol Modal (Tailwind)
+         */
+        function openScannerModal() {
+            const modal = document.getElementById('modalScanQR');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex'); // Pastikan flex aktif untuk centering
+
+            // Beri sedikit delay agar browser merender modal sebelum kamera start
+            setTimeout(() => {
+                startScanner();
+            }, 300);
+        }
+
+        function closeScannerModal() {
+            const modal = document.getElementById('modalScanQR');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            stopScanner();
+            showScannerState('loading');
+        }
+
+        /**
+         * Mulai Scanner QR Code
+         */
+        function startScanner() {
+            if (isScanning) return;
+
+            console.log("🔄 Starting QR Scanner...");
+            showScannerState('loading');
+
+            if (html5QrCode) {
+                try {
+                    html5QrCode.clear();
+                } catch (err) {}
+            }
+
+            html5QrCode = new Html5Qrcode("reader");
+
+            const config = {
+                fps: 10,
+                qrbox: {
+                    width: 250,
+                    height: 250
+                },
+                aspectRatio: 1.0,
+                videoConstraints: {
+                    facingMode: "environment"
+                }
+            };
+
+            html5QrCode.start({
+                        facingMode: "environment"
+                    },
+                    config,
+                    onScanSuccess,
+                    onScanError
+                )
+                .then(() => {
+                    isScanning = true;
+                    showScannerState('active');
+                    console.log("✅ Scanner started");
+                })
+                .catch((err) => {
+                    isScanning = false;
+                    console.error("❌ Failed:", err);
+                    showScannerState('error', "Kamera tidak dapat diakses. Pastikan izin aktif.");
+                });
+        }
+
+        /**
+         * Hentikan Scanner
+         */
+        function stopScanner() {
+            if (html5QrCode && isScanning) {
+                html5QrCode.stop()
+                    .then(() => {
+                        html5QrCode.clear();
+                        isScanning = false;
+                    })
+                    .catch(err => console.error("❌ Error stop:", err));
+            }
+        }
+
+        /**
+         * Callback Sukses Scan
+         */
+        function onScanSuccess(decodedText) {
+            if (navigator.vibrate) navigator.vibrate(100);
+            playBeepSound();
+
+            // Tutup Modal Tailwind
+            closeScannerModal();
+
+            // Lanjut proses GPS dan Kirim Data
+            processQRCode(decodedText);
+        }
+
+        function onScanError(errorMessage) {
+            // Diabaikan untuk performa
+        }
+
+        /**
+         * Tampilkan Modal Input Manual (Tailwind)
+         */
+        function showManualInput() {
+            // Tutup modal scanner
+            closeScannerModal();
+
+            // Buka modal manual
+            const manualModal = document.getElementById('modalManualInput');
+            manualModal.classList.remove('hidden');
+            manualModal.classList.add('flex');
+        }
+
+        function closeManualModal() {
+            const manualModal = document.getElementById('modalManualInput');
+            manualModal.classList.add('hidden');
+            manualModal.classList.remove('flex');
+        }
+
+        /**
+         * Proses Kode Manual
+         */
+        function processManualCode() {
+            const codeInput = document.getElementById('manualCode');
+            const code = codeInput.value.trim();
+
+            if (!code) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Kosong',
+                    text: 'Masukkan kode QR.'
+                });
+                return;
+            }
+
+            closeManualModal();
+            processQRCode(code);
+            codeInput.value = '';
+        }
+
+        /**
+         * UI State Manager
+         */
+        function showScannerState(state, message = '') {
+            const readerDiv = document.getElementById('reader');
+            const loadingDiv = document.getElementById('scanner-loading');
+            const errorDiv = document.getElementById('scanner-error');
+            const errorMessage = document.getElementById('scanner-error-message');
+
+            loadingDiv.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+            readerDiv.classList.add('hidden');
+
+            if (state === 'loading') {
+                loadingDiv.classList.remove('hidden');
+            } else if (state === 'active') {
+                readerDiv.classList.remove('hidden');
+            } else if (state === 'error') {
+                errorDiv.classList.remove('hidden');
+                if (message) errorMessage.textContent = message;
+            }
+        }
+
+        /**
+         * Proses QR + GPS (Tetap Sama)
+         */
+        function processQRCode(qrData) {
+            if (!navigator.geolocation) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'GPS Error',
+                    text: 'Browser tidak support GPS.'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Memproses Lokasi...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    sendAbsensiData(qrData, position.coords.latitude, position.coords.longitude);
+                },
+                (error) => {
+                    Swal.close();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'GPS Gagal',
+                        text: 'Izin lokasi ditolak.'
+                    });
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 10000
+                }
+            );
+        }
+
+        // Tambahkan sisa fungsi (sendAbsensiData, playBeepSound) dari kode Anda sebelumnya di sini...
         // Tangkap tombol
         const btnOvertime = document.getElementById('btnOvertime');
 

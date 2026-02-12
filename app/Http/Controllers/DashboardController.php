@@ -70,7 +70,10 @@ class DashboardController extends Controller
 
         // 4. Data Map & Tabel Terbaru
         $absensis = Absensi::with(['user', 'cabang', 'shift'])
-            ->orderBy('tanggal', 'desc')->take(100)->get();
+            ->orderBy('tanggal', 'desc') // Tanggal terbaru dulu
+            ->orderBy('created_at', 'desc') // Jika tanggal sama, jam terbaru (inputan terakhir) di atas
+            ->take(100)
+            ->get();
 
         $lokasiMarkers = $absensis->filter(fn($a) => $a->lat_masuk && $a->long_masuk)
             ->map(fn($a) => [

@@ -15,7 +15,9 @@
 
                 <div class="col-md-6 d-flex justify-content-md-end gap-2">
                     <form method="GET" class="d-flex gap-2">
-                        <input type="date" name="tanggal" value="{{ $tanggal }}" class="form-control">
+                        <input type="date" name="start_date" value="{{ $start_date }}" class="form-control">
+
+                        <input type="date" name="end_date" value="{{ $end_date }}" class="form-control">
                         <button class="btn btn-primary">
                             <i class="ph ph-magnifying-glass"></i>
                         </button>
@@ -30,88 +32,118 @@
                 <h5>Rekap Absensi Tanggal {{ \Carbon\Carbon::parse($tanggal)->format('d M Y') }}</h5>
             </div>
 
-            <div class="card-body p-0">
-                <div class="table-responsive p-4">
-                    <table class="table align-middle mb-0" id="absensiTable">
-                        <thead class="table-light">
-                            <tr>
-                                <th>No</th>
-                                <th>Karyawan</th>
-                                <th>Shift</th>
-                                <th>Jam Masuk</th>
-                                <th>Jam Pulang</th>
-                                <th>Lokasi Cabang</th>
-                                <th>Status</th>
-                                <th width="10%" class="text-center">Aksi</th>
+        <div class="card-body p-0">
+    <div class="table-responsive p-4">
+        <table class="table align-middle mb-0" id="absensiTable">
+            <thead class="table-light">
+                <tr>
+                    <th>No</th>
+                    <th>Karyawan</th>
+                    <th>Shift</th>
+                    <th class="text-center">Foto Masuk</th>
+                    <th class="text-center">Foto Pulang</th>
+                    <th>Jam Masuk</th>
+                    <th>Jam Pulang</th>
+                    <th>Lokasi Cabang</th>
+                    <th>Status</th>
+                    <th width="10%" class="text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($absensis as $a)
+                <tr>
+                    <td>{{ $loop->iteration }}</td>
 
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="{{ $a->user->foto_profil && file_exists(public_path('uploads/foto_profil/' . $a->user->foto_profil))
+                                ? asset('uploads/foto_profil/' . $a->user->foto_profil)
+                                : asset('assets/images/avatar/avatar-1.jpg') }}"
+                                class="rounded-full object-cover border border-gray-100 shadow-sm"
+                                alt="{{ $a->user->name }}" style="width: 40px; height: 40px; border-radius:100%;">
+                            <div>
+                                <span class="fw-bold">{{ $a->user->name }}</span><br>
+                                <small class="text-muted">{{ $a->user->nip }}</small>
+                            </div>
+                        </div>
+                    </td>
 
-                            @foreach ($absensis as $a)
-                                <tr>
-                                    <td>{{ $loop->iteration }}</td>
+                    <td>
+                        @if ($a->shift)
+                        <span class="badge bg-light-primary text-primary border border-primary">
+                            {{ $a->shift->nama_shift }}
+                        </span>
+                        @else
+                        <span class="text-muted">-</span>
+                        @endif
+                    </td>
 
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <img src="{{ $a->user->foto_profil ? asset('foto-karyawan/' . $a->user->foto_profil) : asset('assets/images/avatar/avatar-1.jpg') }}"
-                                                class="rounded-circle" width="40" style="height: 40px; object-fit:cover"
-                                                alt="Foto {{ $a->user->name }}">
-                                            <div>
-                                                <span class="fw-bold">{{ $a->user->name }}</span><br>
-                                                <small class="text-muted">{{ $a->user->nip }}</small>
-                                            </div>
-                                        </div>
-                                    </td>
+                    <td class="text-center">
+                        @if($a->foto_masuk)
+                            <img src="{{ asset('storage/' . $a->foto_masuk) }}" 
+                                 class="rounded border shadow-sm" 
+                                 style="width: 60px; height: 60px; object-fit: cover;"
+                                 onclick="window.open(this.src)" role="button">
+                        @elseif($a->jam_masuk)
+                            <small class="text-primary fw-bold" style="font-size: 0.75rem;">
+                                <i class="ph ph-scan text-primary"></i> Face Recognition
+                            </small>
+                        @else
+                            <span class="text-muted">-</span>
+                        @endif
+                    </td>
 
-                                    <td>
-                                        @if ($a->shift)
-                                            <span class="badge bg-light-primary text-primary border border-primary">
-                                                {{ $a->shift->nama_shift }}
-                                            </span>
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
+                    <td class="text-center">
+                        @if($a->foto_keluar) {{-- Ganti ke foto_pulang jika nama kolom di DB berbeda --}}
+                            <img src="{{ asset('storage/' . $a->foto_keluar) }}" 
+                                 class="rounded border shadow-sm" 
+                                 style="width: 60px; height: 60px; object-fit: cover;"
+                                 onclick="window.open(this.src)" role="button">
+                        @elseif($a->jam_keluar)
+                            <small class="text-primary fw-bold" style="font-size: 0.75rem;">
+                                <i class="ph ph-scan text-primary"></i> Face Recognition
+                            </small>
+                        @else
+                            <span class="text-muted">-</span>
+                        @endif
+                    </td>
 
-                                    <td>
-                                        {{ $a->jam_masuk ? \Carbon\Carbon::parse($a->jam_masuk)->format('H:i') : '-' }}
-                                    </td>
+                    <td>
+                        {{ $a->jam_masuk ? \Carbon\Carbon::parse($a->jam_masuk)->format('H:i') : '-' }}
+                    </td>
 
-                                    <td>
-                                        {{ $a->jam_keluar ? \Carbon\Carbon::parse($a->jam_keluar)->format('H:i') : '-' }}
-                                    </td>
+                    <td>
+                        {{ $a->jam_keluar ? \Carbon\Carbon::parse($a->jam_keluar)->format('H:i') : '-' }}
+                    </td>
 
-                                    <td>
-                                        <span class="badge bg-light-info text-info border border-info">
-                                            {{ $a->cabang->nama_cabang ?? '-' }}
-                                        </span>
-                                    </td>
+                    <td>
+                        <span class="badge bg-light-info text-info border border-info">
+                            {{ $a->cabang->nama_cabang ?? '-' }}
+                        </span>
+                    </td>
 
-                                    <td>
-                                        <span
-                                            class="badge
-                                    @if ($a->status == 'HADIR') bg-success
-                                    @elseif($a->status == 'TERLAMBAT') bg-warning
-                                    @elseif($a->status == 'IZIN') bg-info
-                                    @else bg-danger @endif">
-                                            {{ $a->status }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-warning"
-                                            onclick="ubahStatus('{{ $a->id }}','{{ $a->status }}')">
-                                            <i class="ph ph-pencil-simple"></i>
-                                        </button>
-                                    </td>
+                    <td>
+                        <span class="badge
+                            @if ($a->status == 'HADIR') bg-success
+                            @elseif($a->status == 'TERLAMBAT') bg-warning
+                            @elseif($a->status == 'IZIN') bg-info
+                            @else bg-danger @endif">
+                            {{ $a->status }}
+                        </span>
+                    </td>
 
-                                </tr>
-                            @endforeach
-
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-warning"
+                            onclick="ubahStatus('{{ $a->id }}','{{ $a->status }}')">
+                            <i class="ph ph-pencil-simple"></i>
+                        </button>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
         </div>
     </div>
 

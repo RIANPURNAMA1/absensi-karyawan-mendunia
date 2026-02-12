@@ -10,17 +10,19 @@ class RekapController extends Controller
 {
     public function rekap(Request $request)
     {
-        $bulan = $request->bulan ?? now()->month;
-        $tahun = $request->tahun ?? now()->year;
+        // 1. Ambil range tanggal dari request. 
+        // Jika kosong, default ke awal bulan ini sampai akhir bulan ini.
+        $start_date = $request->start_date ?? now()->startOfMonth()->toDateString();
+        $end_date   = $request->end_date ?? now()->endOfMonth()->toDateString();
 
         $rekap = User::where('role', 'KARYAWAN')
-            ->with(['cabang', 'absensi' => function ($q) use ($bulan, $tahun) {
-                $q->whereMonth('tanggal', $bulan)
-                    ->whereYear('tanggal', $tahun);
+            ->with(['cabang', 'absensi' => function ($q) use ($start_date, $end_date) {
+                // 2. Filter absensi berdasarkan range tanggal
+                $q->whereBetween('tanggal', [$start_date, $end_date]);
             }])
             ->get()
             ->map(function ($user) {
-
+                // 3. Menghitung status berdasarkan data yang sudah difilter di atas
                 $hadir       = $user->absensi->where('status', 'HADIR')->count();
                 $terlambat   = $user->absensi->where('status', 'TERLAMBAT')->count();
                 $izin        = $user->absensi->where('status', 'IZIN')->count();
@@ -39,6 +41,7 @@ class RekapController extends Controller
                 ];
             });
 
-        return view('admin.rekap.index', compact('rekap', 'bulan', 'tahun'));
+        // 4. Kirim variabel ke view
+        return view('admin.rekap.index', compact('rekap', 'start_date', 'end_date'));
     }
 }

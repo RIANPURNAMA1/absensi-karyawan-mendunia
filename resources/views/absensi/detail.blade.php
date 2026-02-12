@@ -207,8 +207,8 @@
 
                 <div>
                     <div class="aspect-square bg-gray-100 rounded-xl overflow-hidden mb-2">
-                        @if ($absensi->foto_keluar)
-                            <img src="{{ asset('storage/' . $absensi->foto_keluar) }}"
+                        @if ($absensi->foto_pulang)
+                            <img src="{{ asset('storage/' . $absensi->foto_pulang) }}"
                                 class="w-full h-full object-cover" alt="Foto Keluar">
                         @else
                             <div class="w-full h-full flex items-center justify-center text-gray-400">
@@ -221,13 +221,6 @@
             </div>
         </div>
 
-        <div class="space-y-3 pb-20">
-            <button
-                class="w-full bg-gradient-to-r from-[#00c0ff] to-blue-700 text-white py-4 rounded-2xl font-semibold text-base shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
-                <i data-lucide="download" class="w-5 h-5"></i>
-                Unduh PDF
-            </button>
-        </div>
     </div>
 
      @include('components.bottom_Nav')

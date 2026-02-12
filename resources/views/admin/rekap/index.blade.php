@@ -15,21 +15,21 @@
             </h4>
 
 
-          <form method="GET" class="d-flex gap-2 align-items-end">
+            <form method="GET" class="d-flex gap-2 align-items-end">
                 <div>
                     <label class="small text-muted">Dari Tanggal:</label>
-                    <input type="date" name="start_date" class="form-control form-control-sm" 
-                           value="{{ request('start_date', date('Y-m-01')) }}">
+                    <input type="date" name="start_date" class="form-control form-control-sm"
+                        value="{{ request('start_date', date('Y-m-01')) }}">
                 </div>
                 <div>
                     <label class="small text-muted">Sampai Tanggal:</label>
-                    <input type="date" name="end_date" class="form-control form-control-sm" 
-                           value="{{ request('end_date', date('Y-m-t')) }}">
+                    <input type="date" name="end_date" class="form-control form-control-sm"
+                        value="{{ request('end_date', date('Y-m-t')) }}">
                 </div>
                 <button class="btn btn-primary btn-sm">
                     <i class="bi bi-search"></i> Filter
                 </button>
-                @if(request('start_date'))
+                @if (request('start_date'))
                     <a href="{{ url()->current() }}" class="btn btn-secondary btn-sm">Reset</a>
                 @endif
             </form>
@@ -58,7 +58,7 @@
                                 <tr class="text-center">
                                     <td>{{ $index + 1 }}</td>
                                     <td class="text-start">{{ $r->nama }}</td>
-                                    <td>{{ $r->cabang}}</td>
+                                    <td>{{ $r->cabang }}</td>
                                     <td class="text-success fw-semibold">{{ $r->hadir }}</td>
                                     <td class="text-warning fw-semibold">{{ $r->terlambat }}</td>
                                     <td class="text-info fw-semibold">{{ $r->izin }}</td>

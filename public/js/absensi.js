@@ -699,94 +699,173 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
 
 
 
-    // absensi foto
-    let mediaStreamAbsen = null;
+// ============================================
+// ABSENSI FOTO - FIXED VERSION
+// ============================================
 
+let mediaStreamAbsen = null;
+
+/**
+ * Mulai kamera untuk absensi
+ */
 async function mulaiAbsenFoto() {
     const elModal = document.getElementById('modalKameraAbsen');
     const elVideo = document.getElementById('videoPreviewAbsen');
     
+    // Tampilkan modal
     elModal.classList.remove('hidden');
     elModal.classList.add('flex');
 
     try {
-        // Akses kamera depan
-        mediaStreamAbsen = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                facingMode: "user",
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            }, 
-            audio: false 
-        });
+        // ⭐ PERBAIKAN: Constraint kamera yang lebih baik
+        const constraints = {
+            video: {
+                facingMode: "user", // Kamera depan
+                width: { ideal: 1280, max: 1920 },
+                height: { ideal: 720, max: 1080 }
+            },
+            audio: false
+        };
+
+        // Request akses kamera
+        mediaStreamAbsen = await navigator.mediaDevices.getUserMedia(constraints);
+        
+        // ⭐ PERBAIKAN: Set stream ke video element
         elVideo.srcObject = mediaStreamAbsen;
+        
+        // ⭐ PERBAIKAN: Tunggu video ready sebelum play
+        await new Promise((resolve) => {
+            elVideo.onloadedmetadata = () => {
+                elVideo.play()
+                    .then(resolve)
+                    .catch(err => console.error("Error playing video:", err));
+            };
+        });
+
+        console.log("✅ Kamera berhasil diaktifkan");
+        
     } catch (err) {
-        console.error("Error Kamera:", err);
-        alert("Tidak dapat mengakses kamera. Pastikan izin kamera sudah diberikan.");
+        console.error("❌ Error mengakses kamera:", err);
+        
+        let errorMessage = "Kamera tidak dapat diakses.";
+        
+        if (err.name === 'NotAllowedError') {
+            errorMessage = "Akses kamera ditolak. Mohon izinkan akses kamera di browser settings.";
+        } else if (err.name === 'NotFoundError') {
+            errorMessage = "Kamera tidak ditemukan. Pastikan device memiliki kamera.";
+        } else if (err.name === 'NotReadableError') {
+            errorMessage = "Kamera sedang digunakan aplikasi lain.";
+        }
+        
+        alert(errorMessage);
         hentikanKameraAbsen();
     }
 }
 
+/**
+ * Hentikan kamera dan tutup modal
+ */
 function hentikanKameraAbsen() {
     const elModal = document.getElementById('modalKameraAbsen');
     const elVideo = document.getElementById('videoPreviewAbsen');
 
     // Hentikan semua track kamera
     if (mediaStreamAbsen) {
-        mediaStreamAbsen.getTracks().forEach(track => track.stop());
+        mediaStreamAbsen.getTracks().forEach(track => {
+            track.stop();
+            console.log("🛑 Track stopped:", track.kind);
+        });
         mediaStreamAbsen = null;
     }
     
+    // Reset video element
     elVideo.srcObject = null;
+    elVideo.pause();
+    
+    // Tutup modal
     elModal.classList.add('hidden');
     elModal.classList.remove('flex');
+    
+    console.log("✅ Kamera dihentikan");
 }
 
+/**
+ * Ambil foto dari video stream
+ */
 function eksekusiAmbilFoto() {
     const elVideo = document.getElementById('videoPreviewAbsen');
     const elCanvas = document.getElementById('canvasSimpanFoto');
-    const konteks = elCanvas.getContext('2d');
-
-    // --- STEP 1: OPTIMASI DIMENSI (RESIZING) ---
-    // Kita set maksimal lebar 800px. Jika kamera hp user 12MP, 
-    // akan otomatis diperkecil agar tidak membebani storage VPS.
-    const max_width = 800;
-    const scale = max_width / elVideo.videoWidth;
-    
-    if (scale < 1) {
-        elCanvas.width = max_width;
-        elCanvas.height = elVideo.videoHeight * scale;
-    } else {
-        elCanvas.width = elVideo.videoWidth;
-        elCanvas.height = elVideo.videoHeight;
-    }
-
-    // Gambar ulang video ke canvas dengan ukuran yang sudah disesuaikan
-    konteks.drawImage(elVideo, 0, 0, elCanvas.width, elCanvas.height);
-
-    // --- STEP 2: OPTIMASI SIZE (COMPRESSION) ---
-    // toDataURL('image/jpeg', 0.6) artinya kualitas diturunkan ke 60%.
-    // Ini sangat efektif mengecilkan size dari MB ke KB.
-    const gambarBase64 = elCanvas.toDataURL('image/jpeg', 0.6);
-
-    // Tampilkan loading sederhana (opsional)
     const btnShutter = document.getElementById('btnShutterAbsen');
-    if(btnShutter) btnShutter.disabled = true;
 
-    // --- STEP 3: AMBIL GPS & KIRIM ---
-    if (!navigator.geolocation) {
-        alert("Geolocation tidak didukung oleh browser Anda.");
+    // Validasi video sedang aktif
+    if (!elVideo.srcObject || elVideo.paused) {
+        alert("Kamera belum siap. Mohon tunggu sebentar.");
         return;
     }
 
+    // ⭐ PERBAIKAN: Pastikan video sudah ada dimensi
+    if (elVideo.videoWidth === 0 || elVideo.videoHeight === 0) {
+        alert("Video belum dimuat dengan benar. Coba tutup dan buka kamera lagi.");
+        return;
+    }
+
+    const konteks = elCanvas.getContext('2d');
+
+    // --- STEP 1: OPTIMASI DIMENSI (RESIZING) ---
+    const MAX_WIDTH = 800;
+    const videoWidth = elVideo.videoWidth;
+    const videoHeight = elVideo.videoHeight;
+    const scale = Math.min(1, MAX_WIDTH / videoWidth);
+    
+    elCanvas.width = videoWidth * scale;
+    elCanvas.height = videoHeight * scale;
+
+    console.log(`📐 Canvas size: ${elCanvas.width}x${elCanvas.height}`);
+
+    // --- STEP 2: LOGIKA MIRRORING (Flip horizontal) ---
+    konteks.save();
+    konteks.translate(elCanvas.width, 0);
+    konteks.scale(-1, 1); // Mirror horizontal
+    
+    // Gambar video ke canvas
+    konteks.drawImage(elVideo, 0, 0, elCanvas.width, elCanvas.height);
+    
+    konteks.restore();
+
+    // --- STEP 3: OPTIMASI SIZE (COMPRESSION) ---
+    const gambarBase64 = elCanvas.toDataURL('image/jpeg', 0.7); // Quality 70%
+    
+    console.log(`📷 Foto captured, size: ${(gambarBase64.length / 1024).toFixed(2)} KB`);
+
+    // Disable tombol agar tidak klik ganda
+    if (btnShutter) {
+        btnShutter.disabled = true;
+        btnShutter.classList.add('opacity-50', 'cursor-not-allowed');
+        btnShutter.innerHTML = '<div class="w-full h-full rounded-full border-[3px] border-gray-400 flex items-center justify-center"><div class="w-5 h-5 border-2 border-t-transparent border-gray-600 rounded-full animate-spin"></div></div>';
+    }
+
+    // --- STEP 4: AMBIL GPS & KIRIM DATA ---
+    if (!navigator.geolocation) {
+        alert("Geolocation tidak didukung oleh browser Anda.");
+        resetShutterButton(btnShutter);
+        return;
+    }
+
+    console.log("📍 Meminta lokasi GPS...");
+
     navigator.geolocation.getCurrentPosition(
         function(position) {
+            console.log(`✅ GPS berhasil: ${position.coords.latitude}, ${position.coords.longitude}`);
+            
             const data = {
                 photo: gambarBase64,
                 latitude: position.coords.latitude,
                 longitude: position.coords.longitude,
-                _token: "{{ csrf_token() }}" 
+                accuracy: position.coords.accuracy,
+                _token: document.querySelector('meta[name="csrf-token"]')?.content || ""
             };
+
+            console.log("📤 Mengirim data ke server...");
 
             fetch("/absensi/foto/proses", {
                 method: "POST",
@@ -798,23 +877,81 @@ function eksekusiAmbilFoto() {
             })
             .then(async response => {
                 const res = await response.json();
-                if (!response.ok) throw new Error(res.message || "Gagal absen");
+                
+                if (!response.ok) {
+                    throw new Error(res.message || `Server error: ${response.status}`);
+                }
+                
                 return res;
             })
             .then(res => {
-                alert(res.message);
+                console.log("✅ Absensi berhasil:", res);
+                alert("✅ Absensi Berhasil!\n\n" + res.message);
                 hentikanKameraAbsen();
-                location.reload(); 
+                
+                // Reload halaman setelah delay
+                setTimeout(() => {
+                    location.reload();
+                }, 500);
             })
             .catch(err => {
-                alert("Kesalahan: " + err.message);
-                if(btnShutter) btnShutter.disabled = false;
+                console.error("❌ Error kirim absensi:", err);
+                alert("❌ Gagal mengirim absensi:\n\n" + err.message);
+                resetShutterButton(btnShutter);
             });
-        }, 
-        function(error) {
-            alert("Gagal mendapatkan lokasi. Pastikan GPS aktif.");
-            if(btnShutter) btnShutter.disabled = false;
         },
-        { enableHighAccuracy: true } // Akurasi GPS tinggi
+        function(error) {
+            console.error("❌ GPS Error:", error);
+            
+            let pesanError = "Gagal mendapatkan lokasi.";
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    pesanError = "❌ Akses lokasi ditolak.\n\nMohon izinkan akses lokasi di browser settings.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    pesanError = "❌ Informasi lokasi tidak tersedia.\n\nPastikan GPS aktif dan sinyal baik.";
+                    break;
+                case error.TIMEOUT:
+                    pesanError = "❌ Waktu permintaan lokasi habis.\n\nCoba lagi atau periksa koneksi GPS.";
+                    break;
+            }
+            
+            alert(pesanError);
+            resetShutterButton(btnShutter);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 15000, // 15 detik
+            maximumAge: 0
+        }
     );
+}
+
+/**
+ * Reset shutter button ke kondisi semula
+ */
+function resetShutterButton(btnShutter) {
+    if (btnShutter) {
+        btnShutter.disabled = false;
+        btnShutter.classList.remove('opacity-50', 'cursor-not-allowed');
+        btnShutter.innerHTML = '<div class="w-full h-full rounded-full border-[3px] border-gray-800 group-active:border-gray-600 transition-colors"></div>';
+    }
+}
+
+// ============================================
+// DEBUG HELPER
+// ============================================
+
+// Log info kamera yang tersedia (untuk debugging)
+if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+    navigator.mediaDevices.enumerateDevices()
+        .then(devices => {
+            const cameras = devices.filter(d => d.kind === 'videoinput');
+            console.log(`📹 Kamera tersedia: ${cameras.length}`);
+            cameras.forEach((cam, i) => {
+                console.log(`  ${i + 1}. ${cam.label || 'Camera ' + (i + 1)}`);
+            });
+        })
+        .catch(err => console.error("Error enumerating devices:", err));
 }
