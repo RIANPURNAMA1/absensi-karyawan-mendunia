@@ -356,7 +356,7 @@ async function startCameraReg() {
 
 let isProcessingReg = false;
 let holdStartTime = null;
-const HOLD_DURATION = 3000; // 3 detik
+const HOLD_DURATION = 5000; // 3 detik
 const TILT_TOLERANCE = 0.15; // toleransi kemiringan kepala (radians)
 
 async function startRealtimeDetectionReg() {
@@ -696,3 +696,125 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
             lucide.createIcons();
         }
     });
+
+
+
+    // absensi foto
+    let mediaStreamAbsen = null;
+
+async function mulaiAbsenFoto() {
+    const elModal = document.getElementById('modalKameraAbsen');
+    const elVideo = document.getElementById('videoPreviewAbsen');
+    
+    elModal.classList.remove('hidden');
+    elModal.classList.add('flex');
+
+    try {
+        // Akses kamera depan
+        mediaStreamAbsen = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: "user",
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }, 
+            audio: false 
+        });
+        elVideo.srcObject = mediaStreamAbsen;
+    } catch (err) {
+        console.error("Error Kamera:", err);
+        alert("Tidak dapat mengakses kamera. Pastikan izin kamera sudah diberikan.");
+        hentikanKameraAbsen();
+    }
+}
+
+function hentikanKameraAbsen() {
+    const elModal = document.getElementById('modalKameraAbsen');
+    const elVideo = document.getElementById('videoPreviewAbsen');
+
+    // Hentikan semua track kamera
+    if (mediaStreamAbsen) {
+        mediaStreamAbsen.getTracks().forEach(track => track.stop());
+        mediaStreamAbsen = null;
+    }
+    
+    elVideo.srcObject = null;
+    elModal.classList.add('hidden');
+    elModal.classList.remove('flex');
+}
+
+function eksekusiAmbilFoto() {
+    const elVideo = document.getElementById('videoPreviewAbsen');
+    const elCanvas = document.getElementById('canvasSimpanFoto');
+    const konteks = elCanvas.getContext('2d');
+
+    // --- STEP 1: OPTIMASI DIMENSI (RESIZING) ---
+    // Kita set maksimal lebar 800px. Jika kamera hp user 12MP, 
+    // akan otomatis diperkecil agar tidak membebani storage VPS.
+    const max_width = 800;
+    const scale = max_width / elVideo.videoWidth;
+    
+    if (scale < 1) {
+        elCanvas.width = max_width;
+        elCanvas.height = elVideo.videoHeight * scale;
+    } else {
+        elCanvas.width = elVideo.videoWidth;
+        elCanvas.height = elVideo.videoHeight;
+    }
+
+    // Gambar ulang video ke canvas dengan ukuran yang sudah disesuaikan
+    konteks.drawImage(elVideo, 0, 0, elCanvas.width, elCanvas.height);
+
+    // --- STEP 2: OPTIMASI SIZE (COMPRESSION) ---
+    // toDataURL('image/jpeg', 0.6) artinya kualitas diturunkan ke 60%.
+    // Ini sangat efektif mengecilkan size dari MB ke KB.
+    const gambarBase64 = elCanvas.toDataURL('image/jpeg', 0.6);
+
+    // Tampilkan loading sederhana (opsional)
+    const btnShutter = document.getElementById('btnShutterAbsen');
+    if(btnShutter) btnShutter.disabled = true;
+
+    // --- STEP 3: AMBIL GPS & KIRIM ---
+    if (!navigator.geolocation) {
+        alert("Geolocation tidak didukung oleh browser Anda.");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const data = {
+                photo: gambarBase64,
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                _token: "{{ csrf_token() }}" 
+            };
+
+            fetch("/absensi/foto/proses", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+            .then(async response => {
+                const res = await response.json();
+                if (!response.ok) throw new Error(res.message || "Gagal absen");
+                return res;
+            })
+            .then(res => {
+                alert(res.message);
+                hentikanKameraAbsen();
+                location.reload(); 
+            })
+            .catch(err => {
+                alert("Kesalahan: " + err.message);
+                if(btnShutter) btnShutter.disabled = false;
+            });
+        }, 
+        function(error) {
+            alert("Gagal mendapatkan lokasi. Pastikan GPS aktif.");
+            if(btnShutter) btnShutter.disabled = false;
+        },
+        { enableHighAccuracy: true } // Akurasi GPS tinggi
+    );
+}

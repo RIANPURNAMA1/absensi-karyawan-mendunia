@@ -15,25 +15,23 @@
             </h4>
 
 
-            <form method="GET" class="d-flex gap-2">
-                <select name="bulan" class="form-control">
-                    @for ($i = 1; $i <= 12; $i++)
-                        <option value="{{ $i }}" {{ $bulan == $i ? 'selected' : '' }}>
-                            {{ \Carbon\Carbon::create()->month($i)->format('F') }}
-                        </option>
-                    @endfor
-                </select>
-
-                <select name="tahun" class="form-control">
-                    @for ($y = 2024; $y <= date('Y'); $y++)
-                        <option value="{{ $y }}" {{ $tahun == $y ? 'selected' : '' }}>{{ $y }}
-                        </option>
-                    @endfor
-                </select>
-
-                <button class="btn btn-primary">
-                    <i class="ph ph-magnifying-glass"></i>
+          <form method="GET" class="d-flex gap-2 align-items-end">
+                <div>
+                    <label class="small text-muted">Dari Tanggal:</label>
+                    <input type="date" name="start_date" class="form-control form-control-sm" 
+                           value="{{ request('start_date', date('Y-m-01')) }}">
+                </div>
+                <div>
+                    <label class="small text-muted">Sampai Tanggal:</label>
+                    <input type="date" name="end_date" class="form-control form-control-sm" 
+                           value="{{ request('end_date', date('Y-m-t')) }}">
+                </div>
+                <button class="btn btn-primary btn-sm">
+                    <i class="bi bi-search"></i> Filter
                 </button>
+                @if(request('start_date'))
+                    <a href="{{ url()->current() }}" class="btn btn-secondary btn-sm">Reset</a>
+                @endif
             </form>
         </div>
 

@@ -183,6 +183,22 @@
         </div>
 
         <div class="grid grid-cols-4 gap-2">
+            <button onclick="mulaiAbsenFoto()"
+                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+                <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <i data-lucide="camera" class="w-5 h-5 text-emerald-600"></i>
+                </div>
+                <span class="text-[11px] font-medium text-gray-700">Absen Foto</span>
+            </button>
+
+            <button onclick="location.href='/absensi/scan'"
+                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i data-lucide="qr-code" class="w-5 h-5 text-blue-600"></i>
+                </div>
+                <span class="text-[11px] font-medium text-gray-700">Scan QR</span>
+            </button>
+
             <button onclick="location.href='/absensi/izin'"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
                 <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -207,7 +223,6 @@
                 <span class="text-[11px] font-medium text-gray-700">Lembur</span>
             </button>
 
-
             <button onclick="toggleModalJadwal(true)"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
                 <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -215,14 +230,6 @@
                 </div>
                 <span class="text-[11px] font-medium text-gray-700">Jadwal</span>
             </button>
-
-            {{-- <button onclick="openAbsen()"
-                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition border border-dashed border-blue-400">
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i>
-                </div>
-                <span class="text-[11px] font-semibold text-blue-600">Manual Testing </span>
-            </button> --}}
         </div>
     </div>
 
@@ -298,6 +305,7 @@
             </div>
         </div>
     </div>
+    
 
     <!-- RIWAYAT ABSENSI -->
     <div class="px-5 pb-24">
@@ -344,7 +352,7 @@
 
         </div>
     </div>
-  
+
     <style>
         @keyframes scan {
             0% {
@@ -369,10 +377,9 @@
 
     <!-- BOTTOM NAV -->
     @include('components.bottom_Nav')
-  
+    @include('absensi.modal_absen_foto')
 
 
-    {{-- MODAL REGISTRASI WAJAH --}}
     {{-- MODAL REGISTRASI WAJAH --}}
     <div id="modalRegistrasiWajah"
         class="hidden fixed inset-0 bg-black/80 items-center justify-center z-[60] p-4 backdrop-blur-sm">

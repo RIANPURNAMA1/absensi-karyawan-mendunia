@@ -693,4 +693,78 @@ class AbsensiController extends Controller
         // LOGIKA: Jika distance > 0.4, maka dianggap ORANG BERBEDA
         return $distance;
     }
+
+
+    // absen foto
+    // --- FUNGSI KHUSUS ABSEN DENGAN FOTO (MANUAL CAPTURE) ---
+public function absenFoto(Request $request)
+{
+    $user = Auth::user();
+    $today = Carbon::today()->toDateString();
+    $now = Carbon::now();
+
+    // 1. Validasi Input
+    $request->validate([
+        'photo' => 'required', // Base64 dari kamera
+        'latitude' => 'required',
+        'longitude' => 'required',
+    ]);
+
+    // 2. Cek Cabang & Radius (Tetap validasi lokasi agar tidak bisa absen dari rumah)
+    $cabang = $user->cabang;
+    if (!$cabang) return response()->json(['message' => 'Cabang tidak ditemukan'], 422);
+
+    $jarak = $this->calculateDistance(
+        $request->latitude, $request->longitude,
+        $cabang->latitude, $cabang->longitude
+    );
+
+    if ($jarak > $cabang->radius) {
+        return response()->json([
+            'message' => 'Gagal! Anda di luar radius cabang. Jarak: ' . round($jarak) . 'm'
+        ], 422);
+    }
+
+    // 3. Simpan File Foto ke Storage
+    $fotoPath = $this->saveBase64Photo($request->photo, 'absen_manual');
+
+    // 4. Cari atau Buat Record Absensi
+    $absensi = Absensi::where('user_id', $user->id)->where('tanggal', $today)->first();
+
+    if (!$absensi) {
+        // Logika Masuk
+        $shift = $user->shift;
+        $status = 'HADIR';
+        if ($shift) {
+            $batasToleransi = Carbon::parse($shift->jam_masuk)->addMinutes($shift->toleransi);
+            if ($now->gt($batasToleransi)) $status = 'TERLAMBAT';
+        }
+
+        $absensi = Absensi::create([
+            'user_id'    => $user->id,
+            'cabang_id'  => $cabang->id,
+            'shift_id'   => $user->shift_id,
+            'tanggal'    => $today,
+            'jam_masuk'  => $now->toTimeString(),
+            'lat_masuk'  => $request->latitude,
+            'long_masuk' => $request->longitude,
+            'foto_masuk' => $fotoPath, // Simpan path foto
+            'status'     => $status,
+        ]);
+        $msg = "Absen masuk dengan foto berhasil.";
+    } else {
+        // Logika Pulang
+        if ($absensi->jam_keluar) return response()->json(['message' => 'Anda sudah absen pulang'], 422);
+
+        $absensi->update([
+            'jam_keluar'  => $now->toTimeString(),
+            'lat_pulang'  => $request->latitude,
+            'long_pulang' => $request->longitude,
+            'foto_pulang' => $fotoPath, // Simpan path foto pulang
+        ]);
+        $msg = "Absen pulang dengan foto berhasil.";
+    }
+
+    return response()->json(['message' => $msg, 'path' => $fotoPath]);
+}
 }
