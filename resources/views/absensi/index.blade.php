@@ -191,7 +191,7 @@
                 <span class="text-[11px] font-medium text-gray-700">Absen Foto</span>
             </button>
 
-            <button type="button" onclick="openScannerModal()"
+            <button type="button" onclick="showUnderDevelopment()"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="qr-code" class="w-5 h-5 text-blue-600"></i>
@@ -353,130 +353,6 @@
         </div>
     </div>
 
-    <style>
-        @keyframes scan {
-            0% {
-                top: 0;
-                opacity: 0;
-            }
-
-            50% {
-                opacity: 1;
-            }
-
-            100% {
-                top: 100%;
-                opacity: 0;
-            }
-        }
-
-        .animate-scan {
-            animation: scan 2s linear infinite;
-        }
-    </style>
-
-    {{-- modal qr --}}
-    <!-- Modal Scan QR Code - COMPLETE VERSION -->
-    <div class="modal fade" id="modalScanQR" tabindex="-1" aria-labelledby="modalScanQRLabel" aria-hidden="true"
-        data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <!-- Header -->
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title" id="modalScanQRLabel">
-                        <i data-lucide="qr-code" class="w-5 h-5 inline-block mr-2"></i>
-                        Scan QR Code
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <!-- Body -->
-                <div class="modal-body">
-                    <!-- Scanner Container -->
-                    <div id="reader" class="rounded-lg overflow-hidden bg-black"
-                        style="width: 100%; min-height: 300px; position: relative;"></div>
-
-                    <!-- Loading State (hidden by default) -->
-                    <div id="scanner-loading" class="text-center py-4" style="display: none;">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="text-muted mt-2 mb-0">Memuat kamera...</p>
-                    </div>
-
-                    <!-- Error State (hidden by default) -->
-                    <div id="scanner-error" class="alert alert-danger mt-3" style="display: none;" role="alert">
-                        <i data-lucide="alert-circle" class="w-4 h-4 inline-block mr-1"></i>
-                        <span id="scanner-error-message">Kamera tidak dapat diakses</span>
-                    </div>
-
-                    <!-- Instructions -->
-                    <div class="mt-3 text-center">
-                        <p class="text-sm text-muted mb-2">
-                            <i data-lucide="camera" class="w-4 h-4 inline-block"></i>
-                            Arahkan kamera ke QR Code
-                        </p>
-                        <div class="d-flex gap-2 justify-content-center flex-wrap">
-                            <span class="badge bg-light text-dark">
-                                <i data-lucide="zap" class="w-3 h-3 inline-block"></i>
-                                Auto-detect
-                            </span>
-                            <span class="badge bg-light text-dark">
-                                <i data-lucide="map-pin" class="w-3 h-3 inline-block"></i>
-                                GPS Required
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Manual Input Alternative -->
-                    <div class="mt-3">
-                        <button type="button" class="btn btn-sm btn-outline-secondary w-100"
-                            onclick="showManualInput()">
-                            <i data-lucide="keyboard" class="w-4 h-4 inline-block mr-1"></i>
-                            Input Manual (jika scan gagal)
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Manual Input (Backup) -->
-    <div id="modalScanQR"
-        class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50 p-4">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div class="flex items-center justify-between p-4 border-b">
-                <h3 class="text-lg font-bold text-gray-800">Scan QR Absensi</h3>
-                <button onclick="closeScannerModal()" class="text-gray-400 hover:text-gray-600">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-
-            <div class="p-4">
-                <div id="reader" class="w-full bg-black rounded-xl overflow-hidden shadow-inner"
-                    style="min-height: 300px;"></div>
-
-                <div id="scanner-loading" class="hidden text-center py-10">
-                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
-                    <p class="text-gray-500 mt-4 text-sm">Menghubungkan kamera...</p>
-                </div>
-
-                <div class="mt-4 text-center text-sm text-gray-500">
-                    Arahkan kamera ke QR Code di lokasi cabang
-                </div>
-            </div>
-
-            <div class="p-4 bg-gray-50 flex justify-end">
-                <button onclick="closeScannerModal()"
-                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium">
-                    Batal
-                </button>
-            </div>
-        </div>
-    </div>
-
-
-
 
     <!-- BOTTOM NAV -->
     @include('components.bottom_Nav')
@@ -608,18 +484,6 @@
     </div>
 
 
-    {{-- modal scanner barcode --}}
-
-    <div class="modal-body">
-        <div id="reader"
-            style="width: 100%; min-height: 250px; background: #000; border-radius: 10px; overflow: hidden;"></div>
-
-        <div class="mt-3 text-center">
-            <p class="text-sm text-muted">Arahkan kamera ke QR Code di lokasi cabang</p>
-        </div>
-    </div>
-
-
     <!-- IMPORTANT: Include Html5Qrcode Library BEFORE your script -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <!-- Face API dan SweetAlert CDN -->
@@ -633,6 +497,23 @@
     <script src="{{ asset('js/absensi.js') }}" defer></script>
 
     <script>
+
+
+function showUnderDevelopment() {
+    Swal.fire({
+        title: 'Fitur Dalam Pengembangan',
+        text: 'Mohon maaf, fitur Scan QR saat ini sedang dalam tahap pengembangan.',
+        icon: 'info',
+        confirmButtonText: 'Oke, Mengerti',
+        confirmButtonColor: '#2563eb', // Warna biru menyesuaikan tema tombol Anda
+        showClass: {
+            popup: 'animate__animated animate__fadeInUp'
+        },
+        hideClass: {
+            popup: 'animate__animated animate__fadeOutDown'
+        }
+    });
+}
         // ============================================
         // QR CODE SCANNER - TAILWIND VERSION (NO BOOTSTRAP)
         // ============================================
