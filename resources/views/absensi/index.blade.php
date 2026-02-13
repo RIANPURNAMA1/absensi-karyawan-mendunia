@@ -445,7 +445,7 @@
             opacity: 1;
         }
     </style>
-    {{-- MODAL REGISTRASI WAJAH --}}
+    {{-- MODAL REGISTRASI WAJAH
     <div id="modalRegistrasiWajah"
         class="hidden fixed inset-0 bg-black/80 items-center justify-center z-[60] p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl p-6 relative w-full max-w-sm flex flex-col items-center shadow-2xl">
@@ -484,7 +484,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
 
 
     <!-- IMPORTANT: Include Html5Qrcode Library BEFORE your script -->

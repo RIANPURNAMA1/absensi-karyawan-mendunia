@@ -536,37 +536,37 @@ async function initFaceEngine() {
     }
 }
 
-async function showModalRegistrasi() {
-    $("#modalRegistrasiWajah").removeClass("hidden").addClass("flex");
-    if (isEngineReady) await startCameraReg();
-}
+// async function showModalRegistrasi() {
+//     $("#modalRegistrasiWajah").removeClass("hidden").addClass("flex");
+//     if (isEngineReady) await startCameraReg();
+// }
 
-async function startCameraReg() {
-    try {
-        streamReg = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: "user",
-                width: 640,
-                height: 480,
-            },
-        });
-        const video = document.getElementById("videoReg");
-        video.srcObject = streamReg;
-        video.onloadedmetadata = () => {
-            video.play();
-            $("#instructionText")
-                .text("Mencari wajah...")
-                .removeClass("text-blue-600 text-green-600 text-red-500");
-            startRealtimeDetectionReg();
-        };
-    } catch (err) {
-        Swal.fire(
-            "Kamera Error",
-            "Mohon izinkan akses kamera untuk verifikasi wajah.",
-            "error",
-        );
-    }
-}
+// async function startCameraReg() {
+//     try {
+//         streamReg = await navigator.mediaDevices.getUserMedia({
+//             video: {
+//                 facingMode: "user",
+//                 width: 640,
+//                 height: 480,
+//             },
+//         });
+//         const video = document.getElementById("videoReg");
+//         video.srcObject = streamReg;
+//         video.onloadedmetadata = () => {
+//             video.play();
+//             $("#instructionText")
+//                 .text("Mencari wajah...")
+//                 .removeClass("text-blue-600 text-green-600 text-red-500");
+//             startRealtimeDetectionReg();
+//         };
+//     } catch (err) {
+//         Swal.fire(
+//             "Kamera Error",
+//             "Mohon izinkan akses kamera untuk verifikasi wajah.",
+//             "error",
+//         );
+//     }
+// }
 
 let isProcessingReg = false;
 let holdStartTime = null;
