@@ -183,7 +183,7 @@
         </div>
 
         <div class="grid grid-cols-4 gap-2">
-            <button onclick="openAbsen()"
+            {{-- <button onclick="openAbsen()"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition border border-blue-50">
                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center relative overflow-hidden">
                     <i data-lucide="scan-face" class="w-5 h-5 text-blue-600 relative z-10"></i>
@@ -191,7 +191,7 @@
                     <div class="absolute inset-0 bg-blue-400/10 animate-pulse"></div>
                 </div>
                 <span class="text-[11px] font-bold text-gray-800">Face Scan</span>
-            </button>
+            </button> --}}
 
             <button type="button" onclick="showUnderDevelopment()"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
