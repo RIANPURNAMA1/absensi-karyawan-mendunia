@@ -358,6 +358,7 @@
 
     <!-- BOTTOM NAV -->
     @include('components.bottom_Nav')
+    @include('absensi.modal_manual')
 
     <!-- Modal Kamera Absensi - FIXED VERSION -->
     <div id="modalKameraAbsen" class="fixed inset-0 z-[9999] bg-black hidden items-center justify-center">
@@ -517,213 +518,56 @@
         // ============================================
         // QR CODE SCANNER - TAILWIND VERSION (NO BOOTSTRAP)
         // ============================================
+        // function closeAbsenManual() {
+        //     const modal = document.getElementById("modalAbsenManual");
+        //     modal.classList.add("hidden");
+        //     modal.classList.remove("flex");
 
-        let html5QrCode = null;
-        let isScanning = false;
+        //     if (stream) stream.getTracks().forEach((track) => track.stop());
+        //     if (detectionInterval) clearInterval(detectionInterval);
 
-        /**
-         * Fungsi Kontrol Modal (Tailwind)
-         */
-        function openScannerModal() {
-            const modal = document.getElementById('modalScanQR');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex'); // Pastikan flex aktif untuk centering
+        //     // reset state
+        //     faceDetectedCount = 0;
+        //     absensiProcessing = false;
+        //     document.getElementById("instructionTextAbsen").textContent =
+        //         "Posisikan wajah Anda di depan kamera...";
+        // }
 
-            // Beri sedikit delay agar browser merender modal sebelum kamera start
+        // ============================================
+        // CLOSE MODAL - VANILLA JS (NO JQUERY MODAL)
+        // ============================================
+
+        function closeAbsenManual() {
+            if (isModalClosing) return;
+            
+            isModalClosing = true;
+            const modal = document.getElementById("modalAbsenManual");
+            const card = modal.querySelector(".modal-card");
+            
+            // Start fade out animation
+            card.classList.remove("modal-fade-in");
+            card.classList.add("modal-fade-out");
+            
+            // Cleanup resources
             setTimeout(() => {
-                startScanner();
-            }, 300);
+                stopAllIntervals();
+                stopStream();
+                
+                // HIDE MODAL - VANILLA JS ONLY!
+                modal.classList.add("hidden");
+                modal.classList.remove("flex");
+                
+                // Restore body scroll
+                document.body.style.overflow = "auto";
+                
+                // Reset state
+                resetModalState();
+                
+                // Reset flag
+                isModalClosing = false;
+            }, 250);
         }
 
-        function closeScannerModal() {
-            const modal = document.getElementById('modalScanQR');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            stopScanner();
-            showScannerState('loading');
-        }
-
-        /**
-         * Mulai Scanner QR Code
-         */
-        function startScanner() {
-            if (isScanning) return;
-
-            console.log("🔄 Starting QR Scanner...");
-            showScannerState('loading');
-
-            if (html5QrCode) {
-                try {
-                    html5QrCode.clear();
-                } catch (err) {}
-            }
-
-            html5QrCode = new Html5Qrcode("reader");
-
-            const config = {
-                fps: 10,
-                qrbox: {
-                    width: 250,
-                    height: 250
-                },
-                aspectRatio: 1.0,
-                videoConstraints: {
-                    facingMode: "environment"
-                }
-            };
-
-            html5QrCode.start({
-                        facingMode: "environment"
-                    },
-                    config,
-                    onScanSuccess,
-                    onScanError
-                )
-                .then(() => {
-                    isScanning = true;
-                    showScannerState('active');
-                    console.log("✅ Scanner started");
-                })
-                .catch((err) => {
-                    isScanning = false;
-                    console.error("❌ Failed:", err);
-                    showScannerState('error', "Kamera tidak dapat diakses. Pastikan izin aktif.");
-                });
-        }
-
-        /**
-         * Hentikan Scanner
-         */
-        function stopScanner() {
-            if (html5QrCode && isScanning) {
-                html5QrCode.stop()
-                    .then(() => {
-                        html5QrCode.clear();
-                        isScanning = false;
-                    })
-                    .catch(err => console.error("❌ Error stop:", err));
-            }
-        }
-
-        /**
-         * Callback Sukses Scan
-         */
-        function onScanSuccess(decodedText) {
-            if (navigator.vibrate) navigator.vibrate(100);
-            playBeepSound();
-
-            // Tutup Modal Tailwind
-            closeScannerModal();
-
-            // Lanjut proses GPS dan Kirim Data
-            processQRCode(decodedText);
-        }
-
-        function onScanError(errorMessage) {
-            // Diabaikan untuk performa
-        }
-
-        /**
-         * Tampilkan Modal Input Manual (Tailwind)
-         */
-        function showManualInput() {
-            // Tutup modal scanner
-            closeScannerModal();
-
-            // Buka modal manual
-            const manualModal = document.getElementById('modalManualInput');
-            manualModal.classList.remove('hidden');
-            manualModal.classList.add('flex');
-        }
-
-        function closeManualModal() {
-            const manualModal = document.getElementById('modalManualInput');
-            manualModal.classList.add('hidden');
-            manualModal.classList.remove('flex');
-        }
-
-        /**
-         * Proses Kode Manual
-         */
-        function processManualCode() {
-            const codeInput = document.getElementById('manualCode');
-            const code = codeInput.value.trim();
-
-            if (!code) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Kosong',
-                    text: 'Masukkan kode QR.'
-                });
-                return;
-            }
-
-            closeManualModal();
-            processQRCode(code);
-            codeInput.value = '';
-        }
-
-        /**
-         * UI State Manager
-         */
-        function showScannerState(state, message = '') {
-            const readerDiv = document.getElementById('reader');
-            const loadingDiv = document.getElementById('scanner-loading');
-            const errorDiv = document.getElementById('scanner-error');
-            const errorMessage = document.getElementById('scanner-error-message');
-
-            loadingDiv.classList.add('hidden');
-            errorDiv.classList.add('hidden');
-            readerDiv.classList.add('hidden');
-
-            if (state === 'loading') {
-                loadingDiv.classList.remove('hidden');
-            } else if (state === 'active') {
-                readerDiv.classList.remove('hidden');
-            } else if (state === 'error') {
-                errorDiv.classList.remove('hidden');
-                if (message) errorMessage.textContent = message;
-            }
-        }
-
-        /**
-         * Proses QR + GPS (Tetap Sama)
-         */
-        function processQRCode(qrData) {
-            if (!navigator.geolocation) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'GPS Error',
-                    text: 'Browser tidak support GPS.'
-                });
-                return;
-            }
-
-            Swal.fire({
-                title: 'Memproses Lokasi...',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    sendAbsensiData(qrData, position.coords.latitude, position.coords.longitude);
-                },
-                (error) => {
-                    Swal.close();
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'GPS Gagal',
-                        text: 'Izin lokasi ditolak.'
-                    });
-                }, {
-                    enableHighAccuracy: true,
-                    timeout: 10000
-                }
-            );
-        }
 
         // Tambahkan sisa fungsi (sendAbsensiData, playBeepSound) dari kode Anda sebelumnya di sini...
         // Tangkap tombol

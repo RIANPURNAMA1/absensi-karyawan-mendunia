@@ -1,3 +1,4 @@
+lucide.createIcons();
 $.ajaxSetup({
     headers: {
         "X-CSRF-TOKEN": document
@@ -5,18 +6,107 @@ $.ajaxSetup({
             .getAttribute("content"),
     },
 });
+const DETECTION_THRESHOLD = 9; // Kurangi dari default untuk deteksi lebih cepat (9 frame = ~0.9 detik pada 100ms interval)
+const COUNTDOWN_DURATION = 3; // Countdown 3 detik sebelum proses absensi
+let detectionInterval;
+let faceDetectedCount = 0;
+let absensiProcessing = false;
+let countdownInterval = null;
+let isEngineReady = false;
+let isModalClosing = false;
 
-lucide.createIcons();
 const MODEL_URL =
     "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights";
 let stream = null;
-let isEngineReady = false;
-let detectionInterval = null;
 
-// Variabel untuk deteksi otomatis
-let faceDetectedCount = 0;
-const DETECTION_THRESHOLD = 3; // Deteksi 3x berturut-turut untuk konfirmasi
-let absensiProcessing = false;
+ // Open modal dengan optimization
+        function openAbsenManual() {
+            if (isModalClosing) return; // Prevent open during close
+            
+            const modal = document.getElementById("modalAbsenManual");
+            const card = modal.querySelector(".modal-card");
+            
+            // Remove old animations
+            card.classList.remove("modal-fade-out");
+            card.classList.add("modal-fade-in");
+            
+            // Show modal
+            modal.classList.remove("hidden");
+            modal.classList.add("visible");
+            
+            // Prevent body scroll
+            document.body.classList.add("modal-open");
+            
+            // Start camera
+            setTimeout(() => startCamera(), 100);
+        }
+
+  
+        // Go to dashboard
+        function goToDashboard() {
+            if (isModalClosing) return;
+            closeAbsenManual();
+            setTimeout(() => {
+                window.location.href = '/absensi';
+            }, 300);
+        }
+
+        // ============================================
+        // CLEANUP FUNCTIONS
+        // ============================================
+
+        function stopAllIntervals() {
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+                detectionInterval = null;
+            }
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+        }
+
+        function stopStream() {
+            if (stream) {
+                try {
+                    stream.getTracks().forEach(track => {
+                        track.stop();
+                        // Destroy track reference
+                        track = null;
+                    });
+                    stream = null;
+                } catch (err) {
+                    console.warn("Error stopping stream:", err);
+                }
+            }
+
+            // Clear video
+            const video = document.getElementById("videoStream");
+            if (video) {
+                video.srcObject = null;
+                video.pause();
+            }
+
+            // Clear canvas
+            const canvas = document.getElementById("canvasStream");
+            if (canvas) {
+                const ctx = canvas.getContext("2d");
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        function resetModalState() {
+            faceDetectedCount = 0;
+            absensiProcessing = false;
+            isEngineReady = false;
+            
+            // Reset UI
+            document.getElementById("instructionTextAbsen").textContent = 
+                "Posisikan wajah di tengah lingkaran dan diam sebentar...";
+            document.getElementById("timerTextAbsen").textContent = "";
+        }
+
+
 
 window.openAbsen = async function () {
     const modal = document.getElementById("modalAbsenManual");
@@ -26,21 +116,6 @@ window.openAbsen = async function () {
     await loadModels();
     startCamera();
 };
-
-function closeAbsenManual() {
-    const modal = document.getElementById("modalAbsenManual");
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-
-    if (stream) stream.getTracks().forEach((track) => track.stop());
-    if (detectionInterval) clearInterval(detectionInterval);
-
-    // reset state
-    faceDetectedCount = 0;
-    absensiProcessing = false;
-    document.getElementById("instructionTextAbsen").textContent =
-        "Posisikan wajah Anda di depan kamera...";
-}
 
 async function loadModels() {
     if (isEngineReady) return;
@@ -59,6 +134,13 @@ async function loadModels() {
         "Posisikan wajah Anda di depan kamera...";
 }
 
+// ============================================
+// OPTIMIZED FACE DETECTION FOR ATTENDANCE
+// ============================================
+
+// ============================================
+// CAMERA STARTUP
+// ============================================
 async function startCamera() {
     const video = document.getElementById("videoStream");
     const canvas = document.getElementById("canvasStream");
@@ -68,7 +150,7 @@ async function startCamera() {
             video: {
                 facingMode: "user",
                 width: { ideal: 640 },
-                height: { ideal: 480 }
+                height: { ideal: 480 },
             },
         });
         video.srcObject = stream;
@@ -76,6 +158,8 @@ async function startCamera() {
             video.play();
             document.getElementById("instructionTextAbsen").textContent =
                 "Mencari wajah...";
+            // Mark engine sebagai ready sebelum mulai deteksi
+            isEngineReady = true;
             startRealtimeDetection(video, canvas);
         };
     } catch (err) {
@@ -88,6 +172,9 @@ async function startCamera() {
     }
 }
 
+// ============================================
+// REAL-TIME FACE DETECTION (OPTIMIZED)
+// ============================================
 function startRealtimeDetection(video, canvas) {
     const displaySize = {
         width: video.clientWidth,
@@ -95,108 +182,230 @@ function startRealtimeDetection(video, canvas) {
     };
     faceapi.matchDimensions(canvas, displaySize);
 
+    // Interval lebih cepat (100ms) untuk deteksi lebih responsif
     detectionInterval = setInterval(async () => {
-        // Skip jika sedang memproses absensi
+        // Skip jika sedang memproses absensi atau video belum siap
         if (!video.videoWidth || !isEngineReady || absensiProcessing) return;
 
-        const detection = await faceapi
-            .detectSingleFace(
-                video,
-                new faceapi.TinyFaceDetectorOptions({
-                    inputSize: 224,
-                    scoreThreshold: 0.5,
-                }),
-            )
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+        try {
+            const detection = await faceapi
+                .detectSingleFace(
+                    video,
+                    new faceapi.TinyFaceDetectorOptions({
+                        inputSize: 224,
+                        scoreThreshold: 0.5, // Bisa diturunkan menjadi 0.4 untuk sensitivitas lebih tinggi
+                    }),
+                )
+                .withFaceLandmarks()
+                .withFaceDescriptor();
 
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        if (detection) {
-            const resized = faceapi.resizeResults(detection, displaySize);
-            const box = resized.detection.box;
+            if (detection) {
+                const resized = faceapi.resizeResults(detection, displaySize);
+                const box = resized.detection.box;
 
-            // Increment counter jika wajah terdeteksi
-            faceDetectedCount++;
+                // Increment counter jika wajah terdeteksi
+                faceDetectedCount++;
 
-            // Gambar kotak hijau di sekitar wajah yang terdeteksi
-            ctx.strokeStyle = "#10b981"; // Green color
-            ctx.lineWidth = 3;
-            ctx.strokeRect(box.x, box.y, box.width, box.height);
+                // ============================================
+                // DRAW BOUNDING BOX - LEBIH CEPAT DAN JELAS
+                // ============================================
+                ctx.strokeStyle = "#10b981"; // Green color
+                ctx.lineWidth = 3;
+                ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-            // Tambahkan indikator visual
-            ctx.fillStyle = "#10b981";
-            ctx.font = "16px Arial";
-            ctx.fillText("Wajah Terdeteksi", box.x, box.y - 10);
+                // Corner indicators untuk visual lebih menarik
+                const cornerSize = 15;
+                ctx.fillStyle = "#10b981";
 
-            // Update instruksi
-            if (faceDetectedCount >= DETECTION_THRESHOLD) {
-                document.getElementById("instructionTextAbsen").textContent =
-                    "Wajah terdeteksi! Memproses absensi...";
-            } else {
-                document.getElementById("instructionTextAbsen").textContent =
-                    `Wajah terdeteksi (${faceDetectedCount}/${DETECTION_THRESHOLD})...`;
-            }
+                // Top-left
+                ctx.fillRect(box.x, box.y, cornerSize, 3);
+                ctx.fillRect(box.x, box.y, 3, cornerSize);
 
-            // Jika sudah terdeteksi beberapa kali berturut-turut, proses absensi
-            if (faceDetectedCount >= DETECTION_THRESHOLD && !absensiProcessing) {
-                absensiProcessing = true;
-
-                // Hentikan interval deteksi
-                clearInterval(detectionInterval);
-
-                Swal.fire({
-                    title: "Memproses Absensi...",
-                    text: "Mohon tunggu sebentar",
-                    allowOutsideClick: false,
-                    showConfirmButton: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    },
-                });
-
-                // Ambil lokasi GPS
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        prosesAbsensiWajah(
-                            resized.descriptor,
-                            pos.coords.latitude,
-                            pos.coords.longitude,
-                        );
-                    },
-                    (err) => {
-                        absensiProcessing = false;
-                        faceDetectedCount = 0;
-
-                        Swal.fire({
-                            icon: "error",
-                            title: "Error Lokasi",
-                            text: "Gagal mengambil koordinat GPS. Pastikan GPS aktif.",
-                            confirmButtonText: "Coba Lagi"
-                        }).then(() => {
-                            // Restart deteksi
-                            if ($("#modalAbsenManual").is(":visible")) {
-                                startRealtimeDetection(video, canvas);
-                            }
-                        });
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 0
-                    }
+                // Top-right
+                ctx.fillRect(
+                    box.x + box.width - cornerSize,
+                    box.y,
+                    cornerSize,
+                    3,
                 );
+                ctx.fillRect(box.x + box.width - 3, box.y, 3, cornerSize);
+
+                // Bottom-left
+                ctx.fillRect(box.x, box.y + box.height - 3, cornerSize, 3);
+                ctx.fillRect(
+                    box.x,
+                    box.y + box.height - cornerSize,
+                    3,
+                    cornerSize,
+                );
+
+                // Bottom-right
+                ctx.fillRect(
+                    box.x + box.width - cornerSize,
+                    box.y + box.height - 3,
+                    cornerSize,
+                    3,
+                );
+                ctx.fillRect(
+                    box.x + box.width - 3,
+                    box.y + box.height - cornerSize,
+                    3,
+                    cornerSize,
+                );
+
+                // Label dengan indikator
+                ctx.fillStyle = "#10b981";
+                ctx.font = "bold 16px Arial";
+                ctx.fillText("✓ Wajah Terdeteksi", box.x, box.y - 10);
+
+                // Progress bar visual
+                const progressWidth =
+                    (box.width * faceDetectedCount) / DETECTION_THRESHOLD;
+                ctx.fillStyle = "rgba(16, 185, 129, 0.5)";
+                ctx.fillRect(box.x, box.y + box.height + 5, progressWidth, 4);
+                ctx.strokeStyle = "#10b981";
+                ctx.strokeRect(box.x, box.y + box.height + 5, box.width, 4);
+
+                // Update instruksi dengan progress
+                if (faceDetectedCount >= DETECTION_THRESHOLD) {
+                    document.getElementById(
+                        "instructionTextAbsen",
+                    ).textContent = "Wajah Terdeteksi! Mulai Countdown...";
+                } else {
+                    document.getElementById(
+                        "instructionTextAbsen",
+                    ).textContent =
+                        `Wajah Terdeteksi (${faceDetectedCount}/${DETECTION_THRESHOLD})...`;
+                }
+
+                // ============================================
+                // JIKA DETEKSI SUDAH CUKUP, MULAI COUNTDOWN
+                // ============================================
+                if (
+                    faceDetectedCount >= DETECTION_THRESHOLD &&
+                    !absensiProcessing
+                ) {
+                    absensiProcessing = true;
+                    clearInterval(detectionInterval); // Hentikan deteksi sementara
+
+                    // Mulai countdown 3 detik
+                    startCountdown(video, canvas, resized.descriptor);
+                }
+            } else {
+                // Reset counter jika wajah tidak terdeteksi
+                faceDetectedCount = 0;
+                document.getElementById("instructionTextAbsen").textContent =
+                    "Posisikan wajah Anda di depan kamera...";
             }
-        } else {
-            // Reset counter jika wajah tidak terdeteksi
-            faceDetectedCount = 0;
-            document.getElementById("instructionTextAbsen").textContent =
-                "Posisikan wajah Anda di depan kamera...";
+        } catch (err) {
+            console.error("Error dalam deteksi wajah:", err);
         }
-    }, 300); // Check setiap 300ms untuk performa lebih baik
+    }, 100); // Check setiap 100ms untuk performa yang lebih baik
 }
 
+// ============================================
+// COUNTDOWN SEBELUM ABSENSI
+// ============================================
+function startCountdown(video, canvas, faceDescriptor) {
+    let countdown = COUNTDOWN_DURATION;
+    const ctx = canvas.getContext("2d");
+    const displaySize = {
+        width: video.clientWidth,
+        height: video.clientHeight,
+    };
+
+    countdownInterval = setInterval(async () => {
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw countdown text besar di tengah
+        ctx.fillStyle = "#10b981";
+        ctx.font = "bold 80px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(countdown, canvas.width / 2, canvas.height / 2);
+
+        // Background setengah transparan untuk lebih terlihat
+        ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Redraw countdown di atas
+        ctx.fillStyle = "#10b981";
+        ctx.font = "bold 80px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(countdown, canvas.width / 2, canvas.height / 2);
+
+        // Update instruksi
+        document.getElementById("instructionTextAbsen").textContent =
+            `Proses dalam ${countdown}...`;
+
+        countdown--;
+
+        // Jika countdown selesai
+        if (countdown < 0) {
+            clearInterval(countdownInterval);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Tampilkan loading
+            Swal.fire({
+                title: "Memproses Absensi...",
+                text: "Mengambil lokasi GPS...",
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                },
+            });
+
+            // Ambil lokasi GPS dan proses absensi
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    prosesAbsensiWajah(
+                        faceDescriptor,
+                        pos.coords.latitude,
+                        pos.coords.longitude,
+                    );
+                },
+                (err) => {
+                    handleGPSError(video, canvas);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0,
+                },
+            );
+        }
+    }, 1000); // Update countdown setiap 1 detik
+}
+
+// ============================================
+// ERROR HANDLING - GPS
+// ============================================
+function handleGPSError(video, canvas) {
+    absensiProcessing = false;
+    faceDetectedCount = 0;
+
+    Swal.fire({
+        icon: "error",
+        title: "Error Lokasi",
+        text: "Gagal mengambil koordinat GPS. Pastikan GPS aktif.",
+        confirmButtonText: "Coba Lagi",
+    }).then(() => {
+        // Restart deteksi jika modal masih terbuka
+        if ($("#modalAbsenManual").is(":visible")) {
+            startRealtimeDetection(video, canvas);
+        }
+    });
+}
+
+// ============================================
+// PROCESS ATTENDANCE (ABSENSI)
+// ============================================
 function prosesAbsensiWajah(faceEmbedding, latitude, longitude) {
     const payload = {
         face_embedding: JSON.stringify(Array.from(faceEmbedding)),
@@ -224,7 +433,7 @@ function prosesAbsensiWajah(faceEmbedding, latitude, longitude) {
                     icon: "info",
                     title: "Sudah Absen",
                     text: "Anda sudah melakukan absensi masuk dan pulang hari ini.",
-                    confirmButtonText: "OK"
+                    confirmButtonText: "OK",
                 }).then(() => {
                     closeAbsenManual();
                 });
@@ -246,7 +455,7 @@ function prosesAbsensiWajah(faceEmbedding, latitude, longitude) {
                     }).then(() => {
                         closeAbsenManual();
                         // Reload data jika ada fungsi loadRiwayatRealtime
-                        if (typeof loadRiwayatRealtime === 'function') {
+                        if (typeof loadRiwayatRealtime === "function") {
                             loadRiwayatRealtime();
                         }
                     });
@@ -262,42 +471,47 @@ function prosesAbsensiWajah(faceEmbedding, latitude, longitude) {
     });
 }
 
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
 function handleError(xhr) {
     absensiProcessing = false;
     faceDetectedCount = 0;
 
-    // Stop deteksi dan kamera
-    if (detectionInterval) {
-        clearInterval(detectionInterval);
-    }
+    let errorMsg = "Terjadi kesalahan dalam proses absensi";
 
-    const pesanError =
-        xhr.responseJSON?.message ??
-        "Terjadi kesalahan pada sistem. Silakan coba lagi.";
+    if (xhr.responseJSON && xhr.responseJSON.message) {
+        errorMsg = xhr.responseJSON.message;
+    }
 
     Swal.fire({
         icon: "error",
-        title: "Absensi Gagal",
-        text: pesanError,
-        confirmButtonColor: "#ef4444",
+        title: "Error",
+        text: errorMsg,
         confirmButtonText: "Coba Lagi",
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Restart deteksi jika user ingin coba lagi
-            const video = document.getElementById("videoStream");
-            const canvas = document.getElementById("canvasStream");
-
-            if ($("#modalAbsenManual").is(":visible") && video.srcObject) {
-                startRealtimeDetection(video, canvas);
-            } else {
-                closeAbsenManual();
-            }
-        } else {
-            closeAbsenManual();
+    }).then(() => {
+        const video = document.getElementById("videoStream");
+        const canvas = document.getElementById("canvasStream");
+        if ($("#modalAbsenManual").is(":visible")) {
+            startRealtimeDetection(video, canvas);
         }
     });
 }
 
+// function closeAbsenManual() {
+//     absensiProcessing = false;
+//     faceDetectedCount = 0;
+//     if (detectionInterval) clearInterval(detectionInterval);
+//     if (countdownInterval) clearInterval(countdownInterval);
+
+//     const stream = document.getElementById("videoStream").srcObject;
+//     if (stream) {
+//         stream.getTracks().forEach((track) => track.stop());
+//     }
+
+//     $("#modalAbsenManual").modal("hide");
+// }
 // beda fungsi
 lucide.createIcons();
 
@@ -374,10 +588,13 @@ async function startRealtimeDetectionReg() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const detection = await faceapi
-            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
-                inputSize: 224,
-                scoreThreshold: 0.5,
-            }))
+            .detectSingleFace(
+                video,
+                new faceapi.TinyFaceDetectorOptions({
+                    inputSize: 224,
+                    scoreThreshold: 0.5,
+                }),
+            )
             .withFaceLandmarks();
 
         if (detection) {
@@ -394,14 +611,18 @@ async function startRealtimeDetectionReg() {
             const leftEye = landmarks.getLeftEye();
             const rightEye = landmarks.getRightEye();
 
-            const eyeSlope = (rightEye[0].y - leftEye[0].y) / (rightEye[0].x - leftEye[0].x);
+            const eyeSlope =
+                (rightEye[0].y - leftEye[0].y) / (rightEye[0].x - leftEye[0].x);
 
             const headIsStraight = Math.abs(eyeSlope) < TILT_TOLERANCE;
 
             if (headIsStraight) {
                 if (!holdStartTime) holdStartTime = Date.now();
                 const holdTime = Date.now() - holdStartTime;
-                const remainingTime = Math.max(0, Math.ceil((HOLD_DURATION - holdTime) / 1000));
+                const remainingTime = Math.max(
+                    0,
+                    Math.ceil((HOLD_DURATION - holdTime) / 1000),
+                );
 
                 // progres instruksi
                 if (holdTime < HOLD_DURATION) {
@@ -426,7 +647,6 @@ async function startRealtimeDetectionReg() {
                     .removeClass("text-green-600 text-blue-600")
                     .addClass("text-red-500");
             }
-
         } else {
             holdStartTime = null;
             $("#instructionText")
@@ -434,11 +654,8 @@ async function startRealtimeDetectionReg() {
                 .removeClass("text-blue-600 text-green-600")
                 .addClass("text-red-500");
         }
-
     }, 150); // lebih responsif
 }
-
-
 
 async function prosesRegistrasiWajah() {
     const video = document.getElementById("videoReg");
@@ -470,7 +687,7 @@ async function prosesRegistrasiWajah() {
             icon: "error",
             title: "Gagal Deteksi",
             text: "Wajah tidak terdeteksi dengan jelas. Silakan coba lagi.",
-            confirmButtonText: "Coba Lagi"
+            confirmButtonText: "Coba Lagi",
         }).then(() => {
             $("#instructionText")
                 .text("Posisikan wajah Anda di depan kamera...")
@@ -503,7 +720,7 @@ async function prosesRegistrasiWajah() {
             }).then(() => {
                 // Stop kamera sebelum reload
                 if (streamReg) {
-                    streamReg.getTracks().forEach(track => track.stop());
+                    streamReg.getTracks().forEach((track) => track.stop());
                 }
                 location.reload();
             });
@@ -549,8 +766,8 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
     const a =
         Math.sin(dLat / 2) ** 2 +
         Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) ** 2;
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLon / 2) ** 2;
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
@@ -656,48 +873,45 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
 //     });
 // }
 
-
 // jadwaal
 
 function toggleModalJadwal(show) {
-    const modal = document.getElementById('modalJadwal');
-    const content = document.getElementById('modalContent');
+    const modal = document.getElementById("modalJadwal");
+    const content = document.getElementById("modalContent");
 
     if (show) {
         // 1. Tampilkan container utama (menghilangkan class hidden)
-        modal.classList.remove('hidden');
+        modal.classList.remove("hidden");
 
         // 2. Beri sedikit jeda agar transisi slide-up terlihat
         setTimeout(() => {
-            content.classList.remove('translate-y-full');
-            content.classList.add('translate-y-0');
+            content.classList.remove("translate-y-full");
+            content.classList.add("translate-y-0");
         }, 10);
 
         // 3. Kunci scroll body
-        document.body.style.overflow = 'hidden';
+        document.body.style.overflow = "hidden";
     } else {
         // 1. Jalankan animasi slide-down terlebih dahulu
-        content.classList.remove('translate-y-0');
-        content.classList.add('translate-y-full');
+        content.classList.remove("translate-y-0");
+        content.classList.add("translate-y-full");
 
         // 2. Tunggu animasi selesai (300ms sesuai duration-300) baru sembunyikan container
         setTimeout(() => {
-            modal.classList.add('hidden');
+            modal.classList.add("hidden");
         }, 300);
 
         // 3. Kembalikan scroll body
-        document.body.style.overflow = 'auto';
+        document.body.style.overflow = "auto";
     }
 }
 
 // Pastikan Lucide Icons ter-render jika data dimuat dinamis
 document.addEventListener("DOMContentLoaded", function () {
-    if (typeof lucide !== 'undefined') {
+    if (typeof lucide !== "undefined") {
         lucide.createIcons();
     }
 });
-
-
 
 // ============================================
 // ABSENSI FOTO - FIXED VERSION
@@ -709,12 +923,12 @@ let mediaStreamAbsen = null;
  * Mulai kamera untuk absensi
  */
 async function mulaiAbsenFoto() {
-    const elModal = document.getElementById('modalKameraAbsen');
-    const elVideo = document.getElementById('videoPreviewAbsen');
+    const elModal = document.getElementById("modalKameraAbsen");
+    const elVideo = document.getElementById("videoPreviewAbsen");
 
     // Tampilkan modal
-    elModal.classList.remove('hidden');
-    elModal.classList.add('flex');
+    elModal.classList.remove("hidden");
+    elModal.classList.add("flex");
 
     try {
         // ⭐ PERBAIKAN: Constraint kamera yang lebih baik
@@ -722,13 +936,14 @@ async function mulaiAbsenFoto() {
             video: {
                 facingMode: "user", // Kamera depan
                 width: { ideal: 1280, max: 1920 },
-                height: { ideal: 720, max: 1080 }
+                height: { ideal: 720, max: 1080 },
             },
-            audio: false
+            audio: false,
         };
 
         // Request akses kamera
-        mediaStreamAbsen = await navigator.mediaDevices.getUserMedia(constraints);
+        mediaStreamAbsen =
+            await navigator.mediaDevices.getUserMedia(constraints);
 
         // ⭐ PERBAIKAN: Set stream ke video element
         elVideo.srcObject = mediaStreamAbsen;
@@ -736,24 +951,26 @@ async function mulaiAbsenFoto() {
         // ⭐ PERBAIKAN: Tunggu video ready sebelum play
         await new Promise((resolve) => {
             elVideo.onloadedmetadata = () => {
-                elVideo.play()
+                elVideo
+                    .play()
                     .then(resolve)
-                    .catch(err => console.error("Error playing video:", err));
+                    .catch((err) => console.error("Error playing video:", err));
             };
         });
 
         console.log("✅ Kamera berhasil diaktifkan");
-
     } catch (err) {
         console.error("❌ Error mengakses kamera:", err);
 
         let errorMessage = "Kamera tidak dapat diakses.";
 
-        if (err.name === 'NotAllowedError') {
-            errorMessage = "Akses kamera ditolak. Mohon izinkan akses kamera di browser settings.";
-        } else if (err.name === 'NotFoundError') {
-            errorMessage = "Kamera tidak ditemukan. Pastikan device memiliki kamera.";
-        } else if (err.name === 'NotReadableError') {
+        if (err.name === "NotAllowedError") {
+            errorMessage =
+                "Akses kamera ditolak. Mohon izinkan akses kamera di browser settings.";
+        } else if (err.name === "NotFoundError") {
+            errorMessage =
+                "Kamera tidak ditemukan. Pastikan device memiliki kamera.";
+        } else if (err.name === "NotReadableError") {
             errorMessage = "Kamera sedang digunakan aplikasi lain.";
         }
 
@@ -766,12 +983,12 @@ async function mulaiAbsenFoto() {
  * Hentikan kamera dan tutup modal
  */
 function hentikanKameraAbsen() {
-    const elModal = document.getElementById('modalKameraAbsen');
-    const elVideo = document.getElementById('videoPreviewAbsen');
+    const elModal = document.getElementById("modalKameraAbsen");
+    const elVideo = document.getElementById("videoPreviewAbsen");
 
     // Hentikan semua track kamera
     if (mediaStreamAbsen) {
-        mediaStreamAbsen.getTracks().forEach(track => {
+        mediaStreamAbsen.getTracks().forEach((track) => {
             track.stop();
             console.log("🛑 Track stopped:", track.kind);
         });
@@ -783,8 +1000,8 @@ function hentikanKameraAbsen() {
     elVideo.pause();
 
     // Tutup modal
-    elModal.classList.add('hidden');
-    elModal.classList.remove('flex');
+    elModal.classList.add("hidden");
+    elModal.classList.remove("flex");
 
     console.log("✅ Kamera dihentikan");
 }
@@ -793,9 +1010,9 @@ function hentikanKameraAbsen() {
  * Ambil foto dari video stream
  */
 function eksekusiAmbilFoto() {
-    const elVideo = document.getElementById('videoPreviewAbsen');
-    const elCanvas = document.getElementById('canvasSimpanFoto');
-    const btnShutter = document.getElementById('btnShutterAbsen');
+    const elVideo = document.getElementById("videoPreviewAbsen");
+    const elCanvas = document.getElementById("canvasSimpanFoto");
+    const btnShutter = document.getElementById("btnShutterAbsen");
 
     // Validasi video sedang aktif
     if (!elVideo.srcObject || elVideo.paused) {
@@ -805,11 +1022,13 @@ function eksekusiAmbilFoto() {
 
     // ⭐ PERBAIKAN: Pastikan video sudah ada dimensi
     if (elVideo.videoWidth === 0 || elVideo.videoHeight === 0) {
-        alert("Video belum dimuat dengan benar. Coba tutup dan buka kamera lagi.");
+        alert(
+            "Video belum dimuat dengan benar. Coba tutup dan buka kamera lagi.",
+        );
         return;
     }
 
-    const konteks = elCanvas.getContext('2d');
+    const konteks = elCanvas.getContext("2d");
 
     // --- STEP 1: OPTIMASI DIMENSI (RESIZING) ---
     const MAX_WIDTH = 800;
@@ -833,15 +1052,18 @@ function eksekusiAmbilFoto() {
     konteks.restore();
 
     // --- STEP 3: OPTIMASI SIZE (COMPRESSION) ---
-    const gambarBase64 = elCanvas.toDataURL('image/jpeg', 0.7); // Quality 70%
+    const gambarBase64 = elCanvas.toDataURL("image/jpeg", 0.7); // Quality 70%
 
-    console.log(`📷 Foto captured, size: ${(gambarBase64.length / 1024).toFixed(2)} KB`);
+    console.log(
+        `📷 Foto captured, size: ${(gambarBase64.length / 1024).toFixed(2)} KB`,
+    );
 
     // Disable tombol agar tidak klik ganda
     if (btnShutter) {
         btnShutter.disabled = true;
-        btnShutter.classList.add('opacity-50', 'cursor-not-allowed');
-        btnShutter.innerHTML = '<div class="w-full h-full rounded-full border-[3px] border-gray-400 flex items-center justify-center"><div class="w-5 h-5 border-2 border-t-transparent border-gray-600 rounded-full animate-spin"></div></div>';
+        btnShutter.classList.add("opacity-50", "cursor-not-allowed");
+        btnShutter.innerHTML =
+            '<div class="w-full h-full rounded-full border-[3px] border-gray-400 flex items-center justify-center"><div class="w-5 h-5 border-2 border-t-transparent border-gray-600 rounded-full animate-spin"></div></div>';
     }
 
     // --- STEP 4: AMBIL GPS & KIRIM DATA ---
@@ -855,14 +1077,18 @@ function eksekusiAmbilFoto() {
 
     navigator.geolocation.getCurrentPosition(
         function (position) {
-            console.log(`✅ GPS berhasil: ${position.coords.latitude}, ${position.coords.longitude}`);
+            console.log(
+                `✅ GPS berhasil: ${position.coords.latitude}, ${position.coords.longitude}`,
+            );
 
             const data = {
                 photo: gambarBase64,
                 latitude: position.coords.latitude,
                 longitude: position.coords.longitude,
                 accuracy: position.coords.accuracy,
-                _token: document.querySelector('meta[name="csrf-token"]')?.content || ""
+                _token:
+                    document.querySelector('meta[name="csrf-token"]')
+                        ?.content || "",
             };
 
             console.log("📤 Mengirim data ke server...");
@@ -871,35 +1097,40 @@ function eksekusiAmbilFoto() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Accept": "application/json"
+                    Accept: "application/json",
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
             })
-                .then(async response => {
+                .then(async (response) => {
                     const res = await response.json();
 
                     if (!response.ok) {
-                        throw new Error(res.message || `Server error: ${response.status}`);
+                        throw new Error(
+                            res.message || `Server error: ${response.status}`,
+                        );
                     }
 
                     return res;
                 })
-                .then(res => {
+                .then((res) => {
                     console.log("✅ Absensi berhasil:", res);
                     Swal.fire({
-                        title: 'Absensi Berhasil!',
+                        title: "Absensi Berhasil!",
                         text: res.message,
-                        icon: 'success',
-                        confirmButtonText: 'Mantap!',
-                        confirmButtonColor: '#10b981', // Warna hijau emerald (sesuai Tailwind)
+                        icon: "success",
+                        confirmButtonText: "Mantap!",
+                        confirmButtonColor: "#10b981", // Warna hijau emerald (sesuai Tailwind)
                         timer: 3000, // Akan tertutup otomatis dalam 3 detik
                         timerProgressBar: true,
                         showClass: {
-                            popup: 'animate__animated animate__fadeInDown'
-                        }
+                            popup: "animate__animated animate__fadeInDown",
+                        },
                     }).then((result) => {
                         // Jika Anda ingin halaman reload otomatis setelah user klik OK
-                        if (result.isConfirmed || result.dismiss === Swal.DismissReason.timer) {
+                        if (
+                            result.isConfirmed ||
+                            result.dismiss === Swal.DismissReason.timer
+                        ) {
                             location.reload();
                         }
                     });
@@ -910,7 +1141,7 @@ function eksekusiAmbilFoto() {
                         location.reload();
                     }, 500);
                 })
-                .catch(err => {
+                .catch((err) => {
                     console.error("❌ Error kirim absensi:", err);
                     alert("❌ Gagal mengirim absensi:\n\n" + err.message);
                     resetShutterButton(btnShutter);
@@ -923,13 +1154,16 @@ function eksekusiAmbilFoto() {
 
             switch (error.code) {
                 case error.PERMISSION_DENIED:
-                    pesanError = "❌ Akses lokasi ditolak.\n\nMohon izinkan akses lokasi di browser settings.";
+                    pesanError =
+                        "❌ Akses lokasi ditolak.\n\nMohon izinkan akses lokasi di browser settings.";
                     break;
                 case error.POSITION_UNAVAILABLE:
-                    pesanError = "❌ Informasi lokasi tidak tersedia.\n\nPastikan GPS aktif dan sinyal baik.";
+                    pesanError =
+                        "❌ Informasi lokasi tidak tersedia.\n\nPastikan GPS aktif dan sinyal baik.";
                     break;
                 case error.TIMEOUT:
-                    pesanError = "❌ Waktu permintaan lokasi habis.\n\nCoba lagi atau periksa koneksi GPS.";
+                    pesanError =
+                        "❌ Waktu permintaan lokasi habis.\n\nCoba lagi atau periksa koneksi GPS.";
                     break;
             }
 
@@ -939,8 +1173,8 @@ function eksekusiAmbilFoto() {
         {
             enableHighAccuracy: true,
             timeout: 15000, // 15 detik
-            maximumAge: 0
-        }
+            maximumAge: 0,
+        },
     );
 }
 
@@ -950,8 +1184,9 @@ function eksekusiAmbilFoto() {
 function resetShutterButton(btnShutter) {
     if (btnShutter) {
         btnShutter.disabled = false;
-        btnShutter.classList.remove('opacity-50', 'cursor-not-allowed');
-        btnShutter.innerHTML = '<div class="w-full h-full rounded-full border-[3px] border-gray-800 group-active:border-gray-600 transition-colors"></div>';
+        btnShutter.classList.remove("opacity-50", "cursor-not-allowed");
+        btnShutter.innerHTML =
+            '<div class="w-full h-full rounded-full border-[3px] border-gray-800 group-active:border-gray-600 transition-colors"></div>';
     }
 }
 
@@ -961,13 +1196,14 @@ function resetShutterButton(btnShutter) {
 
 // Log info kamera yang tersedia (untuk debugging)
 if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-    navigator.mediaDevices.enumerateDevices()
-        .then(devices => {
-            const cameras = devices.filter(d => d.kind === 'videoinput');
+    navigator.mediaDevices
+        .enumerateDevices()
+        .then((devices) => {
+            const cameras = devices.filter((d) => d.kind === "videoinput");
             console.log(`📹 Kamera tersedia: ${cameras.length}`);
             cameras.forEach((cam, i) => {
-                console.log(`  ${i + 1}. ${cam.label || 'Camera ' + (i + 1)}`);
+                console.log(`  ${i + 1}. ${cam.label || "Camera " + (i + 1)}`);
             });
         })
-        .catch(err => console.error("Error enumerating devices:", err));
+        .catch((err) => console.error("Error enumerating devices:", err));
 }
