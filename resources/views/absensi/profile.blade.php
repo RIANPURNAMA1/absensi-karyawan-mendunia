@@ -70,8 +70,10 @@
             <div class="flex items-center gap-4 mb-4">
                 <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white/30 shadow-inner">
                     <img id="previewFoto"
-                        src="{{ auth()->user()->foto_profil ? asset('uploads/foto_profil/' . auth()->user()->foto_profil) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) }}"
-                        class="w-full h-full object-cover">
+                        src="{{ auth()->user()->foto_profil && file_exists(public_path('foto-karyawan/' . auth()->user()->foto_profil))
+                            ? asset('foto-karyawan/' . auth()->user()->foto_profil)
+                            : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=random' }}"
+                        class="w-full h-full object-cover" alt="Foto Profil">
                 </div>
 
                 <div class="flex-1">
