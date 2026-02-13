@@ -13,7 +13,7 @@
                 <span class="text-xs font-medium">Calendar</span>
             </button>
 
-            <button onclick="openAbsen()" class="flex flex-col items-center -mt-8">
+            <button onclick="mulaiAbsenFoto()" class="flex flex-col items-center -mt-8">
                 <div
                     class="w-14 h-14 bg-gradient-to-br from-[#00c0ff] to-blue-700 rounded-full flex items-center justify-center shadow-lg">
                     <i data-lucide="camera" class="w-7 h-7 text-white"></i>
