@@ -81,10 +81,9 @@
                                 <td>
                                     <img src="{{ $k->foto_profil && file_exists(public_path('uploads/foto_profil/' . $k->foto_profil))
                                         ? asset('uploads/foto_profil/' . $k->foto_profil)
-                                        : asset('assets/images/avatar/avatar-1.jpg') }}"
+                                        : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' }}"
                                         class="rounded-circle" width="40" height="40" style="object-fit: cover"
                                         alt="Foto {{ $k->name }}">
-
                                 </td>
 
                                 <td>{{ $k->nip }}</td>

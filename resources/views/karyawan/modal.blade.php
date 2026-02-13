@@ -16,7 +16,7 @@
                            <!-- NIP -->
                            <div class="col-md-6">
                                <label class="form-label">NIP</label>
-                               <input type="text" name="nip" class="form-control" readonly
+                               <input type="text" name="nip" class="form-control"
                                    placeholder="Otomatis akan terisi setelah simpan">
                            </div>
 
