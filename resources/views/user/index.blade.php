@@ -36,12 +36,12 @@
             <div class="card-body p-0">
                 <div class="table-responsive p-4">
                     <table class="table align-middle table-hover mb-0" id="userTable">
-                        <thead class="table-light">
+                        <thead class="bg-blue-700">
                             <tr>
-                                <th style="width: 30%">Nama Karyawan</th>
-                                <th style="width: 30%">Email Login</th>
-                                <th style="width: 25%">Password (Default)</th>
-                                <th class="no-export text-center" style="width: 15%">Aksi</th>
+                                <th style="width: 30%" class="text-white">Nama Karyawan</th>
+                                <th style="width: 30%"  class="text-white">Email Login</th>
+                                <th style="width: 25%"  class="text-white">Password (Default)</th>
+                                <th class="no-export text-center text-white" style="width: 15%">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>

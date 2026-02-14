@@ -6,14 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cabang extends Model
 {
-    // Pastikan _token TIDAK ada di sini
-    protected $fillable = [
-        'nama_cabang',
-        'latitude',
-        'longitude',
-        'radius',
-        'alamat'
-    ];
+ protected $fillable = [
+    'kode_cabang',
+    'nama_cabang',
+    'status_pusat',
+    'latitude',
+    'longitude',
+    'radius',
+    'alamat'
+];
 
     public function user()
     {

@@ -52,16 +52,15 @@
             <div class="card-body p-0">
                 <div class="table-responsive p-4">
                     <table class="table align-middle mb-0">
-                        <thead class="table-light">
+                        <thead class="bg-blue-700 text-white">
                             <tr>
-                                <th>No</th>
-                                <th>Karyawan</th>
-                                <th>Jenis Izin</th>
-                                <th>Periode</th>
-                                <th>Alasan</th>
-                                <th>Lampiran</th>
-                                <th>Status</th>
-                                <th class="text-center">Aksi</th>
+                                <th class="px-4 py-3 text-left font-semibold  text-white">No</th>
+                                <th class="px-4 py-3 text-left font-semibold  text-white">Jenis Izin</th>
+                                <th class="px-4 py-3 text-left font-semibold  text-white">Periode</th>
+                                <th class="px-4 py-3 text-left font-semibold  text-white">Alasan</th>
+                                <th class="px-4 py-3 text-left font-semibold  text-white">Lampiran</th>
+                                <th class="px-4 py-3 text-left font-semibold  text-white" >Status</th>
+                                <th class="px-4 py-3 text-center font-semibold  text-white">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>

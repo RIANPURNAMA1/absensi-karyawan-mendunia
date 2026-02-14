@@ -45,7 +45,7 @@ return new class extends Migration
             $table->date('tanggal_lahir')->nullable();
             $table->enum('jenis_kelamin', ['L', 'P'])->nullable();
             $table->enum('agama', ['ISLAM', 'KRISTEN', 'KATOLIK', 'HINDU', 'BUDDHA', 'KONGHUCU'])->nullable();
-            $table->enum('status_pernikahan', ['BELUM_MENIKAH', 'MENIKAH', 'CERAI'])->nullable();
+            $table->enum('status_pernikahan', ['BELUM MENIKAH', 'MENIKAH', 'CERAI'])->nullable();
 
 
 

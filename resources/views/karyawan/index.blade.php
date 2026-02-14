@@ -45,6 +45,44 @@
             </div>
         </div>
     </div>
+    <div class="card mb-3">
+        <div class="card-body">
+            <form action="{{ route('karyawan.index') }}" method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Cabang</label>
+                    <select name="cabang_id" class="form-select select2" onchange="this.form.submit()">
+                        <option value="">-- Semua Cabang --</option>
+                        @foreach ($cabang as $c)
+                            <option value="{{ $c->id }}" {{ request('cabang_id') == $c->id ? 'selected' : '' }}>
+                                {{ $c->nama_cabang }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Divisi</label>
+                    <select name="divisi_id" class="form-select select2" onchange="this.form.submit()">
+                        <option value="">-- Semua Divisi --</option>
+                        @foreach ($divisi as $d)
+                            <option value="{{ $d->id }}" {{ request('divisi_id') == $d->id ? 'selected' : '' }}>
+                                {{ $d->nama_divisi }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="ph ph-funnel me-1"></i> Filter
+                    </button>
+                    <a href="{{ route('karyawan.index') }}" class="btn btn-light border w-100">
+                        <i class="ph ph-arrow-counter-clockwise me-1"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- CARD TABLE -->
     <div class="card table-card">
@@ -55,64 +93,47 @@
         <div class="card-body p-0">
             <div class="table-responsive p-5">
                 <table class="table align-middle mb-0" id="karyawanTable">
-                    <thead>
+                    <thead class="bg-blue-700">
                         <tr>
-                            <th>Foto</th>
-                            <th>NIP</th>
-                            <th>Nama</th>
-                            <th>Jabatan</th>
-                            <th>Divisi</th>
-                            <th>Cabang</th>
-                            <th>Shift</th>
-                            <th>No HP</th>
-                            <th>Email</th>
-                            <th>Status Kerja</th>
-                            <th>Tempat Lahir</th>
-                            <th>Tanggal Lahir</th>
-                            <th>Jenis Kelamin</th>
-                            <th>Agama</th>
-                            <th>Status Pernikahan</th>
-                            <th class="text-center">Aksi</th>
+                            <th class="text-center text-white" width="50">NO</th>
+                            <th class="text-center text-white">FOTO</th>
+                            <th class="text-center text-white">KARYAWAN</th>
+                            <th class="text-center text-white">CABANG</th>
+                            <th class="text-center text-white">DEPARTEMEN</th>
+                            <th class="text-center text-white">JABATAN</th>
+                            <th class="text-center text-white">L/P</th>
+                            <th class="text-center text-white">STATUS</th>
+                            <th class="text-center text-white">AKSI</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($karyawan as $k)
+                        @foreach ($karyawan as $index => $k)
                             <tr>
+                                <td class="text-center text-muted">{{ $index + 1 }}</td>
                                 <td>
                                     <img src="{{ $k->foto_profil && file_exists(public_path('uploads/foto_profil/' . $k->foto_profil))
                                         ? asset('uploads/foto_profil/' . $k->foto_profil)
                                         : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' }}"
-                                        class="rounded-circle" width="40" height="40" style="object-fit: cover"
-                                        alt="Foto {{ $k->name }}">
+                                        class="rounded-circle shadow-sm" width="40" height="40"
+                                        style="object-fit: cover" alt="Foto {{ $k->name }}">
                                 </td>
-
-                                <td>{{ $k->nip }}</td>
-                                <td>{{ $k->name }}</td>
-                                <td>{{ $k->jabatan }}</td>
-                                <td>{{ $k->divisi?->nama_divisi ?? '-' }}</td>
-                                <td>{{ $k->cabang?->nama_cabang ?? '-' }}</td>
-
-                                <td class="text-center">
-                                    @if ($k->shift)
-                                        <span class="badge bg-light text-primary border border-primary px-2 py-1 mb-1">
-                                            <i class="ph ph-clock me-1"></i> {{ $k->shift->nama_shift }}
-                                        </span>
-                                        <br>
-                                        <small class="text-muted fw-bold">
-                                            {{ \Carbon\Carbon::parse($k->shift->jam_masuk)->format('H:i') }} -
-                                            {{ \Carbon\Carbon::parse($k->shift->jam_pulang)->format('H:i') }}
-                                        </small>
-                                    @else
-                                        <span class="badge bg-soft-danger text-danger">
-                                            <i class="ph ph-warning-circle me-1"></i> Belum Set
-                                        </span>
-                                    @endif
-                                </td>
-
-                                <td>{{ $k->no_hp }}</td>
-                                <td>{{ $k->email }}</td>
-
                                 <td>
+                                    <div class="fw-bold text-dark">{{ $k->name }}</div>
+                                    <small class="text-muted">{{ $k->nip }}</small>
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge bg-light text-dark border">{{ $k->cabang?->nama_cabang ?? '-' }}</span>
+                                </td>
+                                <td>{{ $k->divisi?->nama_divisi ?? '-' }}</td>
+                                <td>{{ $k->jabatan }}</td>
+                                <td class="text-center">
+                                    <span
+                                        class="badge {{ $k->jenis_kelamin == 'L' ? 'bg-soft-primary text-primary' : 'bg-soft-danger text-danger' }}">
+                                        {{ $k->jenis_kelamin }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
                                     @if ($k->status_kerja === 'TETAP')
                                         <span class="badge bg-success">Tetap</span>
                                     @elseif ($k->status_kerja === 'KONTRAK')
@@ -121,22 +142,20 @@
                                         <span class="badge bg-info">Magang</span>
                                     @endif
                                 </td>
-
-                                <td>{{ $k->tempat_lahir ?? '-' }}</td>
-                                <td>{{ $k->tanggal_lahir ? \Carbon\Carbon::parse($k->tanggal_lahir)->format('d-m-Y') : '-' }}
-                                </td>
-                                <td>{{ $k->jenis_kelamin ?? '-' }}</td>
-                                <td>{{ $k->agama ?? '-' }}</td>
-                                <td>{{ $k->status_pernikahan ?? '-' }}</td>
-
                                 <td class="text-center">
                                     <div class="d-flex gap-1 justify-content-center">
-                                        <button type="button" class="btn btn-sm btn-warning"
+                                        <a href="{{ route('karyawan.show', $k->id) }}" class="btn btn-sm btn-info"
+                                            title="Detail">
+                                            <i class="ph ph-eye"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-warning" title="Edit"
                                             onclick="editKaryawan(
                                 '{{ $k->id }}',
+                                '{{ $k->nik }}',
                                 '{{ $k->nip }}',
                                 '{{ $k->name }}',
                                 '{{ $k->jabatan }}',
+                                '{{ $k->pendidikan_terakhir }}',
                                 '{{ $k->divisi_id }}',
                                 '{{ $k->cabang_id }}',
                                 '{{ $k->shift_id }}',
@@ -153,12 +172,7 @@
                             )">
                                             <i class="ph ph-note-pencil"></i>
                                         </button>
-
-                                        <a href="{{ route('karyawan.show', $k->id) }}" class="btn btn-sm btn-info">
-                                            <i class="ph ph-eye"></i>
-                                        </a>
-
-                                        <button class="btn btn-sm btn-danger"
+                                        <button class="btn btn-sm btn-danger" title="Hapus"
                                             onclick="deleteKaryawan({{ $k->id }})">
                                             <i class="ph ph-trash"></i>
                                         </button>
@@ -189,25 +203,31 @@
     <script>
         // Pastikan urutan parameter sama dengan tombol di Blade
         function editKaryawan(
-            id, nip, name, jabatan, divisi_id, cabang_id, shift_id, status_kerja,
+            id, nik, nip, name, jabatan, pendidikan_terakhir, divisi_id, cabang_id, shift_id, status_kerja,
             no_hp, email, tanggal_masuk,
             tempat_lahir, tanggal_lahir, jenis_kelamin, agama, status_pernikahan,
             alamat
         ) {
-            // Reset form dan masukkan data ke input modal
+            // Masukkan data ke input modal
             $('#edit_id').val(id);
+            $('#edit_nik').val(nik); // Field Baru
             $('#edit_nip').val(nip);
             $('#edit_name').val(name);
             $('#edit_jabatan').val(jabatan);
+            $('#edit_pendidikan_terakhir').val(pendidikan_terakhir); // Field Baru (Select Option)
+
+            // Dropdown Relasi
             $('#edit_divisi').val(divisi_id);
             $('#edit_cabang').val(cabang_id);
             $('#edit_shift_id').val(shift_id);
+
+            // Data Kepegawaian & Kontak
             $('#edit_status_kerja').val(status_kerja);
             $('#edit_no_hp').val(no_hp);
             $('#edit_email').val(email);
             $('#edit_tanggal_masuk').val(tanggal_masuk);
 
-            // Field tambahan
+            // Field tambahan (Personal)
             $('#edit_tempat_lahir').val(tempat_lahir);
             $('#edit_tanggal_lahir').val(tanggal_lahir);
             $('#edit_jenis_kelamin').val(jenis_kelamin);
@@ -215,6 +235,9 @@
             $('#edit_status_pernikahan').val(status_pernikahan);
 
             $('#edit_alamat').val(alamat);
+
+            // Ubah Action Form Update (Sesuaikan URL route-nya)
+            $('#formEditKaryawan').attr('action', '/karyawan/' + id);
 
             // Tampilkan modal
             $('#modalEditKaryawan').modal('show');

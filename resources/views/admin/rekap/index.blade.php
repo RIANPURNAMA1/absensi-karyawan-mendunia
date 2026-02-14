@@ -40,17 +40,35 @@
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="rekapTable" class="table table-bordered table-striped align-middle">
-                        <thead class="table-light text-center">
+                        <thead class="bg-blue-700 text-white text-center">
                             <tr>
-                                <th>No</th>
-                                <th>Nama Karyawan</th>
-                                <th>Cabang</th>
-                                <th>Hadir</th>
-                                <th>Terlambat</th>
-                                <th>Izin</th>
-                                <th>Alpa</th>
-                                <th>Pulang Lebih Awal</th>
-                                <th>Total Kehadiran</th>
+                                <th
+                                    class="px-3 py-3 font-semibold uppercase tracking-wider text-xs border-b border-blue-800 text-white">
+                                    No</th>
+                                <th
+                                    class="px-4 py-3 font-semibold uppercase tracking-wider text-xs border-b border-blue-800 text-white text-left">
+                                    Nama Karyawan</th>
+                                <th
+                                    class="px-4 py-3 font-semibold uppercase tracking-wider text-xs border-b border-blue-800 text-white">
+                                    Cabang</th>
+                                <th
+                                    class="px-3 py-3 font-semibold uppercase tracking-wider text-xs border-b border-blue-800 text-white">
+                                    Hadir</th>
+                                <th
+                                    class="px-3 py-3 font-semibold uppercase tracking-wider text-xs border-b border-blue-800 text-white">
+                                    Terlambat</th>
+                                <th
+                                    class="px-3 py-3 font-semibold uppercase tracking-wider text-xs border-b border-blue-800 text-white">
+                                    Izin</th>
+                                <th
+                                    class="px-3 py-3 font-semibold uppercase tracking-wider text-xs border-b border-blue-800 text-white">
+                                    Alpa</th>
+                                <th
+                                    class="px-3 py-3 font-semibold uppercase tracking-wider text-xs border-b border-blue-800 text-white">
+                                    Pulang Lebih Awal</th>
+                                <th
+                                    class="px-4 py-3 font-semibold uppercase tracking-wider text-xs border-b border-blue-800 text-white bg-blue-800">
+                                    Total Kehadiran</th>
                             </tr>
                         </thead>
                         <tbody>

@@ -48,22 +48,32 @@
             <div class="card-body p-0">
                 <div class="table-responsive p-4">
                     <table class="table align-middle mb-0" id="cabangTable">
-                        <thead class="table-light">
+                        <thead class="bg-blue-700">
                             <tr>
-                                <th width="5%">No</th>
-                                <th>Nama Cabang</th>
-                                <th>Lokasi (Lat, Long)</th>
-                                <th>Radius</th>
-                                <th width="15%" class="text-center">Aksi</th>
+                                <th class="text-white" width="5%">NO</th>
+                                <th class="text-white" width="10%">KODE</th>
+                                <th class="text-white"> NAMA</th>
+                                <th class="text-white">PUSAT/CABANG</th>
+                                <th class="text-white">LOKASI (LAT, LONG)</th>
+                                <th class="text-white">RADIUS</th>
+                                <th class="text-white" width="15%" class="text-center">AKSI</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($cabangs as $c)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
+                                    <td><span class="badge bg-light-secondary text-dark fw-bold">{{ $c->kode_cabang }}</span></td>
                                     <td>
                                         <span class="fw-bold text-dark">{{ $c->nama_cabang }}</span><br>
                                         <small class="text-muted">{{ Str::limit($c->alamat, 40) }}</small>
+                                    </td>
+                                    <td>
+                                        @if($c->status_pusat == 'PUSAT')
+                                            <span class="badge bg-primary">PUSAT</span>
+                                        @else
+                                            <span class="badge bg-info">CABANG</span>
+                                        @endif
                                     </td>
                                     <td>
                                         <code class="text-primary">{{ $c->latitude }}, {{ $c->longitude }}</code>
@@ -75,7 +85,7 @@
                                     </td>
                                     <td class="text-center">
                                         <button class="btn btn-sm btn-warning"
-                                            onclick="editCabang('{{ $c->id }}', '{{ $c->nama_cabang }}', '{{ $c->latitude }}', '{{ $c->longitude }}', '{{ $c->radius }}', '{{ $c->alamat }}')">
+                                            onclick="editCabang('{{ $c->id }}', '{{ $c->kode_cabang }}', '{{ $c->nama_cabang }}', '{{ $c->status_pusat }}', '{{ $c->latitude }}', '{{ $c->longitude }}', '{{ $c->radius }}', '{{ $c->alamat }}')">
                                             <i class="ph ph-pencil"></i>
                                         </button>
 
@@ -88,7 +98,7 @@
 
                             @if ($cabangs->isEmpty())
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">
+                                    <td colspan="7" class="text-center text-muted py-4">
                                         <i class="ph ph-map-pin-slash d-block fs-2 mb-2"></i>
                                         Data cabang belum tersedia
                                     </td>
@@ -104,10 +114,12 @@
     @include('cabang.modal')
 
     <script>
-        // Fungsi Edit (Mengisi data ke Modal Edit)
-        function editCabang(id, nama, lat, long, radius, alamat) {
+        // Fungsi Edit (Menyesuaikan parameter baru: kode dan status)
+        function editCabang(id, kode, nama, status, lat, long, radius, alamat) {
             $('#edit_id').val(id);
+            $('#edit_kode_cabang').val(kode); // Pastikan ID input ini ada di modal
             $('#edit_nama_cabang').val(nama);
+            $('#edit_status_pusat').val(status); // Pastikan ID select/input ini ada di modal
             $('#edit_latitude').val(lat);
             $('#edit_longitude').val(long);
             $('#edit_radius').val(radius);

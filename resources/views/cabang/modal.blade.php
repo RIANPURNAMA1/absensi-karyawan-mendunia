@@ -1,16 +1,30 @@
 <div class="modal fade" id="modalTambahCabang" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header  text-white">
-                <h5 class="modal-title"><i class="ph ph-map-pin-plus me-2"></i>Tambah Cabang Baru</h5>
+            <div class="modal-header  text-white"   style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">
+                <h5 class="modal-title text-white"><i class="ph ph-map-pin-plus me-2"></i>Tambah Cabang Baru</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="formTambahCabang" action="{{ route('cabang.store') }}" method="POST">
                 @csrf
                 <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Kode</label>
+                            <input type="text" name="kode_cabang" class="form-control" placeholder="PST" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Nama Cabang</label>
+                            <input type="text" name="nama_cabang" class="form-control" placeholder="Contoh: Kantor Pusat" required>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Nama Cabang</label>
-                        <input type="text" name="nama_cabang" class="form-control" placeholder="Contoh: Kantor Pusat" required>
+                        <label class="form-label fw-bold">Status Kantor</label>
+                        <select name="status_pusat" class="form-select" required>
+                            <option value="CABANG">CABANG</option>
+                            <option value="PUSAT">PUSAT</option>
+                        </select>
                     </div>
 
                     <div class="row g-3">
@@ -36,7 +50,6 @@
                             <input type="number" name="radius" class="form-control border-danger text-danger fw-bold" value="100" required>
                             <span class="input-group-text bg-danger text-white">Meter</span>
                         </div>
-                        <small class="text-muted">Jarak maksimal karyawan boleh absen dari titik koordinat.</small>
                     </div>
 
                     <div class="mb-0">
@@ -56,18 +69,32 @@
 <div class="modal fade" id="modalEditCabang" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header  text-white">
-                <h5 class="modal-title"><i class="ph ph-pencil-line me-2"></i>Edit Data Cabang</h5>
+            <div class="modal-header  text-white"  style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">
+                <h5 class="modal-title text-white"><i class="ph ph-pencil-line me-2"></i>Edit Data Cabang</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form id="formEditCabang"  action="" method="POST">
+            <form id="formEditCabang" action="" method="POST">
                 @csrf
                 @method('PUT')
                 <input type="hidden" id="edit_id">
                 <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Kode</label>
+                            <input type="text" name="kode_cabang" id="edit_kode_cabang" class="form-control" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Nama Cabang</label>
+                            <input type="text" name="nama_cabang" id="edit_nama_cabang" class="form-control" required>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Nama Cabang</label>
-                        <input type="text" name="nama_cabang" id="edit_nama_cabang" class="form-control" required>
+                        <label class="form-label fw-bold">Status Kantor</label>
+                        <select name="status_pusat" id="edit_status_pusat" class="form-select" required>
+                            <option value="CABANG">CABANG</option>
+                            <option value="PUSAT">PUSAT</option>
+                        </select>
                     </div>
 
                     <div class="row g-3">
@@ -110,7 +137,7 @@
 </div>
 
 <script>
-    // FUNGSI AMBIL LOKASI GPS HP/LAPTOP
+    // FUNGSI AMBIL LOKASI GPS
     function getCurrentLocation(type) {
         if (navigator.geolocation) {
             Swal.fire({
@@ -147,109 +174,59 @@
         }
     }
 
-    // Logic untuk mengarahkan Action Form Edit secara dinamis
-    $('#modalEditCabang').on('show.bs.modal', function () {
-        var id = $('#edit_id').val();
-        $('#formEditCabang').attr('action', '/cabang/' + id);
-    });
-
-
     $(document).ready(function() {
-    $('#formTambahCabang').on('submit', function(e) {
-        e.preventDefault(); // Mencegah form reload halaman
-
-        let form = $(this);
-        let url = form.attr('action');
-        let formData = form.serialize(); // Mengambil semua data input
-
-        // Menampilkan Loading
-        Swal.fire({
-            title: 'Menyimpan...',
-            text: 'Sedang memproses data cabang',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
-        });
-
-        $.ajax({
-            url: url,
-            type: "POST",
-            data: formData,
-            success: function(response) {
-                Swal.close();
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: 'Cabang baru telah ditambahkan',
-                    showConfirmButton: false,
-                    timer: 1500
-                });
-
-                // Tutup modal
-                $('#modalTambahCabang').modal('hide');
-                
-                // Reset form
-                form[0].reset();
-
-                // Reload halaman otomatis untuk memperbarui tabel
-                setTimeout(function() {
-                    location.reload();
-                }, 1500);
-            },
-            error: function(xhr) {
-                Swal.close();
-                
-                // Ambil pesan error dari Laravel jika ada (validasi gagal)
-                let errorMsg = "Terjadi kesalahan saat menyimpan data.";
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg = xhr.responseJSON.message;
-                }
-
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal!',
-                    text: errorMsg
-                });
-            }
-        });
-    });
-
-
-$('#formEditCabang').on('submit', function(e) {
-    e.preventDefault();
-
-    let form = $(this);
-    let id = $('#edit_id').val();
-    let url = "/cabang/" + id;
-    
-    // Gunakan FormData agar lebih akurat mengirim method spoofing
-    let formData = new FormData(this);
-    // Tambahkan _method PUT secara manual untuk memastikan
-    formData.append('_method', 'PUT');
-
-    $.ajax({
-        url: url,
-        type: "POST", // Browser mengirim sebagai POST
-        data: formData,
-        processData: false, // Wajib jika menggunakan FormData
-        contentType: false, // Wajib jika menggunakan FormData
-        success: function(response) {
+        // FORM TAMBAH
+        $('#formTambahCabang').on('submit', function(e) {
+            e.preventDefault();
+            let form = $(this);
             Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: 'Data cabang telah diperbarui',
-                showConfirmButton: false,
-                timer: 1500
+                title: 'Menyimpan...',
+                text: 'Sedang memproses data cabang',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
             });
-            $('#modalEditCabang').modal('hide');
-            setTimeout(() => { location.reload(); }, 1500);
-        },
-        error: function(xhr) {
-            // Jika error 405 (Method Not Allowed) muncul lagi, cek route:list
-            console.log(xhr.responseText);
-            Swal.fire({ icon: 'error', title: 'Oops!', text: 'Method tidak didukung atau terjadi kesalahan server.' });
-        }
+
+            $.ajax({
+                url: form.attr('action'),
+                type: "POST",
+                data: form.serialize(),
+                success: function(response) {
+                    Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Cabang baru telah ditambahkan', timer: 1500, showConfirmButton: false });
+                    $('#modalTambahCabang').modal('hide');
+                    form[0].reset();
+                    setTimeout(() => { location.reload(); }, 1500);
+                },
+                error: function(xhr) {
+                    Swal.fire({ icon: 'error', title: 'Gagal!', text: xhr.responseJSON?.message || "Terjadi kesalahan." });
+                }
+            });
+        });
+
+        // FORM EDIT
+        $('#formEditCabang').on('submit', function(e) {
+            e.preventDefault();
+            let id = $('#edit_id').val();
+            let url = "/cabang/" + id;
+            let formData = new FormData(this);
+            formData.append('_method', 'PUT');
+
+            Swal.fire({ title: 'Memperbarui...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+            $.ajax({
+                url: url,
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Data cabang telah diperbarui', timer: 1500, showConfirmButton: false });
+                    $('#modalEditCabang').modal('hide');
+                    setTimeout(() => { location.reload(); }, 1500);
+                },
+                error: function(xhr) {
+                    Swal.fire({ icon: 'error', title: 'Oops!', text: xhr.responseJSON?.message || 'Gagal memperbarui data.' });
+                }
+            });
+        });
     });
-});
-});
 </script>

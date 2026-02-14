@@ -19,6 +19,8 @@ class User extends Authenticatable
         'shift_id',      // PASTIKAN ADA
         'status',
         'nip',
+        'nik',
+        'pendidikan_terakhir',
         'jabatan',
         'no_hp',
         'alamat',

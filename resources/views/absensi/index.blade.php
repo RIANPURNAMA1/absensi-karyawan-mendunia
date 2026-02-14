@@ -77,7 +77,7 @@
                 <!-- FOTO PROFIL (DINAMIS DARI BACKEND) -->
                 <div class="w-10 h-10 rounded-full overflow-hidden border border-blue-500">
                     <img src="{{ auth()->user() && auth()->user()->foto_profil
-                        ? asset('uploads/foto_profil/' . auth()->user()->foto_profil)
+                        ? asset('foto-karyawan/' . auth()->user()->foto_profil)
                         : asset('images/default-user.png') }}"
                         alt="Foto Karyawan" class="w-full h-full object-cover">
                 </div>
@@ -110,20 +110,19 @@
         </div> --}}
 
         <!-- SEARCH BAR -->
-        <div class="bg-gray-100 rounded-xl px-4 py-3 flex items-center gap-3 mb-4">
-            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input type="text" placeholder="Search"
-                class="bg-transparent flex-1 outline-none text-sm text-gray-700" />
-            <button class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                </svg>
-            </button>
-        </div>
+        {{-- <div class="relative mb-8 px-2">
+            <div class="absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-32 bg-blue-100/50 rounded-full blur-3xl -z-10">
+            </div>
+
+            <div class="flex flex-col items-center justify-center text-center">
+                <div
+                    class="p-4transition-all duration-300 group">
+                    <img src="{{ asset('assets/images/logo/logo.png') }}" alt="logo image"
+                        class="logo-lg object-contain group-hover:scale-105 transition-transform duration-300"
+                        width="180" />
+                </div>
+            </div>
+        </div> --}}
     </div>
 
     <div class="px-5 py-5">
@@ -539,30 +538,30 @@
 
         function closeAbsenManual() {
             if (isModalClosing) return;
-            
+
             isModalClosing = true;
             const modal = document.getElementById("modalAbsenManual");
             const card = modal.querySelector(".modal-card");
-            
+
             // Start fade out animation
             card.classList.remove("modal-fade-in");
             card.classList.add("modal-fade-out");
-            
+
             // Cleanup resources
             setTimeout(() => {
                 stopAllIntervals();
                 stopStream();
-                
+
                 // HIDE MODAL - VANILLA JS ONLY!
                 modal.classList.add("hidden");
                 modal.classList.remove("flex");
-                
+
                 // Restore body scroll
                 document.body.style.overflow = "auto";
-                
+
                 // Reset state
                 resetModalState();
-                
+
                 // Reset flag
                 isModalClosing = false;
             }, 250);

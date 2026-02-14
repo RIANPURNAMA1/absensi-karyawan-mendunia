@@ -54,16 +54,16 @@
         <div class="card-body p-0">
             <div class="table-responsive p-5">
                 <table class="table align-middle mb-0" id="shiftTable">
-                    <thead>
+                    <thead class="bg-blue-700"> 
                         <tr>
-                            <th>No</th>
-                            <th>Nama Shift</th>
-                            <th>Jam Masuk</th>
-                            <th>Jam Pulang</th>
-                            <th>Total Jam</th>
-                            <th>Toleransi Keterlambatan</th>
-                            <th>Status</th>
-                            <th class="text-center">Aksi</th>
+                            <th class="text-white">No</th>
+                            <th class="text-white">Nama Shift</th>
+                            <th class="text-white">Jam Masuk</th>
+                            <th class="text-white">Jam Pulang</th>
+                            <th class="text-white">Total Jam</th>
+                            <th class="text-white">Toleransi Keterlambatan</th>
+                            <th class="text-white">Status</th>
+                            <th class="text-center text-white">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>

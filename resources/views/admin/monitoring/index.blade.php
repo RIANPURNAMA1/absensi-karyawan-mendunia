@@ -29,14 +29,20 @@
             <div class="card-body p-0">
                 <div class="table-responsive p-4">
                     <table class="table align-middle" id="monitorTable">
-                        <thead class="table-light">
+                        <thead class="bg-blue-700 text-white">
                             <tr>
-                                <th>Karyawan</th>
-                                <th>Jam Masuk</th>
-                                <th>Jam Pulang</th>
-                                <th>Cabang</th>
-                                <th>Lokasi Terekam</th>
-                                <th>Foto</th>
+                                <th class="px-4 py-3 text-left font-semibold uppercase tracking-wider text-sm text-white">
+                                    Karyawan</th>
+                                <th class="px-4 py-3 text-left font-semibold uppercase tracking-wider text-sm text-white">
+                                    Jam Masuk</th>
+                                <th class="px-4 py-3 text-left font-semibold uppercase tracking-wider text-sm text-white">
+                                    Jam Pulang</th>
+                                <th class="px-4 py-3 text-left font-semibold uppercase tracking-wider text-sm text-white">
+                                    Cabang</th>
+                                <th class="px-4 py-3 text-left font-semibold uppercase tracking-wider text-sm text-white">
+                                    Lokasi Terekam</th>
+                                <th class="px-4 py-3 text-left font-semibold uppercase tracking-wider text-sm text-white">
+                                    Foto</th>
                             </tr>
                         </thead>
                         <tbody>
