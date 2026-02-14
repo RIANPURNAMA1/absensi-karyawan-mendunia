@@ -56,31 +56,12 @@
 
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            @php
-                                                // Logika pengecekan foto
-                                                $fotoPath = 'uploads/foto_profil/' . $a->user->foto_profil;
-                                                $punyaFoto =
-                                                    $a->user->foto_profil && file_exists(public_path($fotoPath));
-
-                                                // Logika ambil inisial (contoh: "Budi Utomo" -> "BU")
-                                                $nama = $a->user->name;
-                                                $inisial = collect(explode(' ', $nama))
-                                                    ->map(fn($segment) => strtoupper(substr($segment, 0, 1)))
-                                                    ->take(2)
-                                                    ->implode('');
-                                            @endphp
-
-                                            @if ($punyaFoto)
-                                                <img src="{{ asset($fotoPath) }}"
-                                                    class="rounded-full object-cover border border-gray-100 shadow-sm"
-                                                    alt="{{ $nama }}" style="width: 40px; height: 40px;">
-                                            @else
-                                                <div class="flex items-center justify-center rounded-full bg-blue-600 border border-blue-700 shadow-sm text-white font-bold text-sm tracking-tighter"
-                                                    style="width: 40px; height: 40px; min-width: 40px;"
-                                                    title="{{ $nama }}">
-                                                    {{ $inisial }}
-                                                </div>
-                                            @endif
+                                            <img src="{{ $a->user->foto_profil && file_exists(public_path('uploads/foto_profil/' . $a->user->foto_profil))
+                                                ? asset('uploads/foto_profil/' . $a->user->foto_profil)
+                                                : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' }}"
+                                                class="rounded-full object-cover border border-gray-100 shadow-sm"
+                                                alt="{{ $a->user->name }}"
+                                                style="width: 40px; height: 40px; border-radius: 100%; flex-shrink: 0;">
                                             <div>
                                                 <span class="fw-bold">{{ $a->user->name }}</span><br>
                                                 <small class="text-muted">{{ $a->user->nip }}</small>
