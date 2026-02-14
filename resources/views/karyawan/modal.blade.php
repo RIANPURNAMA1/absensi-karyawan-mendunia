@@ -144,7 +144,7 @@
                                <label class="form-label fw-bold">Status Pernikahan</label>
                                <select name="status_pernikahan" class="form-select">
                                    <option value="">-- Pilih Status --</option>
-                                   <option value="BELUM_MENIKAH">Belum Menikah</option>
+                                   <option value="BELUM MENIKAH">Belum Menikah</option>
                                    <option value="MENIKAH">Menikah</option>
                                    <option value="CERAI">Cerai</option>
                                </select>

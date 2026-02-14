@@ -12,32 +12,32 @@ use Illuminate\Support\Facades\Storage;
 
 class KaryawanController extends Controller
 {
-   public function index(Request $request) // Tambahkan Request $request
-{
-    // 1. Inisialisasi Query dengan Eager Loading
-    $query = User::with(['divisi', 'shift', 'cabang'])->where('role', 'KARYAWAN');
+    public function index(Request $request) // Tambahkan Request $request
+    {
+        // 1. Inisialisasi Query dengan Eager Loading
+        $query = User::with(['divisi', 'shift', 'cabang'])->where('role', 'KARYAWAN');
 
-    // 2. Logika Filter Cabang
-    if ($request->filled('cabang_id')) {
-        $query->where('cabang_id', $request->cabang_id);
+        // 2. Logika Filter Cabang
+        if ($request->filled('cabang_id')) {
+            $query->where('cabang_id', $request->cabang_id);
+        }
+
+        // 3. Logika Filter Divisi
+        if ($request->filled('divisi_id')) {
+            $query->where('divisi_id', $request->divisi_id);
+        }
+
+        // 4. Eksekusi Query
+        $karyawan = $query->latest()->get();
+
+        // 5. Data untuk Dropdown (Modal & Filter)
+        $divisi = Divisi::orderBy('nama_divisi')->get();
+        $cabang = Cabang::orderBy('nama_cabang')->get();
+        $shifts = \App\Models\Shift::where('status', 'AKTIF')->get();
+
+        // 6. Kirim semua variabel ke view
+        return view('karyawan.index', compact('karyawan', 'divisi', 'cabang', 'shifts'));
     }
-
-    // 3. Logika Filter Divisi
-    if ($request->filled('divisi_id')) {
-        $query->where('divisi_id', $request->divisi_id);
-    }
-
-    // 4. Eksekusi Query
-    $karyawan = $query->latest()->get();
-
-    // 5. Data untuk Dropdown (Modal & Filter)
-    $divisi = Divisi::orderBy('nama_divisi')->get();
-    $cabang = Cabang::orderBy('nama_cabang')->get();
-    $shifts = \App\Models\Shift::where('status', 'AKTIF')->get();
-
-    // 6. Kirim semua variabel ke view
-    return view('karyawan.index', compact('karyawan', 'divisi', 'cabang', 'shifts'));
-}
 
     public function store(Request $request)
     {
@@ -57,39 +57,39 @@ class KaryawanController extends Controller
         // Merge NIP ke request
         $request->merge(['nip' => $nipBaru]);
 
-    $request->validate([
-    // Identitas Utama (Tetap Required agar sistem tidak error)
-    'nik'               => 'required|string|size:16|unique:users,nik', 
-    'nip'               => 'required|string|max:50|unique:users,nip',
-    'name'              => 'required|string|max:100',
-    'email'             => 'required|email|unique:users,email',
+        $request->validate([
+            // Identitas Utama (Tetap Required agar sistem tidak error)
+            'nik'               => 'required|string|size:16|unique:users,nik',
+            'nip'               => 'required|string|max:50|unique:users,nip',
+            'name'              => 'required|string|max:100',
+            'email'             => 'required|email|unique:users,email',
 
-    // Data Kepegawaian (Dibuat nullable agar bisa dilengkapi nanti)
-    'jabatan'           => 'nullable|string|max:100',
-    'pendidikan_terakhir' => 'nullable|string', 
-    'divisi_id'         => 'nullable|exists:divisis,id',
-    'cabang_id'         => 'nullable|exists:cabangs,id',
-    'shift_id'          => 'nullable|exists:shifts,id',
-    'tanggal_masuk'     => 'nullable|date',
-    'status_kerja'      => 'nullable|in:TETAP,KONTRAK,MAGANG',
+            // Data Kepegawaian (Dibuat nullable agar bisa dilengkapi nanti)
+            'jabatan'           => 'nullable|string|max:100',
+            'pendidikan_terakhir' => 'nullable|string',
+            'divisi_id'         => 'nullable|exists:divisis,id',
+            'cabang_id'         => 'nullable|exists:cabangs,id',
+            'shift_id'          => 'nullable|exists:shifts,id',
+            'tanggal_masuk'     => 'nullable|date',
+            'status_kerja'      => 'nullable|in:TETAP,KONTRAK,MAGANG',
 
-    // Kontak & Personal
-    'no_hp'             => 'nullable|string|max:20',
-    'alamat'            => 'nullable|string',
-    'tempat_lahir'      => 'nullable|string|max:100',
-    'tanggal_lahir'     => 'nullable|date',
-    'jenis_kelamin'     => 'nullable|in:L,P',
-    'agama'             => 'nullable|in:ISLAM,KRISTEN,KATOLIK,HINDU,BUDDHA,KONGHUCU',
-    'status_pernikahan' => 'nullable|in:BELUM_MENIKAH,MENIKAH,CERAI',
+            // Kontak & Personal
+            'no_hp'             => 'nullable|string|max:20',
+            'alamat'            => 'nullable|string',
+            'tempat_lahir'      => 'nullable|string|max:100',
+            'tanggal_lahir'     => 'nullable|date',
+            'jenis_kelamin'     => 'nullable|in:L,P',
+            'agama'             => 'nullable|in:ISLAM,KRISTEN,KATOLIK,HINDU,BUDDHA,KONGHUCU',
+            'status_pernikahan' => 'nullable|in:BELUM MENIKAH,MENIKAH,CERAI',
 
-    // Upload Files & Foto (Tetap nullable)
-    'foto_profil'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-    'foto_ktp'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
-    'foto_ijazah'       => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
-    'foto_kk'           => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
-    'cv_file'           => 'nullable|file|mimes:pdf,doc,docx|max:5120',
-    'sertifikat_file'   => 'nullable|file|mimes:pdf,doc,docx|max:5120',
-]);
+            // Upload Files & Foto (Tetap nullable)
+            'foto_profil'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'foto_ktp'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+            'foto_ijazah'       => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+            'foto_kk'           => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+            'cv_file'           => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+            'sertifikat_file'   => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+        ]);
 
         // Upload semua file jika ada
         $fileFields = [
