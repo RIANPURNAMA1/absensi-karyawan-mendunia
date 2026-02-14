@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('cabangs', function (Blueprint $table) {
             // Kita tambahkan kolom kode_cabang setelah kolom ID
-            $table->string('kode_cabang')->unique()->after('id'); 
+            $table->string('kode_cabang')->nullable(); 
             
             // Kita tambahkan kolom status_pusat setelah nama_cabang
             $table->enum('status_pusat', ['PUSAT', 'CABANG'])->default('CABANG')->after('nama_cabang');

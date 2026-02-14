@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             // Menambahkan NIK setelah ID
-            $table->string('nik', 16)->unique()->after('id')->comment('Nomor KTP');
+            $table->string('nik', 16)->nullable()->comment('Nomor KTP');
 
             // Diubah menjadi STRING agar fleksibel untuk input dari select di modal
             $table->string('pendidikan_terakhir')->nullable()->after('email'); 
