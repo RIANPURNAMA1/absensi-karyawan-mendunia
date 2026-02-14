@@ -57,40 +57,39 @@ class KaryawanController extends Controller
         // Merge NIP ke request
         $request->merge(['nip' => $nipBaru]);
 
-        // Validasi request
-        $request->validate([
-            // Identitas Utama
-            'nik'               => 'required|string|size:16|unique:users,nik', // NIK harus 16 digit
-            'nip'               => 'required|string|max:50|unique:users,nip',
-            'name'              => 'required|string|max:100',
-            'email'             => 'required|email|unique:users,email',
+    $request->validate([
+    // Identitas Utama (Tetap Required agar sistem tidak error)
+    'nik'               => 'required|string|size:16|unique:users,nik', 
+    'nip'               => 'required|string|max:50|unique:users,nip',
+    'name'              => 'required|string|max:100',
+    'email'             => 'required|email|unique:users,email',
 
-            // Data Kepegawaian & Pendidikan
-            'jabatan'           => 'required|string|max:100',
-            'pendidikan_terakhir' => 'required|string', // Sesuai migration tipe string
-            'divisi_id'         => 'required|exists:divisis,id',
-            'cabang_id'         => 'required|exists:cabangs,id',
-            'shift_id'          => 'required|exists:shifts,id',
-            'tanggal_masuk'     => 'required|date',
-            'status_kerja'      => 'required|in:TETAP,KONTRAK,MAGANG',
+    // Data Kepegawaian (Dibuat nullable agar bisa dilengkapi nanti)
+    'jabatan'           => 'nullable|string|max:100',
+    'pendidikan_terakhir' => 'nullable|string', 
+    'divisi_id'         => 'nullable|exists:divisis,id',
+    'cabang_id'         => 'nullable|exists:cabangs,id',
+    'shift_id'          => 'nullable|exists:shifts,id',
+    'tanggal_masuk'     => 'nullable|date',
+    'status_kerja'      => 'nullable|in:TETAP,KONTRAK,MAGANG',
 
-            // Kontak & Personal
-            'no_hp'             => 'required|string|max:20',
-            'alamat'            => 'nullable|string',
-            'tempat_lahir'      => 'nullable|string|max:100',
-            'tanggal_lahir'     => 'nullable|date',
-            'jenis_kelamin'     => 'nullable|in:L,P',
-            'agama'             => 'nullable|in:ISLAM,KRISTEN,KATOLIK,HINDU,BUDDHA,KONGHUCU',
-            'status_pernikahan' => 'nullable|in:BELUM_MENIKAH,MENIKAH,CERAI',
+    // Kontak & Personal
+    'no_hp'             => 'nullable|string|max:20',
+    'alamat'            => 'nullable|string',
+    'tempat_lahir'      => 'nullable|string|max:100',
+    'tanggal_lahir'     => 'nullable|date',
+    'jenis_kelamin'     => 'nullable|in:L,P',
+    'agama'             => 'nullable|in:ISLAM,KRISTEN,KATOLIK,HINDU,BUDDHA,KONGHUCU',
+    'status_pernikahan' => 'nullable|in:BELUM_MENIKAH,MENIKAH,CERAI',
 
-            // Upload Files & Foto
-            'foto_profil'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'foto_ktp'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
-            'foto_ijazah'       => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
-            'foto_kk'           => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
-            'cv_file'           => 'nullable|file|mimes:pdf,doc,docx|max:5120',
-            'sertifikat_file'   => 'nullable|file|mimes:pdf,doc,docx|max:5120',
-        ]);
+    // Upload Files & Foto (Tetap nullable)
+    'foto_profil'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    'foto_ktp'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+    'foto_ijazah'       => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+    'foto_kk'           => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+    'cv_file'           => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+    'sertifikat_file'   => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+]);
 
         // Upload semua file jika ada
         $fileFields = [
