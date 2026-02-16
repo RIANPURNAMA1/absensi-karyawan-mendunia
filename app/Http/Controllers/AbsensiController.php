@@ -18,31 +18,40 @@ use Illuminate\Support\Facades\Storage;
 class AbsensiController extends Controller
 {
 
+
+    // public function ayo(){
+    //   return view('absensi.ayo');
+    // }
+
     public function index()
     {
-        // PERBAIKAN: Jangan load 'cabang' di sini karena itu Accessor, cukup load 'shift'
+        // 1. Load user beserta relasi shift-nya
         $user = Auth::user()->load(['shift']);
 
-        // PERBAIKAN: Ambil data cabang dari Accessor (karena cabang_ids berupa array JSON)
-        // Ini akan memanggil getCabangAttribute() di Model User
+        // 2. Ambil data cabang dari Accessor (getCabangAttribute di Model User)
+        // Diasumsikan ini mengembalikan Collection
         $cabangs = $user->cabang;
 
-        // PERBAIKAN: Cek apakah user punya cabang (karena Accessor mengembalikan koleksi)
-        if ($cabangs->isEmpty()) {
-            abort(403, 'User belum terdaftar di cabang manapun.');
+        // --- PERBAIKAN LOGIKA CABANG ---
+        // Jika user belum punya cabang, kita buat data default (null/nol) 
+        // agar halaman tetap bisa di-render tapi tombol absen di View tidak bisa berfungsi.
+        $cabangTerpilih = null;
+        $pesanErrorCabang = null;
+
+        if ($cabangs && $cabangs->isNotEmpty()) {
+            $cabangTerpilih = $cabangs->first();
+        } else {
+            // Kita siapkan pesan untuk ditampilkan di View jika perlu
+            $pesanErrorCabang = "Anda belum terdaftar di cabang manapun. Fitur absensi dinonaktifkan.";
         }
 
-        // Untuk keperluan koordinat absensi, kita ambil cabang pertama sebagai default
-        // atau sesuaikan jika Anda ingin user memilih cabang.
-        $cabangTerpilih = $cabangs->first();
-
-        // 1. Ambil 10 riwayat terakhir
+        // 3. Ambil 10 riwayat terakhir
         $riwayat = Absensi::where('user_id', $user->id)
             ->orderBy('tanggal', 'desc')
             ->take(10)
             ->get();
 
-        // 2. Ambil semua jadwal shift yang aktif
+        // 4. Ambil semua jadwal shift yang aktif untuk dropdown/informasi
         $allShifts = \App\Models\Shift::where('status', 'AKTIF')->get();
 
         // --- LOGIKA NOTIFIKASI BROWSER ---
@@ -62,7 +71,7 @@ class AbsensiController extends Controller
 
             if (!$sudahAbsen) {
                 $selisihMenit = $now->diffInMinutes($jamMasuk, false);
-
+                // Notifikasi muncul jika jam masuk tinggal 30 menit lagi
                 if ($selisihMenit > 0 && $selisihMenit <= 30) {
                     $showNotification = true;
                     $notifMessage = "Waktunya bersiap! Jam masuk Anda pukul " . $jamMasuk->format('H:i') . " (" . $selisihMenit . " menit lagi).";
@@ -70,7 +79,7 @@ class AbsensiController extends Controller
             }
         }
 
-        // 3. Cari shift yang berlaku saat ini
+        // 5. Cari shift yang berlaku saat ini berdasarkan jam server
         $currentTime = now()->format('H:i:s');
         $currentShift = \App\Models\Shift::where('status', 'AKTIF')
             ->where('jam_masuk', '<=', $currentTime)
@@ -81,13 +90,17 @@ class AbsensiController extends Controller
             'riwayat'          => $riwayat,
             'shifts'           => $allShifts,
             'currentShift'     => $currentShift,
-            // PERBAIKAN: Gunakan $cabangTerpilih (objek cabang tunggal)
+
+            // Data Geofencing (Aman meski $cabangTerpilih null karena menggunakan null coalescing ??)
             'cabangLat'        => $cabangTerpilih->latitude ?? 0,
             'cabangLong'       => $cabangTerpilih->longitude ?? 0,
-            'radiusMeter'      => $cabangTerpilih->radius ?? 100,
-            'namaCabang'       => $cabangTerpilih->nama_cabang ?? '-',
+            'radiusMeter'      => $cabangTerpilih->radius ?? 0, // Set 0 agar radius tidak terbentuk jika tak ada cabang
+            'namaCabang'       => $cabangTerpilih->nama_cabang ?? 'Belum Ditentukan',
+
+            // Data Tambahan
             'showNotification' => $showNotification,
-            'notifMessage'     => $notifMessage
+            'notifMessage'     => $notifMessage,
+            'pesanErrorCabang' => $pesanErrorCabang // Lempar pesan ini ke view
         ]);
     }
 
