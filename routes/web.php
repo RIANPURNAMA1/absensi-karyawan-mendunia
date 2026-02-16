@@ -144,7 +144,7 @@ Route::get('/test-akses', function() {
     return "Akses Berhasil!";
 });
 Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
-    Route::get('/absensi/karyawan', [AbsensiController::class, 'index'])->name('absensi.index');
+    Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
 
     // absensi foto
     Route::post('/absensi/foto/proses', [AbsensiController::class, 'absenFoto'])->middleware('auth');
