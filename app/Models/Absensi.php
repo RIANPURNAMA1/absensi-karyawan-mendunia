@@ -56,10 +56,21 @@ class Absensi extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function cabang()
-    {
-        return $this->belongsTo(Cabang::class);
-    }
+ // Ganti relasi lama dengan Accessor ini
+    // public function getCabangAttribute()
+    // {
+    //     if (!$this->cabang_ids) return collect();
+
+    //     // Mengambil semua data cabang yang ID-nya ada di dalam list cabang_ids
+    //     return \App\Models\Cabang::whereIn('id', $this->cabang_ids)->get();
+    // }
+
+// Tambahkan ini di Model Absensi
+public function cabang()
+{
+    // Ini mengacu pada kolom 'cabang_id' yang ada di tabel absensis
+    return $this->belongsTo(Cabang::class, 'cabang_id');
+}
 
     public function izin()
     {
