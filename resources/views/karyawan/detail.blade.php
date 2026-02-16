@@ -54,7 +54,7 @@
                                 </tr>
                                 <tr>
                                     <th class="bg-light">Cabang</th>
-                                    <td>{{ $karyawan->cabang->nama_cabang ?? '-' }}</td>
+                                    <td>{{ $karyawan->cabang->pluck('nama_cabang')->implode(', ') ?: '-' }}</td>
                                 </tr>
                                 <tr>
                                     <th class="bg-light">No HP / WhatsApp</th>

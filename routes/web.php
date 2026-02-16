@@ -139,13 +139,13 @@ Route::middleware(['auth', 'role:HR,MANAGER,KARYAWAN'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
+Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
 Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
 
     // absensi foto
     Route::post('/absensi/foto/proses', [AbsensiController::class, 'absenFoto'])->middleware('auth');
 
     // Absensi
-    Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
     Route::get('/absensi/mobile', fn() => view('absensi.mobile'))->name('absensi.mobile');
     Route::post('/absen/masuk', [AbsensiController::class, 'absenMasuk'])->name('absen.masuk');
     Route::post('/absensi/masuk', [AbsensiController::class, 'absenMasuk']);
