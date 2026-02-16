@@ -43,21 +43,30 @@ class ProfileController extends Controller
             $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
         }
 
-        // 3. Logika Foto Profil (Simpan ke Public Folder)
+        // 3. Logika Foto Profil (Simpan ke public/uploads/foto_profil)
         if ($request->hasFile('foto_profil')) {
-            // Hapus foto lama jika ada di folder public
-            if ($user->foto_profil && file_exists(public_path('foto-karyawan/' . $user->foto_profil))) {
-                unlink(public_path('foto-karyawan/' . $user->foto_profil));
+
+            $folderPath = public_path('uploads/foto_profil');
+
+            // Pastikan folder ada
+            if (!file_exists($folderPath)) {
+                mkdir($folderPath, 0777, true);
+            }
+
+            // Hapus foto lama jika ada
+            if ($user->foto_profil && file_exists($folderPath . '/' . $user->foto_profil)) {
+                unlink($folderPath . '/' . $user->foto_profil);
             }
 
             $file = $request->file('foto_profil');
             $namaFoto = time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
 
-            // Pindahkan file langsung ke public/foto-karyawan
-            $file->move(public_path('foto-karyawan'), $namaFoto);
+            // Pindahkan file ke folder baru
+            $file->move($folderPath, $namaFoto);
 
             $user->foto_profil = $namaFoto;
         }
+
 
         $user->save();
 
