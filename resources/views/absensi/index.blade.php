@@ -78,9 +78,10 @@
                 <div class="w-10 h-10 rounded-full overflow-hidden border border-blue-500">
                     <img src="{{ auth()->user() && auth()->user()->foto_profil
                         ? asset('uploads/foto_profil/' . auth()->user()->foto_profil)
-                        : asset('images/default-user.png') }}"
+                        : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png' }}"
                         alt="Foto Karyawan" class="w-full h-full object-cover">
                 </div>
+
 
 
                 <!-- NAMA & DIVISI -->
