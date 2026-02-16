@@ -12,14 +12,14 @@ use Illuminate\Support\Facades\Storage;
 
 class KaryawanController extends Controller
 {
-    public function index(Request $request) // Tambahkan Request $request
+    public function index(Request $request)
     {
-        // 1. Inisialisasi Query dengan Eager Loading
-        $query = User::with(['divisi', 'shift', 'cabang'])->where('role', 'KARYAWAN');
+        // 1. Hapus 'cabang' dari with()
+        $query = User::with(['divisi', 'shift'])->where('role', 'KARYAWAN');
 
-        // 2. Logika Filter Cabang
+        // 2. Logika Filter Cabang (Gunakan whereJsonContains)
         if ($request->filled('cabang_id')) {
-            $query->where('cabang_id', $request->cabang_id);
+            $query->whereJsonContains('cabang_ids', $request->cabang_id);
         }
 
         // 3. Logika Filter Divisi
@@ -27,17 +27,16 @@ class KaryawanController extends Controller
             $query->where('divisi_id', $request->divisi_id);
         }
 
-        // 4. Eksekusi Query
         $karyawan = $query->latest()->get();
 
-        // 5. Data untuk Dropdown (Modal & Filter)
         $divisi = Divisi::orderBy('nama_divisi')->get();
         $cabang = Cabang::orderBy('nama_cabang')->get();
         $shifts = \App\Models\Shift::where('status', 'AKTIF')->get();
 
-        // 6. Kirim semua variabel ke view
         return view('karyawan.index', compact('karyawan', 'divisi', 'cabang', 'shifts'));
     }
+
+
 
     public function store(Request $request)
     {
@@ -58,17 +57,21 @@ class KaryawanController extends Controller
         $request->merge(['nip' => $nipBaru]);
 
         $request->validate([
-            // Identitas Utama (Tetap Required agar sistem tidak error)
+            // Identitas Utama
             'nik'               => 'required|string|size:16|unique:users,nik',
             'nip'               => 'required|string|max:50|unique:users,nip',
             'name'              => 'required|string|max:100',
             'email'             => 'required|email|unique:users,email',
 
-            // Data Kepegawaian (Dibuat nullable agar bisa dilengkapi nanti)
+            // Data Kepegawaian (DISESUAIKAN UNTUK MULTIPLE CABANG)
             'jabatan'           => 'nullable|string|max:100',
             'pendidikan_terakhir' => 'nullable|string',
             'divisi_id'         => 'nullable|exists:divisis,id',
-            'cabang_id'         => 'nullable|exists:cabangs,id',
+
+            // Validasi Cabang sebagai Array
+            'cabang_ids'        => 'required|array|min:1',
+            'cabang_ids.*'      => 'exists:cabangs,id',
+
             'shift_id'          => 'nullable|exists:shifts,id',
             'tanggal_masuk'     => 'nullable|date',
             'status_kerja'      => 'nullable|in:TETAP,KONTRAK,MAGANG',
@@ -82,7 +85,7 @@ class KaryawanController extends Controller
             'agama'             => 'nullable|in:ISLAM,KRISTEN,KATOLIK,HINDU,BUDDHA,KONGHUCU',
             'status_pernikahan' => 'nullable|in:BELUM MENIKAH,MENIKAH,CERAI',
 
-            // Upload Files & Foto (Tetap nullable)
+            // Upload Files & Foto
             'foto_profil'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'foto_ktp'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
             'foto_ijazah'       => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
@@ -92,14 +95,7 @@ class KaryawanController extends Controller
         ]);
 
         // Upload semua file jika ada
-        $fileFields = [
-            'foto_profil',
-            'foto_ktp',
-            'foto_ijazah',
-            'foto_kk',
-            'cv_file',
-            'sertifikat_file'
-        ];
+        $fileFields = ['foto_profil', 'foto_ktp', 'foto_ijazah', 'foto_kk', 'cv_file', 'sertifikat_file'];
         $uploadedFiles = [];
 
         foreach ($fileFields as $field) {
@@ -123,14 +119,16 @@ class KaryawanController extends Controller
             'role'              => 'KARYAWAN',
             'status'            => 'AKTIF',
 
-            // Field Baru yang ditambahkan
             'nik'               => $request->nik,
             'pendidikan_terakhir' => $request->pendidikan_terakhir,
 
             // Data Kepegawaian
-            'nip'               => $nipBaru, // Menggunakan variabel NIP yang sudah digenerate
+            'nip'               => $nipBaru,
             'divisi_id'         => $request->divisi_id,
-            'cabang_id'         => $request->cabang_id,
+
+            // SIMPAN CABANG SEBAGAI ARRAY/JSON
+            'cabang_ids'        => $request->cabang_ids,
+
             'shift_id'          => $request->shift_id,
             'jabatan'           => $request->jabatan,
             'tanggal_masuk'     => $request->tanggal_masuk,
@@ -158,106 +156,326 @@ class KaryawanController extends Controller
         ], 201);
     }
 
+    // public function store(Request $request)
+    // {
+    //     // Ambil tahun masuk dari input
+    //     $tahunMasuk = \Carbon\Carbon::parse($request->tanggal_masuk)->format('Y');
+
+    //     // Cari NIP terakhir di tahun ini
+    //     $lastNip = User::whereYear('tanggal_masuk', $tahunMasuk)
+    //         ->orderBy('nip', 'desc')
+    //         ->first();
+
+    //     $urutan = $lastNip ? (int)substr($lastNip->nip, -4) + 1 : 1;
+
+    //     // Buat NIP baru: YYYYXXXX
+    //     $nipBaru = $tahunMasuk . str_pad($urutan, 4, '0', STR_PAD_LEFT);
+
+    //     // Merge NIP ke request
+    //     $request->merge(['nip' => $nipBaru]);
+
+    //     $request->validate([
+    //         // Identitas Utama (Tetap Required agar sistem tidak error)
+    //         'nik'               => 'required|string|size:16|unique:users,nik',
+    //         'nip'               => 'required|string|max:50|unique:users,nip',
+    //         'name'              => 'required|string|max:100',
+    //         'email'             => 'required|email|unique:users,email',
+
+    //         // Data Kepegawaian (Dibuat nullable agar bisa dilengkapi nanti)
+    //         'jabatan'           => 'nullable|string|max:100',
+    //         'pendidikan_terakhir' => 'nullable|string',
+    //         'divisi_id'         => 'nullable|exists:divisis,id',
+    //         'cabang_id'         => 'nullable|exists:cabangs,id',
+    //         'shift_id'          => 'nullable|exists:shifts,id',
+    //         'tanggal_masuk'     => 'nullable|date',
+    //         'status_kerja'      => 'nullable|in:TETAP,KONTRAK,MAGANG',
+
+    //         // Kontak & Personal
+    //         'no_hp'             => 'nullable|string|max:20',
+    //         'alamat'            => 'nullable|string',
+    //         'tempat_lahir'      => 'nullable|string|max:100',
+    //         'tanggal_lahir'     => 'nullable|date',
+    //         'jenis_kelamin'     => 'nullable|in:L,P',
+    //         'agama'             => 'nullable|in:ISLAM,KRISTEN,KATOLIK,HINDU,BUDDHA,KONGHUCU',
+    //         'status_pernikahan' => 'nullable|in:BELUM MENIKAH,MENIKAH,CERAI',
+
+    //         // Upload Files & Foto (Tetap nullable)
+    //         'foto_profil'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    //         'foto_ktp'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+    //         'foto_ijazah'       => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+    //         'foto_kk'           => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+    //         'cv_file'           => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+    //         'sertifikat_file'   => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+    //     ]);
+
+    //     // Upload semua file jika ada
+    //     $fileFields = [
+    //         'foto_profil',
+    //         'foto_ktp',
+    //         'foto_ijazah',
+    //         'foto_kk',
+    //         'cv_file',
+    //         'sertifikat_file'
+    //     ];
+    //     $uploadedFiles = [];
+
+    //     foreach ($fileFields as $field) {
+    //         if ($request->hasFile($field)) {
+    //             $file = $request->file($field);
+    //             $namaFile = time() . '_' . $file->getClientOriginalName();
+    //             $tujuanFolder = public_path('uploads/' . $field);
+    //             if (!file_exists($tujuanFolder)) mkdir($tujuanFolder, 0755, true);
+    //             $file->move($tujuanFolder, $namaFile);
+    //             $uploadedFiles[$field] = $namaFile;
+    //         } else {
+    //             $uploadedFiles[$field] = null;
+    //         }
+    //     }
+
+    //     // Simpan user karyawan
+    //     $user = User::create(array_merge([
+    //         'name'              => $request->name,
+    //         'email'             => $request->email,
+    //         'password'          => Hash::make('12345678'), // Password default
+    //         'role'              => 'KARYAWAN',
+    //         'status'            => 'AKTIF',
+
+    //         // Field Baru yang ditambahkan
+    //         'nik'               => $request->nik,
+    //         'pendidikan_terakhir' => $request->pendidikan_terakhir,
+
+    //         // Data Kepegawaian
+    //         'nip'               => $nipBaru, // Menggunakan variabel NIP yang sudah digenerate
+    //         'divisi_id'         => $request->divisi_id,
+    //         'cabang_id'         => $request->cabang_id,
+    //         'shift_id'          => $request->shift_id,
+    //         'jabatan'           => $request->jabatan,
+    //         'tanggal_masuk'     => $request->tanggal_masuk,
+    //         'status_kerja'      => $request->status_kerja,
+
+    //         // Data Personal & Kontak
+    //         'no_hp'             => $request->no_hp,
+    //         'alamat'            => $request->alamat,
+    //         'tempat_lahir'      => $request->tempat_lahir,
+    //         'tanggal_lahir'     => $request->tanggal_lahir,
+    //         'jenis_kelamin'     => $request->jenis_kelamin,
+    //         'agama'             => $request->agama,
+    //         'status_pernikahan' => $request->status_pernikahan,
+    //     ], $uploadedFiles));
+
+    //     return response()->json([
+    //         'status'  => true,
+    //         'message' => 'Karyawan berhasil dibuat',
+    //         'akun'    => [
+    //             'email'    => $request->email,
+    //             'password' => '12345678',
+    //             'nip'      => $nipBaru
+    //         ],
+    //         'data' => $user
+    //     ], 201);
+    // }
+
+
+
+    // public function update(Request $request, $id)
+    // {
+    //     $user = User::findOrFail($id);
+
+    //     // Validasi request
+    //     $request->validate([
+    //         'nik'                => 'required|string|size:16|unique:users,nik,' . $user->id,
+    //         'nip'                => 'required|unique:users,nip,' . $user->id,
+    //         'name'               => 'required|string|max:100',
+    //         'email'              => 'required|email|unique:users,email,' . $user->id,
+    //         'jabatan'            => 'required|string|max:100',
+    //         'pendidikan_terakhir' => 'required|string', // Tambahan field pendidikan
+    //         'divisi_id'          => 'required|exists:divisis,id',
+    //         'cabang_id'          => 'required|exists:cabangs,id',
+    //         'shift_id'           => 'required|exists:shifts,id',
+    //         'no_hp'              => 'required|string|max:20',
+    //         'alamat'             => 'nullable|string',
+    //         'tanggal_masuk'      => 'required|date',
+    //         'status_kerja'       => 'required|in:TETAP,KONTRAK,MAGANG',
+
+    //         // File Validation
+    //         'foto_profil'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    //         'foto_ktp'           => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+    //         'foto_ijazah'        => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+    //         'foto_kk'            => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+    //         'cv_file'            => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+    //         'sertifikat_file'    => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+
+    //         'tempat_lahir'       => 'nullable|string|max:100',
+    //         'tanggal_lahir'      => 'nullable|date',
+    //         'jenis_kelamin'      => 'nullable|in:L,P',
+    //         'agama'              => 'nullable|in:ISLAM,KRISTEN,KATOLIK,HINDU,BUDDHA,KONGHUCU',
+    //         'status_pernikahan'  => 'nullable|in:BELUM_MENIKAH,MENIKAH,CERAI',
+    //     ]);
+
+    //     // Array field file
+    //     $fileFields = [
+    //         'foto_profil',
+    //         'foto_ktp',
+    //         'foto_ijazah',
+    //         'foto_kk',
+    //         'cv_file',
+    //         'sertifikat_file'
+    //     ];
+    //     $uploadedFiles = [];
+
+    //     foreach ($fileFields as $field) {
+    //         if ($request->hasFile($field)) {
+    //             $file = $request->file($field);
+    //             $namaFile = time() . '_' . $file->getClientOriginalName();
+    //             $tujuanFolder = public_path('uploads/' . $field);
+
+    //             // Pastikan folder ada
+    //             if (!file_exists($tujuanFolder)) {
+    //                 mkdir($tujuanFolder, 0755, true);
+    //             }
+
+    //             // Hapus file lama jika ada
+    //             if ($user->$field && file_exists($tujuanFolder . '/' . $user->$field)) {
+    //                 unlink($tujuanFolder . '/' . $user->$field);
+    //             }
+
+    //             // Pindahkan file baru
+    //             $file->move($tujuanFolder, $namaFile);
+    //             $uploadedFiles[$field] = $namaFile;
+    //         } else {
+    //             $uploadedFiles[$field] = $user->$field; // tetap pakai file lama jika tidak diupload
+    //         }
+    //     }
+
+    //     // Update user
+    //     $user->update(array_merge([
+    //         'nik'               => $request->nik, // Tambahan pembaruan NIK
+    //         'nip'               => $request->nip,
+    //         'name'              => $request->name,
+    //         'email'             => $request->email,
+    //         'jabatan'           => $request->jabatan,
+    //         'pendidikan_terakhir' => $request->pendidikan_terakhir, // Tambahan pembaruan Pendidikan
+    //         'divisi_id'         => $request->divisi_id,
+    //         'cabang_id'         => $request->cabang_id,
+    //         'shift_id'          => $request->shift_id,
+    //         'no_hp'             => $request->no_hp,
+    //         'alamat'            => $request->alamat,
+    //         'tanggal_masuk'     => $request->tanggal_masuk,
+    //         'status_kerja'      => $request->status_kerja,
+    //         'tempat_lahir'      => $request->tempat_lahir,
+    //         'tanggal_lahir'     => $request->tanggal_lahir,
+    //         'jenis_kelamin'     => $request->jenis_kelamin,
+    //         'agama'             => $request->agama,
+    //         'status_pernikahan' => $request->status_pernikahan,
+    //     ], $uploadedFiles));
+
+    //     return response()->json([
+    //         'status'  => 'success',
+    //         'message' => 'Data karyawan berhasil diperbarui',
+    //         'data'    => $user
+    //     ]);
+    // }
 
 
     public function update(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
+{
+    $user = User::findOrFail($id);
 
-        // Validasi request
-        $request->validate([
-            'nik'                => 'required|string|size:16|unique:users,nik,' . $user->id,
-            'nip'                => 'required|unique:users,nip,' . $user->id,
-            'name'               => 'required|string|max:100',
-            'email'              => 'required|email|unique:users,email,' . $user->id,
-            'jabatan'            => 'required|string|max:100',
-            'pendidikan_terakhir' => 'required|string', // Tambahan field pendidikan
-            'divisi_id'          => 'required|exists:divisis,id',
-            'cabang_id'          => 'required|exists:cabangs,id',
-            'shift_id'           => 'required|exists:shifts,id',
-            'no_hp'              => 'required|string|max:20',
-            'alamat'             => 'nullable|string',
-            'tanggal_masuk'      => 'required|date',
-            'status_kerja'       => 'required|in:TETAP,KONTRAK,MAGANG',
+    // 1. Validasi request
+    $request->validate([
+        'nik'               => 'required|string|size:16|unique:users,nik,' . $user->id,
+        'nip'               => 'required|unique:users,nip,' . $user->id,
+        'name'              => 'required|string|max:100',
+        'email'             => 'required|email|unique:users,email,' . $user->id,
+        'jabatan'           => 'required|string|max:100',
+        'pendidikan_terakhir' => 'required|string',
+        'divisi_id'         => 'required|exists:divisis,id',
+        
+        // SESUAIKAN: Cabang sekarang harus array
+        'cabang_ids'        => 'required|array|min:1',
+        'cabang_ids.*'      => 'exists:cabangs,id',
+        
+        'shift_id'          => 'required|exists:shifts,id',
+        'no_hp'             => 'required|string|max:20',
+        'alamat'            => 'nullable|string',
+        'tanggal_masuk'     => 'required|date',
+        'status_kerja'      => 'required|in:TETAP,KONTRAK,MAGANG',
 
-            // File Validation
-            'foto_profil'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'foto_ktp'           => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
-            'foto_ijazah'        => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
-            'foto_kk'            => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
-            'cv_file'            => 'nullable|file|mimes:pdf,doc,docx|max:5120',
-            'sertifikat_file'    => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+        // File Validation
+        'foto_profil'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        'foto_ktp'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+        'foto_ijazah'       => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+        'foto_kk'           => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+        'cv_file'           => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+        'sertifikat_file'   => 'nullable|file|mimes:pdf,doc,docx|max:5120',
 
-            'tempat_lahir'       => 'nullable|string|max:100',
-            'tanggal_lahir'      => 'nullable|date',
-            'jenis_kelamin'      => 'nullable|in:L,P',
-            'agama'              => 'nullable|in:ISLAM,KRISTEN,KATOLIK,HINDU,BUDDHA,KONGHUCU',
-            'status_pernikahan'  => 'nullable|in:BELUM_MENIKAH,MENIKAH,CERAI',
-        ]);
+        'tempat_lahir'      => 'nullable|string|max:100',
+        'tanggal_lahir'     => 'nullable|date',
+        'jenis_kelamin'     => 'nullable|in:L,P',
+        'agama'             => 'nullable|in:ISLAM,KRISTEN,KATOLIK,HINDU,BUDDHA,KONGHUCU',
+        'status_pernikahan' => 'nullable|in:BELUM_MENIKAH,MENIKAH,CERAI',
+    ]);
 
-        // Array field file
-        $fileFields = [
-            'foto_profil',
-            'foto_ktp',
-            'foto_ijazah',
-            'foto_kk',
-            'cv_file',
-            'sertifikat_file'
-        ];
-        $uploadedFiles = [];
+    // 2. Olah File Upload
+    $fileFields = ['foto_profil', 'foto_ktp', 'foto_ijazah', 'foto_kk', 'cv_file', 'sertifikat_file'];
+    $uploadedFiles = [];
 
-        foreach ($fileFields as $field) {
-            if ($request->hasFile($field)) {
-                $file = $request->file($field);
-                $namaFile = time() . '_' . $file->getClientOriginalName();
-                $tujuanFolder = public_path('uploads/' . $field);
+    foreach ($fileFields as $field) {
+        if ($request->hasFile($field)) {
+            $file = $request->file($field);
+            $namaFile = time() . '_' . $field . '_' . str_replace(' ', '_', $file->getClientOriginalName());
+            $tujuanFolder = public_path('uploads/' . $field);
 
-                // Pastikan folder ada
-                if (!file_exists($tujuanFolder)) {
-                    mkdir($tujuanFolder, 0755, true);
-                }
-
-                // Hapus file lama jika ada
-                if ($user->$field && file_exists($tujuanFolder . '/' . $user->$field)) {
-                    unlink($tujuanFolder . '/' . $user->$field);
-                }
-
-                // Pindahkan file baru
-                $file->move($tujuanFolder, $namaFile);
-                $uploadedFiles[$field] = $namaFile;
-            } else {
-                $uploadedFiles[$field] = $user->$field; // tetap pakai file lama jika tidak diupload
+            // Buat folder jika belum ada
+            if (!file_exists($tujuanFolder)) {
+                mkdir($tujuanFolder, 0755, true);
             }
+
+            // Hapus file lama jika ada dan bukan null
+            if ($user->$field && file_exists($tujuanFolder . '/' . $user->$field)) {
+                unlink($tujuanFolder . '/' . $user->$field);
+            }
+
+            // Upload file baru
+            $file->move($tujuanFolder, $namaFile);
+            $uploadedFiles[$field] = $namaFile;
+        } else {
+            // Jika tidak upload baru, tetap gunakan file lama
+            $uploadedFiles[$field] = $user->$field;
         }
-
-        // Update user
-        $user->update(array_merge([
-            'nik'               => $request->nik, // Tambahan pembaruan NIK
-            'nip'               => $request->nip,
-            'name'              => $request->name,
-            'email'             => $request->email,
-            'jabatan'           => $request->jabatan,
-            'pendidikan_terakhir' => $request->pendidikan_terakhir, // Tambahan pembaruan Pendidikan
-            'divisi_id'         => $request->divisi_id,
-            'cabang_id'         => $request->cabang_id,
-            'shift_id'          => $request->shift_id,
-            'no_hp'             => $request->no_hp,
-            'alamat'            => $request->alamat,
-            'tanggal_masuk'     => $request->tanggal_masuk,
-            'status_kerja'      => $request->status_kerja,
-            'tempat_lahir'      => $request->tempat_lahir,
-            'tanggal_lahir'     => $request->tanggal_lahir,
-            'jenis_kelamin'     => $request->jenis_kelamin,
-            'agama'             => $request->agama,
-            'status_pernikahan' => $request->status_pernikahan,
-        ], $uploadedFiles));
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Data karyawan berhasil diperbarui',
-            'data'    => $user
-        ]);
     }
+
+    // 3. Update Data ke Database
+    $user->update(array_merge([
+        'nik'               => $request->nik,
+        'nip'               => $request->nip,
+        'name'              => $request->name,
+        'email'             => $request->email,
+        'jabatan'           => $request->jabatan,
+        'pendidikan_terakhir' => $request->pendidikan_terakhir,
+        'divisi_id'         => $request->divisi_id,
+        
+        // SESUAIKAN: Update kolom cabang_ids (Array otomatis jadi JSON karena casts di Model)
+        'cabang_ids'        => $request->cabang_ids, 
+        
+        'shift_id'          => $request->shift_id,
+        'no_hp'             => $request->no_hp,
+        'alamat'            => $request->alamat,
+        'tanggal_masuk'     => $request->tanggal_masuk,
+        'status_kerja'      => $request->status_kerja,
+        'tempat_lahir'      => $request->tempat_lahir,
+        'tanggal_lahir'     => $request->tanggal_lahir,
+        'jenis_kelamin'     => $request->jenis_kelamin,
+        'agama'             => $request->agama,
+        'status_pernikahan' => $request->status_pernikahan,
+    ], $uploadedFiles));
+
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'Data karyawan berhasil diperbarui',
+        'data'    => $user
+    ]);
+}
 
 
     public function show($id)

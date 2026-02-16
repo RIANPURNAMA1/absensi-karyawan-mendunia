@@ -1,44 +1,109 @@
    <!-- MODAL TAMBAH KARYAWAN -->
    <div class="modal fade" id="modalTambahKaryawan" tabindex="-1">
        <div class="modal-dialog modal-lg modal-dialog-centered">
-           <div class="modal-content">
+           <div class="modal-content border-0 shadow-lg">
 
-               <div class="modal-header" style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">
-                   <h5 class="modal-title text-white">Tambah Karyawan</h5>
-                   <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+               <div class="modal-header border-0" style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">
+                   <h5 class="modal-title text-white fw-bold">
+                       <i class="ph ph-user-plus me-2"></i>Tambah Karyawan
+                   </h5>
+                   <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                </div>
+
                <form id="formTambahKaryawan" enctype="multipart/form-data">
                    @csrf
 
-                   <div class="modal-body">
+                   <div class="modal-body p-4">
                        <div class="row g-3">
 
                            <div class="col-md-6">
-                               <label class="form-label fw-bold">NIK (No. KTP)</label>
+                               <label class="form-label fw-bold">NIK (No. KTP) <span
+                                       class="text-danger">*</span></label>
                                <input type="text" name="nik" class="form-control"
                                    placeholder="Masukkan 16 digit NIK" required maxlength="16">
                            </div>
 
                            <div class="col-md-6">
                                <label class="form-label fw-bold">NIP</label>
-                               <input type="text" name="nip" class="form-control"
+                               <input type="text" name="nip" class="form-control bg-light"
                                    placeholder="Otomatis setelah simpan" readonly>
                            </div>
 
                            <div class="col-md-6">
-                               <label class="form-label fw-bold">Nama Lengkap</label>
-                               <input type="text" name="name" class="form-control"
-                                   placeholder="Nama tanpa gelar (opsional)" required>
+                               <label class="form-label fw-bold">Nama Lengkap <span class="text-danger">*</span></label>
+                               <input type="text" name="name" class="form-control" placeholder="Nama tanpa gelar"
+                                   required>
                            </div>
 
                            <div class="col-md-6">
-                               <label class="form-label fw-bold">Jabatan</label>
+                               <label class="form-label fw-bold">Jabatan <span class="text-danger">*</span></label>
                                <input type="text" name="jabatan" class="form-control"
                                    placeholder="Contoh: Staff Admin" required>
                            </div>
 
+                           <div class="col-md-12">
+                               <label class="form-label fw-bold text-primary">Penempatan Cabang <span
+                                       class="text-danger">*</span></label>
+                               <div class="card border-primary-subtle shadow-sm">
+                                   <div class="card-body p-3" style="background-color: #f8faff;">
+                                       <div class="row">
+                                           @foreach ($cabang as $c)
+                                               <div class="col-md-4 mb-2">
+                                                   <div class="form-check custom-checkbox">
+                                                       <input class="form-check-input" type="checkbox"
+                                                           name="cabang_ids[]" value="{{ $c->id }}"
+                                                           id="cabang_{{ $c->id }}">
+                                                       <label class="form-check-label fw-semibold"
+                                                           for="cabang_{{ $c->id }}" style="cursor: pointer;">
+                                                           {{ $c->nama_cabang }}
+                                                       </label>
+                                                   </div>
+                                               </div>
+                                           @endforeach
+                                       </div>
+                                       <div class="mt-2 py-1 px-2 bg-white rounded border">
+                                           <small class="text-muted"><i class="ph ph-info me-1"></i>Centang satu atau
+                                               lebih cabang untuk lokasi absensi karyawan.</small>
+                                       </div>
+                                   </div>
+                               </div>
+                           </div>
+
                            <div class="col-md-6">
-                               <label class="form-label fw-bold">Pendidikan Terakhir</label>
+                               <label class="form-label fw-bold">Divisi <span class="text-danger">*</span></label>
+                               <select name="divisi_id" class="form-select" required>
+                                   <option value="">-- Pilih Divisi --</option>
+                                   @foreach ($divisi as $d)
+                                       <option value="{{ $d->id }}">{{ $d->nama_divisi }}</option>
+                                   @endforeach
+                               </select>
+                           </div>
+
+                           <div class="col-md-6">
+                               <label class="form-label fw-bold text-primary">Shift Kerja <span
+                                       class="text-danger">*</span></label>
+                               <select name="shift_id" class="form-select border-primary" required>
+                                   <option value="">-- Pilih Shift --</option>
+                                   @foreach ($shifts as $s)
+                                       <option value="{{ $s->id }}">{{ $s->nama_shift }}</option>
+                                   @endforeach
+                               </select>
+                           </div>
+
+                           <div class="col-md-6">
+                               <label class="form-label fw-bold">No HP <span class="text-danger">*</span></label>
+                               <input type="text" name="no_hp" class="form-control" placeholder="08xxxx" required>
+                           </div>
+
+                           <div class="col-md-6">
+                               <label class="form-label fw-bold">Email <span class="text-danger">*</span></label>
+                               <input type="email" name="email" class="form-control"
+                                   placeholder="email@perusahaan.com" required>
+                           </div>
+
+                           <div class="col-md-6">
+                               <label class="form-label fw-bold">Pendidikan Terakhir <span
+                                       class="text-danger">*</span></label>
                                <select name="pendidikan_terakhir" class="form-select" required>
                                    <option value="">-- Pilih Opsi --</option>
                                    <option value="SD/MI">SD/MI</option>
@@ -53,53 +118,8 @@
                            </div>
 
                            <div class="col-md-6">
-                               <label class="form-label fw-bold">Divisi</label>
-                               <select name="divisi_id" class="form-select" required>
-                                   <option value="">-- Pilih Divisi --</option>
-                                   @foreach ($divisi as $d)
-                                       <option value="{{ $d->id }}">{{ $d->nama_divisi }}</option>
-                                   @endforeach
-                               </select>
-                           </div>
-
-                           <div class="col-md-6">
-                               <label class="form-label fw-bold">Cabang</label>
-                               <select name="cabang_id" class="form-select" required>
-                                   <option value="">-- Pilih Cabang --</option>
-                                   @foreach ($cabang as $c)
-                                       <option value="{{ $c->id }}">{{ $c->nama_cabang }}</option>
-                                   @endforeach
-                               </select>
-                           </div>
-
-                           <div class="col-md-6">
-                               <label class="form-label fw-bold">Shift Kerja</label>
-                               <select name="shift_id" class="form-select" required>
-                                   <option value="">-- Pilih Shift --</option>
-                                   @foreach ($shifts as $s)
-                                       <option value="{{ $s->id }}">{{ $s->nama_shift }}</option>
-                                   @endforeach
-                               </select>
-                           </div>
-
-                           <div class="col-md-6">
-                               <label class="form-label fw-bold">No HP</label>
-                               <input type="text" name="no_hp" class="form-control" placeholder="08xxxx" required>
-                           </div>
-
-                           <div class="col-md-6">
-                               <label class="form-label fw-bold">Email</label>
-                               <input type="email" name="email" class="form-control"
-                                   placeholder="email@perusahaan.com" required>
-                           </div>
-
-                           <div class="col-md-6">
-                               <label class="form-label fw-bold">Tanggal Masuk</label>
-                               <input type="date" name="tanggal_masuk" class="form-control" required>
-                           </div>
-
-                           <div class="col-md-6">
-                               <label class="form-label fw-bold">Status Kerja</label>
+                               <label class="form-label fw-bold">Status Kerja <span
+                                       class="text-danger">*</span></label>
                                <select name="status_kerja" class="form-select" required>
                                    <option value="">-- Pilih Status --</option>
                                    <option value="TETAP">Tetap</option>
@@ -108,101 +128,66 @@
                                </select>
                            </div>
 
-                           <div class="col-md-6">
-                               <label class="form-label fw-bold">Tempat Lahir</label>
-                               <input type="text" name="tempat_lahir" class="form-control">
+                           <div class="col-md-4">
+                               <label class="form-label fw-bold">Tanggal Masuk</label>
+                               <input type="date" name="tanggal_masuk" class="form-control" required>
                            </div>
 
-                           <div class="col-md-6">
-                               <label class="form-label fw-bold">Tanggal Lahir</label>
-                               <input type="date" name="tanggal_lahir" class="form-control">
-                           </div>
-
-                           <div class="col-md-6">
+                           <div class="col-md-4">
                                <label class="form-label fw-bold">Jenis Kelamin</label>
                                <select name="jenis_kelamin" class="form-select">
-                                   <option value="">-- Pilih Jenis Kelamin --</option>
+                                   <option value="">-- Pilih --</option>
                                    <option value="L">Laki-laki</option>
                                    <option value="P">Perempuan</option>
                                </select>
                            </div>
 
-                           <div class="col-md-6">
+                           <div class="col-md-4">
                                <label class="form-label fw-bold">Agama</label>
                                <select name="agama" class="form-select">
-                                   <option value="">-- Pilih Agama --</option>
+                                   <option value="">-- Pilih --</option>
                                    <option value="ISLAM">Islam</option>
                                    <option value="KRISTEN">Kristen</option>
                                    <option value="KATOLIK">Katolik</option>
                                    <option value="HINDU">Hindu</option>
                                    <option value="BUDDHA">Buddha</option>
-                                   <option value="KONGHUCU">Konghucu</option>
-                               </select>
-                           </div>
-
-                           <div class="col-md-6">
-                               <label class="form-label fw-bold">Status Pernikahan</label>
-                               <select name="status_pernikahan" class="form-select">
-                                   <option value="">-- Pilih Status --</option>
-                                   <option value="BELUM MENIKAH">Belum Menikah</option>
-                                   <option value="MENIKAH">Menikah</option>
-                                   <option value="CERAI">Cerai</option>
                                </select>
                            </div>
 
                            <hr class="mt-4 mb-2">
-                           <h6 class="fw-bold"><i class="ph ph-file-arrow-up me-2"></i>Upload Dokumen</h6>
+                           <h6 class="fw-bold text-muted" style="font-size: 0.8rem; letter-spacing: 1px;">UPLOAD
+                               DOKUMEN</h6>
 
                            <div class="col-md-4">
-                               <label class="form-label">Foto Profil</label>
+                               <label class="form-label small fw-bold">Foto Profil</label>
                                <input type="file" name="foto_profil" class="form-control" accept="image/*">
                            </div>
 
                            <div class="col-md-4">
-                               <label class="form-label">Foto KTP</label>
+                               <label class="form-label small fw-bold">Foto KTP</label>
                                <input type="file" name="foto_ktp" class="form-control">
                            </div>
 
                            <div class="col-md-4">
-                               <label class="form-label">Foto Ijazah</label>
-                               <input type="file" name="foto_ijazah" class="form-control">
-                           </div>
-
-                           <div class="col-md-4">
-                               <label class="form-label">Foto KK</label>
-                               <input type="file" name="foto_kk" class="form-control">
-                           </div>
-
-                           <div class="col-md-4">
-                               <label class="form-label">CV (PDF)</label>
+                               <label class="form-label small fw-bold">CV (PDF)</label>
                                <input type="file" name="cv_file" class="form-control" accept=".pdf">
-                           </div>
-
-                           <div class="col-md-4">
-                               <label class="form-label">Sertifikat</label>
-                               <input type="file" name="sertifikat_file" class="form-control">
                            </div>
 
                            <div class="col-md-12">
                                <label class="form-label fw-bold">Alamat Sesuai KTP</label>
-                               <textarea name="alamat" class="form-control" rows="2"
-                                   placeholder="Jl. Nama Jalan No. RT/RW, Kelurahan, Kecamatan"></textarea>
+                               <textarea name="alamat" class="form-control" rows="2" placeholder="Alamat lengkap..."></textarea>
                            </div>
 
                        </div>
                    </div>
 
-                   <div class="modal-footer bg-light">
-                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                           Batal
-                       </button>
-                       <button type="submit" class="btn btn-primary px-4">
-                           <i class="ph ph-check-circle me-1"></i> Simpan Karyawan
+                   <div class="modal-footer bg-light border-0">
+                       <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Batal</button>
+                       <button type="submit" class="btn btn-primary px-4 shadow">
+                           <i class="ph ph-floppy-disk me-1"></i> Simpan Karyawan
                        </button>
                    </div>
                </form>
-
-
 
            </div>
        </div>
@@ -280,14 +265,31 @@
                                </select>
                            </div>
 
-                           <div class="col-md-6">
-                               <label class="form-label fw-semibold">Cabang <span class="text-danger">*</span></label>
-                               <select name="cabang_id" id="edit_cabang" class="form-select" required>
-                                   <option value="">-- Pilih Cabang --</option>
-                                   @foreach ($cabang as $c)
-                                       <option value="{{ $c->id }}">{{ $c->nama_cabang }}</option>
-                                   @endforeach
-                               </select>
+                           <div class="col-md-12">
+                               <label class="form-label fw-semibold">Cabang Penempatan <span
+                                       class="text-danger">*</span></label>
+                               <div class="card border shadow-none mb-0">
+                                   <div class="card-body p-3">
+                                       <div class="row">
+                                           @foreach ($cabang as $c)
+                                               <div class="col-md-4 mb-2">
+                                                   <div class="form-check">
+                                                       <input class="form-check-input check-cabang-edit"
+                                                           type="checkbox" name="cabang_ids[]"
+                                                           value="{{ $c->id }}"
+                                                           id="edit_cb_{{ $c->id }}">
+                                                       <label class="form-check-label"
+                                                           for="edit_cb_{{ $c->id }}">
+                                                           {{ $c->nama_cabang }}
+                                                       </label>
+                                                   </div>
+                                               </div>
+                                           @endforeach
+                                       </div>
+                                   </div>
+                               </div>
+                               <small class="text-muted">Centang satu atau lebih cabang tempat karyawan
+                                   bertugas.</small>
                            </div>
 
                            <div class="col-md-6">

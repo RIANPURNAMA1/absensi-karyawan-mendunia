@@ -3,14 +3,14 @@
 @section('content')
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+
     <!-- DataTables -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
 
@@ -21,6 +21,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -94,10 +95,12 @@
             <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md">
                 <div class="p-4">
                     <div class="flex items-center justify-between mb-3">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                        <div
+                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
                             <i class="ph ph-users text-xl"></i>
                         </div>
-                        <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full uppercase">Aktif</span>
+                        <span
+                            class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full uppercase">Aktif</span>
                     </div>
                     <div>
                         <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Karyawan</p>
@@ -117,7 +120,8 @@
             <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md">
                 <div class="p-4">
                     <div class="flex items-center justify-between mb-3">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
+                        <div
+                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
                             <i class="ph ph-check-circle text-xl"></i>
                         </div>
                     </div>
@@ -139,7 +143,8 @@
             <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md">
                 <div class="p-4">
                     <div class="flex items-center justify-between mb-3">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-amber-500 group-hover:text-white transition-colors duration-300">
+                        <div
+                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-amber-500 group-hover:text-white transition-colors duration-300">
                             <i class="ph ph-clock text-xl"></i>
                         </div>
                     </div>
@@ -162,7 +167,8 @@
             <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md">
                 <div class="p-4">
                     <div class="flex items-center justify-between mb-3">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-rose-600 group-hover:text-white transition-colors duration-300">
+                        <div
+                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-rose-600 group-hover:text-white transition-colors duration-300">
                             <i class="ph ph-x-circle text-xl"></i>
                         </div>
                     </div>
@@ -183,7 +189,8 @@
             <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md">
                 <div class="p-4">
                     <div class="flex items-center justify-between mb-3">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
+                        <div
+                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
                             <i class="ph ph-kanban text-xl"></i>
                         </div>
                     </div>
@@ -202,7 +209,8 @@
             <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md">
                 <div class="p-4">
                     <div class="flex items-center justify-between mb-3">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-300">
+                        <div
+                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-300">
                             <i class="ph ph-file-text text-xl"></i>
                         </div>
                     </div>
@@ -221,7 +229,8 @@
 
         <!-- Rasio Keterlambatan Chart -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-            <div class="p-5 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div
+                class="p-5 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h3 class="font-bold text-gray-800 flex items-center gap-2">
                     <span class="w-1 bg-blue-600 h-5 rounded-full"></span>
                     Rasio Keterlambatan
@@ -255,14 +264,16 @@
                             </p>
                         </div>
                         <div class="flex space-x-2">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
                                 <span class="w-1.5 h-1.5 rounded-full bg-blue-600 mr-1.5 animate-pulse"></span>
                                 Live
                             </span>
                         </div>
                     </div>
                     <div class="p-2">
-                        <div id="world-map-markers" class="rounded-lg bg-slate-50 border border-gray-50" style="height: 480px;"></div>
+                        <div id="world-map-markers" class="rounded-lg bg-slate-50 border border-gray-50"
+                            style="height: 480px;"></div>
                     </div>
                 </div>
             </div>
@@ -271,9 +282,11 @@
             <div class="flex flex-col gap-4">
 
                 <!-- Karyawan Aktif -->
-                <div class="group bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-blue-200 transition-all duration-300">
+                <div
+                    class="group bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-blue-200 transition-all duration-300">
                     <div class="flex items-center space-x-4">
-                        <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                        <div
+                            class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                             <i class="ph ph-users text-2xl"></i>
                         </div>
                         <div class="flex-1">
@@ -287,9 +300,11 @@
                 </div>
 
                 <!-- Hadir Hari Ini -->
-                <div class="group bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-emerald-200 transition-all duration-300">
+                <div
+                    class="group bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-emerald-200 transition-all duration-300">
                     <div class="flex items-center space-x-4">
-                        <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                        <div
+                            class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                             <i class="ph ph-check-circle text-2xl"></i>
                         </div>
                         <div class="flex-1">
@@ -303,9 +318,11 @@
                 </div>
 
                 <!-- Belum Absen -->
-                <div class="group bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-slate-300 transition-all duration-300">
+                <div
+                    class="group bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-slate-300 transition-all duration-300">
                     <div class="flex items-center space-x-4">
-                        <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                        <div
+                            class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                             <i class="ph ph-clock-countdown text-2xl"></i>
                         </div>
                         <div class="flex-1">
@@ -318,9 +335,11 @@
                 </div>
 
                 <!-- Izin Pending -->
-                <div class="group bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-amber-200 transition-all duration-300">
+                <div
+                    class="group bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-amber-200 transition-all duration-300">
                     <div class="flex items-center space-x-4">
-                        <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                        <div
+                            class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-amber-50 text-amber-600">
                             <i class="ph ph-hourglass text-2xl"></i>
                         </div>
                         <div class="flex-1">
@@ -398,6 +417,133 @@
             </div>
         </div>
 
+
+        {{-- izin dan lembur --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[480px]">
+                <div
+                    class="px-6 py-5 border-b border-gray-50 flex items-center justify-between bg-white sticky top-0 z-10">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800 flex items-center">
+                            <div class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center mr-3">
+                                <i class="ph ph-calendar-blank text-amber-600 text-xl"></i>
+                            </div>
+                            Riwayat Izin & Sakit
+                        </h2>
+                        <p class="text-gray-400 text-xs mt-1 font-medium uppercase tracking-widest">
+                            Daftar Pengajuan Terbaru
+                        </p>
+                    </div>
+                    <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">
+                        {{ $dataIzinSakit->count() }} Total
+                    </span>
+                </div>
+
+                <div
+                    class="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 hover:scrollbar-thumb-gray-300">
+                    <ul class="divide-y divide-gray-50">
+                        @forelse($dataIzinSakit as $izin)
+                            <li class="p-4 hover:bg-gray-50 transition-all duration-200">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <img src="{{ $izin->user->foto_profil ? asset('uploads/foto_profil/' . $izin->user->foto_profil) : 'https://ui-avatars.com/api/?name=' . urlencode($izin->user->name) . '&background=random' }}"
+                                            class="w-10 h-10 rounded-full object-cover border border-gray-100 shadow-sm">
+                                        <div class="ml-3">
+                                            <p class="text-sm font-bold text-gray-800 leading-none">
+                                                {{ $izin->user->name }}
+                                            </p>
+                                            <p class="text-[10px] text-gray-500 mt-1.5 flex items-center">
+                                                <i class="ph ph-calendar mr-1 text-amber-600"></i>
+                                                {{ \Carbon\Carbon::parse($izin->tanggal)->format('d M Y') }}
+                                                <span class="mx-1.5">•</span>
+                                                <i class="ph ph-buildings mr-1"></i>
+                                                {{ $izin->cabang->nama_cabang ?? 'Pusat' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider {{ $izin->status == 'SAKIT' ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-700' }}">
+                                            <span
+                                                class="w-1.5 h-1.5 rounded-full mr-1.5 {{ $izin->status == 'SAKIT' ? 'bg-rose-500' : 'bg-blue-500' }}"></span>
+                                            {{ $izin->status }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </li>
+                        @empty
+                            <li class="p-12 text-center text-gray-400 italic text-sm">Tidak ada data ditemukan.</li>
+                        @endforelse
+                    </ul>
+                </div>
+
+                <div class="px-6 py-3 bg-gray-50/50 border-t border-gray-50 text-center">
+                    <p class="text-[10px] text-gray-400">Menampilkan {{ $dataIzinSakit->count() }} data terakhir</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[480px]">
+                <div
+                    class="px-6 py-5 border-b border-gray-50 flex items-center justify-between bg-white sticky top-0 z-10">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800 flex items-center">
+                            <div class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center mr-3">
+                                <i class="ph ph-timer text-emerald-600 text-xl"></i>
+                            </div>
+                            Pengajuan Lembur
+                        </h2>
+                        <p class="text-gray-400 text-xs mt-1 font-medium uppercase tracking-widest">Menunggu Persetujuan
+                        </p>
+                    </div>
+                    <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">
+                        {{ $notifLembur->count() }} Request
+                    </span>
+                </div>
+
+                <div
+                    class="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 hover:scrollbar-thumb-gray-300">
+                    <ul class="divide-y divide-gray-50">
+                        @forelse($notifLembur as $lembur)
+                            <li class="p-4 hover:bg-emerald-50/30 transition-colors">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
+                                            {{ strtoupper(substr($lembur->user->name, 0, 2)) }}
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm font-bold text-gray-800 leading-none">
+                                                {{ $lembur->user->name }}</p>
+                                            <p class="text-[11px] text-gray-500 mt-1">
+                                                <span class="text-emerald-600 font-semibold">{{ $lembur->total_jam }}
+                                                    Jam</span> •
+                                                {{ \Carbon\Carbon::parse($lembur->tanggal)->format('d M') }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <a href="/approval-lembur"
+                                        class="p-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:text-emerald-600 transition-all">
+                                        <i class="ph ph-arrow-right font-bold"></i>
+                                    </a>
+                                </div>
+                            </li>
+                        @empty
+                            <li class="p-12 text-center text-gray-400 italic text-sm">Tidak ada pengajuan lembur.</li>
+                        @endforelse
+                    </ul>
+                </div>
+
+                @if ($notifLembur->count() > 0)
+                    <div class="px-6 py-3 bg-gray-50/50 border-t border-gray-50 text-center">
+                        <a href="/approval-lembur"
+                            class="text-xs font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider">
+                            Lihat Semua &rarr;
+                        </a>
+                    </div>
+                @endif
+            </div>
+        </div>
+
         <!-- Riwayat Absensi Table -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="px-6 py-5 border-b border-gray-50">
@@ -419,13 +565,20 @@
                     <table class="w-full border-collapse" id="dashboardTable">
                         <thead>
                             <tr>
-                                <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider bg-gray-50">Foto</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider bg-gray-50">NIK</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider bg-gray-50">Nama Karyawan</th>
-                                <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider bg-gray-50">Masuk</th>
-                                <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider bg-gray-50">Keluar</th>
-                                <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider bg-gray-50">Status</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider bg-gray-50">Cabang</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider bg-gray-50">Foto
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider bg-gray-50">NIK
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider bg-gray-50">Nama
+                                    Karyawan</th>
+                                <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider bg-gray-50">
+                                    Masuk</th>
+                                <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider bg-gray-50">
+                                    Keluar</th>
+                                <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider bg-gray-50">
+                                    Status</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider bg-gray-50">
+                                    Cabang</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 bg-white">
@@ -457,14 +610,35 @@
                                     <td class="px-6 py-4 text-center">
                                         @php
                                             $statusConfig = [
-                                                'HADIR' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-700', 'border' => 'border-emerald-100'],
-                                                'TERLAMBAT' => ['bg' => 'bg-amber-50', 'text' => 'text-amber-700', 'border' => 'border-amber-100'],
-                                                'IZIN' => ['bg' => 'bg-blue-50', 'text' => 'text-blue-700', 'border' => 'border-blue-100'],
-                                                'ALPA' => ['bg' => 'bg-rose-50', 'text' => 'text-rose-700', 'border' => 'border-rose-100'],
+                                                'HADIR' => [
+                                                    'bg' => 'bg-emerald-50',
+                                                    'text' => 'text-emerald-700',
+                                                    'border' => 'border-emerald-100',
+                                                ],
+                                                'TERLAMBAT' => [
+                                                    'bg' => 'bg-amber-50',
+                                                    'text' => 'text-amber-700',
+                                                    'border' => 'border-amber-100',
+                                                ],
+                                                'IZIN' => [
+                                                    'bg' => 'bg-blue-50',
+                                                    'text' => 'text-blue-700',
+                                                    'border' => 'border-blue-100',
+                                                ],
+                                                'ALPA' => [
+                                                    'bg' => 'bg-rose-50',
+                                                    'text' => 'text-rose-700',
+                                                    'border' => 'border-rose-100',
+                                                ],
                                             ];
-                                            $config = $statusConfig[$a->status] ?? ['bg' => 'bg-slate-50', 'text' => 'text-slate-700', 'border' => 'border-slate-100'];
+                                            $config = $statusConfig[$a->status] ?? [
+                                                'bg' => 'bg-slate-50',
+                                                'text' => 'text-slate-700',
+                                                'border' => 'border-slate-100',
+                                            ];
                                         @endphp
-                                        <span class="px-2.5 py-1 rounded-md text-[10px] font-bold border {{ $config['bg'] }} {{ $config['text'] }} {{ $config['border'] }}">
+                                        <span
+                                            class="px-2.5 py-1 rounded-md text-[10px] font-bold border {{ $config['bg'] }} {{ $config['text'] }} {{ $config['border'] }}">
                                             {{ $a->status }}
                                         </span>
                                     </td>
@@ -490,8 +664,13 @@
             // DataTable Initialization
             $('#dashboardTable').DataTable({
                 "pageLength": 10,
-                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
-                "order": [[3, "desc"]],
+                "lengthMenu": [
+                    [10, 25, 50, -1],
+                    [10, 25, 50, "Semua"]
+                ],
+                "order": [
+                    [3, "desc"]
+                ],
                 "language": {
                     "search": "",
                     "searchPlaceholder": "Cari data absensi...",
@@ -547,7 +726,9 @@
             // Add Markers
             @foreach ($absensis as $a)
                 @if ($a->lat_masuk && $a->long_masuk)
-                    L.marker([{{ $a->lat_masuk }}, {{ $a->long_masuk }}], { icon: masukIcon })
+                    L.marker([{{ $a->lat_masuk }}, {{ $a->long_masuk }}], {
+                            icon: masukIcon
+                        })
                         .addTo(mapAbsensi)
                         .bindPopup(`
                             <div class="p-2">
@@ -562,7 +743,9 @@
                 @endif
 
                 @if ($a->lat_pulang && $a->long_pulang)
-                    L.marker([{{ $a->lat_pulang }}, {{ $a->long_pulang }}], { icon: pulangIcon })
+                    L.marker([{{ $a->lat_pulang }}, {{ $a->long_pulang }}], {
+                            icon: pulangIcon
+                        })
                         .addTo(mapAbsensi)
                         .bindPopup(`
                             <div class="p-2">
@@ -601,7 +784,9 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false },
+                        legend: {
+                            display: false
+                        },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
@@ -612,14 +797,26 @@
                         }
                     },
                     scales: {
-                        x: { grid: { display: false }, suggestedMax: 130 },
-                        y: { grid: { display: false } }
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            suggestedMax: 130
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
                     }
                 },
                 plugins: [{
                     id: 'labelsOnBar',
                     afterDatasetsDraw(chart) {
-                        const { ctx, data } = chart;
+                        const {
+                            ctx,
+                            data
+                        } = chart;
                         const percentages = {!! json_encode($dataPersentaseTerlambat ?? []) !!};
 
                         chart.getDatasetMeta(0).data.forEach((bar, index) => {
@@ -644,8 +841,7 @@
                 type: 'bar',
                 data: {
                     labels: @json($labelsBar ?? []),
-                    datasets: [
-                        {
+                    datasets: [{
                             label: 'Tepat Waktu',
                             data: @json($dataHadirBar ?? []),
                             backgroundColor: 'rgba(34, 197, 94, 0.8)',
@@ -677,12 +873,28 @@
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: { font: { size: 12, weight: 'bold' }, padding: 15, usePointStyle: true }
+                            labels: {
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                padding: 15,
+                                usePointStyle: true
+                            }
                         }
                     },
                     scales: {
-                        x: { grid: { display: false } },
-                        y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } }
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
                     }
                 }
             });
@@ -715,7 +927,14 @@
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: { font: { size: 12, weight: 'bold' }, padding: 15, usePointStyle: true }
+                            labels: {
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                padding: 15,
+                                usePointStyle: true
+                            }
                         }
                     }
                 }

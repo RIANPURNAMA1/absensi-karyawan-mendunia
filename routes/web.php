@@ -14,6 +14,7 @@ use App\Http\Controllers\RekapController;
 use App\Http\Controllers\AbsensiController;
 use App\Http\Controllers\CabangController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\LemburController;
 use App\Http\Controllers\ProfileController;
 
 
@@ -112,6 +113,11 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::get('/pengaturan', [UserController::class, 'index']);
     Route::post('/pengaturan', [UserController::class, 'store'])->name('users.store');
     Route::put('/pengaturan/{id}', [UserController::class, 'update'])->name('pengaturan.update');
+
+
+    // lembur
+    Route::get('/approval-lembur', [LemburController::class, 'approvalIndex'])->name('lembur.approval');
+    Route::post('/approval-lembur/{id}/status', [LemburController::class, 'updateStatus'])->name('lembur.status');
 });
 
 /*
@@ -170,7 +176,14 @@ Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
     // Calendar
     Route::get('/calendar', [CalendarController::class, 'index']);
     Route::get('/absensi/riwayat-kalender', [CalendarController::class, 'getRiwayatKalender'])->name('riwayatKalender');
+
+
+
+    // lembur
+    Route::get('/absensi/lembur', [LemburController::class, 'index'])->name('lembur.index');
+    Route::post('/absensi/lembur/store', [LemburController::class, 'store'])->name('absensi.lembur.store');
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -192,6 +205,7 @@ Route::delete('/hari-libur/{id}', [HariLiburController::class, 'destroy'])->name
 
 
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\TaskController;
 
 Route::middleware(['auth'])->group(function () {
     // View Utama Report
@@ -200,3 +214,11 @@ Route::middleware(['auth'])->group(function () {
     // API untuk data kalender (jika diperlukan oleh script kalender)
     Route::get('/api/report/calendar', [ReportController::class, 'getCalendarData'])->name('report.calendar');
 });
+
+
+
+
+
+
+// task management
+Route::get('/project/dashboard', [TaskController::class, 'index']);

@@ -6,19 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cabang extends Model
 {
- protected $fillable = [
-    'kode_cabang',
-    'nama_cabang',
-    'status_pusat',
-    'latitude',
-    'longitude',
-    'radius',
-    'alamat'
-];
+    protected $fillable = [
+        'kode_cabang',
+        'nama_cabang',
+        'status_pusat',
+        'latitude',
+        'longitude',
+        'radius',
+        'alamat'
+    ];
 
-    public function user()
+    public function users()
     {
-        return $this->hasMany(User::class, 'cabang_id');
+        // Mencari user yang di dalam kolom JSON 'cabang_ids' terdapat ID cabang ini
+        return User::whereJsonContains('cabang_ids', (string) $this->id)->get();
     }
 
     public function absensis()

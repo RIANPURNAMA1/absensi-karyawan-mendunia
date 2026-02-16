@@ -82,8 +82,6 @@
                         alt="Foto Karyawan" class="w-full h-full object-cover">
                 </div>
 
-
-
                 <!-- NAMA & DIVISI -->
                 <div class="leading-tight">
                     <p class="text-sm font-semibold text-gray-800">
@@ -94,8 +92,6 @@
                         {{ auth()->user()->divisi->nama_divisi ?? 'Divisi belum diatur' }}
                     </p>
                 </div>
-
-
             </a>
 
 
@@ -217,7 +213,7 @@
                 <span class="text-[11px] font-medium text-gray-700">Riwayat</span>
             </button>
 
-            <button id="btnOvertime"
+            <button  onclick="location.href= '/absensi/lembur'"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
                 <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="clock-alert" class="w-5 h-5 text-red-600"></i>

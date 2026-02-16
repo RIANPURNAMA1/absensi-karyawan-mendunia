@@ -79,6 +79,12 @@
                      </a>
                  </li>
                  <li class="pc-item">
+                     <a href="/approval-lembur" class="pc-link">
+                         <span class="pc-micon"><i class="ph ph-clock-countdown"></i></span>
+                         <span class="pc-mtext">Approval Lembur</span>
+                     </a>
+                 </li>
+                 <li class="pc-item">
                      <a href="/hari-libur" class="pc-link">
                          <span class="pc-micon"><i class="ph ph-file-text"></i></span>
                          <span class="pc-mtext">Hari Libur </span>
@@ -96,18 +102,6 @@
                          <span class="pc-mtext">Monitoring Lokasi</span>
                      </a>
                  </li>
-                 {{-- <li class="pc-item">
-                     <a href="/monitoring/wajah" class="pc-link">
-                         <span class="pc-micon"><i class="ph ph-face-mask"></i></span>
-                         <span class="pc-mtext">Verifikasi Wajah</span>
-                     </a>
-                 </li>
-                 <li class="pc-item">
-                     <a href="/monitoring/aktivitas" class="pc-link">
-                         <span class="pc-micon"><i class="ph ph-clock"></i></span>
-                         <span class="pc-mtext">Aktivitas Harian</span>
-                     </a>
-                 </li> --}}
              </ul>
          </li>
 
@@ -117,45 +111,50 @@
          @endphp
 
 
-@if($roleUser !== 'HR')
-         <!-- MONITORING & PROJECT MANAGEMENT -->
-         <li class="pc-item pc-caption">
-             <label>Monitoring & Project</label>
-         </li>
-         <li class="pc-item pc-hasmenu">
-             <a href="#!" class="pc-link">
-                 <span class="pc-micon"><i class="ph ph-kanban"></i></span>
-                 <span class="pc-mtext">Project Management</span>
-                 <span class="pc-arrow"><i class="ph ph-caret-down"></i></span>
-             </a>
-             <ul class="pc-submenu">
-                 <li class="pc-item">
-                     <a href="/project/board" class="pc-link">
-                         <span class="pc-micon"><i class="ph ph-columns"></i></span>
-                         <span class="pc-mtext">Board Project</span>
-                     </a>
-                 </li>
-                 <li class="pc-item">
-                     <a href="/project/task" class="pc-link">
-                         <span class="pc-micon"><i class="ph ph-check-square"></i></span>
-                         <span class="pc-mtext">Daftar Task</span>
-                     </a>
-                 </li>
-                 <li class="pc-item">
-                     <a href="/project/progress" class="pc-link">
-                         <span class="pc-micon"><i class="ph ph-trend-up"></i></span>
-                         <span class="pc-mtext">Progress Pekerjaan</span>
-                     </a>
-                 </li>
-                 <li class="pc-item">
-                     <a href="/project/timeline" class="pc-link">
-                         <span class="pc-micon"><i class="ph ph-chart-line"></i></span>
-                         <span class="pc-mtext">Timeline Project</span>
-                     </a>
-                 </li>
-             </ul>
-         </li>
-@endif
+         @if ($roleUser !== 'HR')
+             <li class="pc-item pc-caption">
+                 <label>Monitoring & Project</label>
+             </li>
+             <li class="pc-item pc-hasmenu">
+                 <a href="#!" class="pc-link">
+                     <span class="pc-micon"><i class="ph ph-kanban"></i></span>
+                     <span class="pc-mtext">Project Management</span>
+                     <span class="pc-arrow"><i class="ph ph-caret-down"></i></span>
+                 </a>
+                 <ul class="pc-submenu">
+                     <li class="pc-item">
+                         <a href="/project/dashboard" class="pc-link">
+                             <span class="pc-micon"><i class="ph ph-chart-pie"></i></span>
+                             <span class="pc-mtext">Dashboard Project</span>
+                         </a>
+                     </li>
+                     <li class="pc-item">
+                         <a href="/project/board" class="pc-link">
+                             <span class="pc-micon"><i class="ph ph-columns"></i></span>
+                             <span class="pc-mtext">Board Project</span>
+                         </a>
+                     </li>
+                     <li class="pc-item">
+                         <a href="/project/task" class="pc-link">
+                             <span class="pc-micon"><i class="ph ph-check-square"></i></span>
+                             <span class="pc-mtext">Daftar Task</span>
+                         </a>
+                     </li>
+                     <li class="pc-item">
+                         <a href="/project/progress" class="pc-link">
+                             <span class="pc-micon"><i class="ph ph-trend-up"></i></span>
+                             <span class="pc-mtext">Progress Pekerjaan</span>
+                         </a>
+                     </li>
+                     <li class="pc-item">
+                         <a href="/project/timeline" class="pc-link">
+                             <span class="pc-micon"><i class="ph ph-chart-line"></i></span>
+                             <span class="pc-mtext">Timeline Project</span>
+                         </a>
+                     </li>
+                 </ul>
+             </li>
+         @endif
 
 
          {{-- <!-- LAPORAN -->
@@ -175,33 +174,32 @@
              </a>
          </li> --}}
 
-         @if($roleUser !== 'HR')
-
-         <!-- BLOG WEBSITE -->
-         <li class="pc-item pc-caption">
-             <label>Konten Website</label>
-         </li>
-         <li class="pc-item pc-hasmenu">
-             <a href="#!" class="pc-link">
-                 <span class="pc-micon"><i class="ph ph-article"></i></span>
-                 <span class="pc-mtext">Blog Website</span>
-                 <span class="pc-arrow"><i class="ph ph-caret-down"></i></span>
-             </a>
-             <ul class="pc-submenu">
-                 <li class="pc-item">
-                     <a href="/blog/artikel" class="pc-link">Daftar Artikel</a>
-                 </li>
-                 <li class="pc-item">
-                     <a href="/blog/kategori" class="pc-link">Kategori</a>
-                 </li>
-                 <li class="pc-item">
-                     <a href="/blog/tambah" class="pc-link">Buat Artikel Baru</a>
-                 </li>
-                 <li class="pc-item">
-                     <a href="/blog/komentar" class="pc-link">Kelola Komentar</a>
-                 </li>
-             </ul>
-         </li>
+         @if ($roleUser !== 'HR')
+             <!-- BLOG WEBSITE -->
+             <li class="pc-item pc-caption">
+                 <label>Konten Website</label>
+             </li>
+             <li class="pc-item pc-hasmenu">
+                 <a href="#!" class="pc-link">
+                     <span class="pc-micon"><i class="ph ph-article"></i></span>
+                     <span class="pc-mtext">Blog Website</span>
+                     <span class="pc-arrow"><i class="ph ph-caret-down"></i></span>
+                 </a>
+                 <ul class="pc-submenu">
+                     <li class="pc-item">
+                         <a href="/blog/artikel" class="pc-link">Daftar Artikel</a>
+                     </li>
+                     <li class="pc-item">
+                         <a href="/blog/kategori" class="pc-link">Kategori</a>
+                     </li>
+                     <li class="pc-item">
+                         <a href="/blog/tambah" class="pc-link">Buat Artikel Baru</a>
+                     </li>
+                     <li class="pc-item">
+                         <a href="/blog/komentar" class="pc-link">Kelola Komentar</a>
+                     </li>
+                 </ul>
+             </li>
          @endif
 
          <!-- PENGATURAN -->

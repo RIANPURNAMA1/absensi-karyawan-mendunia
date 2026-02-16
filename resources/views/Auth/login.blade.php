@@ -3,30 +3,26 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Login | Sistem Absensi Karyawan</title>
+    <title>Login | Sistem Absensi Mendunia.id</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="{{ asset('assets/images/logo/logo-sm.png') }}" type="image/png" style="width: 40px">
-
-    <!-- CSRF -->
+    <link rel="icon" href="{{ asset('assets/images/logo/logo-sm.png') }}" type="image/png">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
-
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Tailwind Config -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        inter: ['Inter', 'sans-serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        // Warna biru yang disesuaikan dengan standar logo profesional
+                        brand: '#2563eb',
                     }
                 }
             }
@@ -34,324 +30,298 @@
     </script>
 
     <style>
-        * {
-            font-family: 'Inter', sans-serif;
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
-        .gradient-bg {
-            background: linear-gradient(135deg, #d8d6d6 0%, #ffffff 100%);
+        .bg-brand-gradient {
+            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
         }
 
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-
-        .input-glow:focus {
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-        }
-
-        .btn-gradient {
-            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-gradient::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn-gradient:hover::before {
-            left: 100%;
-        }
-
-        .floating {
-            animation: floating 3s ease-in-out infinite;
+        .floating-element {
+            animation: floating 6s ease-in-out infinite;
         }
 
         @keyframes floating {
 
             0%,
             100% {
-                transform: translateY(0px);
+                transform: translateY(0px) rotate(0deg);
             }
 
             50% {
-                transform: translateY(-10px);
+                transform: translateY(-20px) rotate(2deg);
             }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .feature-badge {
-            transition: all 0.3s ease;
-        }
-
-        .feature-badge:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
 
         .logo-glow {
-            filter: drop-shadow(0 4px 20px rgba(37, 99, 235, 0.3));
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+            filter: drop-shadow(0 0 15px rgba(37, 99, 235, 0.2));
         }
     </style>
 </head>
 
-<body class="gradient-bg min-h-screen flex items-center justify-center mb-5 p-4">
+<body class="bg-white min-h-screen flex">
 
+    <div class="w-full lg:w-1/2 flex flex-col justify-center px-8 lg:px-20 xl:px-32 py-12">
+        {{-- 
+        <div class="mb-12">
+            <img src="{{ asset('assets/images/logo/logo.png') }}" class="w-40 logo-glow">
+        </div> --}}
 
+        <div class="max-w-md w-full mx-auto lg:mx-0">
+            <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Login ke Akun Anda</h1>
+            <p class="text-slate-500 mb-8 font-medium">Selamat datang kembali di <span
+                    class="text-brand font-bold">Mendunia.id</span></p>
 
-    <!-- Background Decorative Elements -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-        <div
-            class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl">
-        </div>
-    </div>
-
-    <!-- Main Container -->
-    <div class="w-full max-w-md relative z-10 fade-in">
-        <!-- Success Message -->
-        @if (session('status'))
-            <div
-                class="alert-success bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-2xl mb-6 overflow-hidden shadow-lg">
-                <div class="p-5">
-                    <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0">
-                            <div
-                                class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-                                <i data-lucide="check-circle" class="w-6 h-6 text-white"></i>
-                            </div>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-bold text-green-900 text-base mb-1">Password Berhasil Diubah!</h3>
-                            <p class="text-sm text-green-700 font-medium">{{ session('status') }}</p>
-                            <p class="text-xs text-green-600 mt-2">Silakan gunakan password baru Anda untuk login.</p>
-                        </div>
-                        <button onclick="this.parentElement.parentElement.parentElement.remove()"
-                            class="flex-shrink-0 text-green-600 hover:text-green-800 transition-colors">
-                            <i data-lucide="x" class="w-5 h-5"></i>
-                        </button>
-                    </div>
+            @if (session('status'))
+                <div
+                    class="mb-6 p-4 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-sm font-semibold flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i> {{ session('status') }}
                 </div>
-                <!-- Progress Bar -->
-                <div class="h-1 bg-green-200">
-                    <div class="h-full bg-gradient-to-r from-green-500 to-emerald-600 animate-progress"
-                        style="width: 0%; animation: progress 5s linear forwards;"></div>
-                </div>
-            </div>
+            @endif
 
-            <style>
-                @keyframes progress {
-                    from {
-                        width: 100%;
-                    }
-
-                    to {
-                        width: 0%;
-                    }
-                }
-            </style>
-        @endif
-        <!-- Login Card -->
-        <div class="glass-effect rounded-3xl shadow-2xl p-8 relative overflow-hidden">
-            
-
-            <!-- Logo & Header -->
-            <div class="text-center mb-8 mt-2">
-                <div class="inline-block mb-6 floating">
-                    <img src="{{ asset('assets/images/logo/logo.png') }}" class="mx-auto w-32 logo-glow drop-shadow-xl">
-                </div>
-                <h1 class="text-2xl font-bold text-gray-800 mb-2">Selamat Datang Kembali</h1>
-                <p class="text-gray-500 text-sm font-medium">Masuk untuk melanjutkan ke dashboard absensi</p>
-            </div>
-
-            <!-- Login Form -->
-            <form id="login" action="/login/process" method="POST" class="space-y-5">
+            <form id="login" action="/login/process" method="POST" class="space-y-6">
                 @csrf
-
-                <!-- Email Input -->
                 <div class="space-y-2">
-                    <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wide ml-1">
-                        Alamat Email
-                    </label>
-                    <div class="relative group">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i data-lucide="mail"
-                                class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors"></i>
-                        </div>
+                    <label class="text-xs font-bold text-slate-700 uppercase tracking-widest ml-1">Alamat Email</label>
+                    <div class="relative">
+                        <i data-lucide="mail"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
                         <input type="email" name="email" required
-                            class="w-full h-14 pl-12 pr-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:bg-white focus:border-blue-600 outline-none transition-all text-sm font-medium text-gray-800 placeholder-gray-400 input-glow"
+                            class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-brand outline-none transition-all font-medium text-slate-800 placeholder-slate-400"
                             placeholder="nama@perusahaan.com">
                     </div>
                 </div>
 
-                <!-- Password Input -->
                 <div class="space-y-2">
-                    <div class="flex justify-between items-center ml-1">
-                        <label class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                            Kata Sandi
-                        </label>
-                        <a href="/forgot-password"
-                            class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                            Lupa Password?
-                        </a>
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-widest ml-1">Kata
+                            Sandi</label>
+                        <a href="/forgot-password" class="text-xs font-bold text-brand hover:underline">Lupa
+                            Password?</a>
                     </div>
-                    <div class="relative group">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i data-lucide="lock"
-                                class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors"></i>
-                        </div>
+                    <div class="relative">
+                        <i data-lucide="lock"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
                         <input type="password" name="password" id="password" required
-                            class="w-full h-14 pl-12 pr-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:bg-white focus:border-blue-600 outline-none transition-all text-sm font-medium text-gray-800 placeholder-gray-400 input-glow"
-                            placeholder="••••••••••">
+                            class="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-brand outline-none transition-all font-medium text-slate-800 placeholder-slate-400"
+                            placeholder="Masukkan kata sandi">
                         <button type="button" onclick="togglePassword()"
-                            class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
+                            class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                             <i data-lucide="eye" id="eyeIcon" class="w-5 h-5"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Remember Me -->
                 <div class="flex items-center">
-                    <label class="flex items-center cursor-pointer group">
-                        <input type="checkbox" name="remember"
-                            class="w-4 h-4 rounded border-2 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-600 focus:ring-offset-0 transition-all cursor-pointer">
-                        <span
-                            class="ml-3 text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors">
-                            Ingat saya selama 30 hari
-                        </span>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox"
+                            class="w-5 h-5 rounded-lg border-slate-300 text-brand focus:ring-brand transition-all">
+                        <span class="text-sm font-semibold text-slate-600 group-hover:text-slate-900">Ingat saya di
+                            perangkat ini</span>
                     </label>
                 </div>
 
-                <!-- Login Button -->
-                <div class="pt-2">
-                    <button type="submit" id="btnLogin"
-                        class="w-full h-14 rounded-xl font-bold text-white btn-gradient hover:shadow-2xl active:scale-[0.98] transition-all text-sm uppercase tracking-wider relative overflow-hidden">
-                        <span class="relative z-10">Masuk ke Dashboard</span>
-                    </button>
+                <div class="space-y-2 mb-6">
+                    <label class="text-xs font-bold text-slate-700 uppercase tracking-widest ml-1">Verifikasi
+                        Keamanan</label>
+                    <div class="flex gap-3">
+                        <div
+                            class="flex-none w-32 h-14 bg-slate-100 rounded-2xl border-2 border-slate-200 border-dashed flex items-center justify-center select-none relative overflow-hidden group">
+                            <span id="captchaCode"
+                                class="text-xl font-black tracking-[0.3em] text-slate-700 italic flex gap-1">
+                            </span>
+                            <button type="button" onclick="generateCaptcha()"
+                                class="absolute inset-0 bg-brand/90 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                                <i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="relative flex-1">
+                            <i data-lucide="shield-check"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                            <input type="text" id="captchaInput" required
+                                class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-brand outline-none transition-all font-bold text-slate-800 placeholder-slate-400"
+                                placeholder="Isi angka">
+                        </div>
+                    </div>
                 </div>
+
+                <button type="submit" id="btnLogin"
+                    class="w-full py-4 bg-brand text-white rounded-2xl font-bold shadow-xl shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 active:scale-[0.98] transition-all flex items-center justify-center gap-2 uppercase tracking-wider text-sm">
+                    <span>Masuk Dashboard</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
             </form>
 
-            <!-- Divider -->
-            <div class="relative my-8">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t-2 border-gray-100"></div>
+            <div
+                class="mt-10 flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                    <i data-lucide="shield-check" class="w-6 h-6 text-brand"></i>
                 </div>
-                <div class="relative flex justify-center text-xs uppercase">
-                    <span class="px-4 text-gray-400 bg-white font-semibold tracking-wider">Fitur Keamanan</span>
+                <div>
+                    <p class="text-xs font-bold text-slate-800">Sistem Keamanan Aktif</p>
+                    <p class="text-[10px] text-slate-500 font-medium">Geolokasi & Presensi Terenkripsi</p>
                 </div>
-            </div>
-
-            <!-- Security Features -->
-            <div class="grid grid-cols-2 gap-3">
-                <div
-                    class="feature-badge bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4 text-center border border-blue-200/50">
-                    <div
-                        class="inline-flex items-center justify-center w-10 h-10 bg-blue-500 rounded-lg mb-2 shadow-lg">
-                        <i data-lucide="scan-face" class="w-5 h-5 text-white"></i>
-                    </div>
-                    <p class="text-xs font-bold text-blue-900">Face Recognition</p>
-                    <p class="text-[10px] text-blue-600 font-medium mt-0.5">Verifikasi Wajah</p>
-                </div>
-
-                <div
-                    class="feature-badge bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4 text-center border border-blue-200/50">
-                    <div
-                        class="inline-flex items-center justify-center w-10 h-10 bg-blue-600 rounded-lg mb-2 shadow-lg">
-                        <i data-lucide="map-pin" class="w-5 h-5 text-white"></i>
-                    </div>
-                    <p class="text-xs font-bold text-blue-900">GPS Tracking</p>
-                    <p class="text-[10px] text-blue-700 font-medium mt-0.5">Lokasi Terverifikasi</p>
-                </div>
-            </div>
-
-            <!-- Additional Info -->
-            <div class="mt-6 pt-6 border-t border-gray-100 text-center">
-                <p class="text-xs text-gray-500 font-medium">
-                    Belum punya akun?
-                    <a href="#"
-                        class="text-blue-600 font-semibold hover:text-blue-700 transition-colors">Hubungi Admin</a>
-                </p>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="mt-8 text-center">
-            <p class="text-black text-xs font-medium">
-                &copy; 2026 Mendunia Absensi System. All rights reserved.
-            </p>
-            <div class="flex items-center justify-center gap-4 mt-3">
-                <a href="#"
-                    class="text-black hover:text-white text-xs font-medium transition-colors">Kebijakan Privasi</a>
-                <span class="text-black">•</span>
-                <a href="#" class="text-black hover:text-white text-xs font-medium transition-colors">Syarat
-                    & Ketentuan</a>
             </div>
         </div>
     </div>
 
+    <div class="hidden lg:flex lg:w-1/2 bg-brand-gradient relative items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 opacity-10"
+            style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 30px 30px;"></div>
+
+        <div class="relative z-10 text-center px-12">
+            <div class="mb-12 relative floating-element">
+                <div
+                    class="bg-white/10 backdrop-blur-xl p-6 rounded-[3rem] border border-white/20 shadow-2xl inline-block">
+                    <div class="bg-white rounded-[2rem] p-4 shadow-inner relative overflow-hidden w-[320px]">
+                        <div class="flex items-center justify-between mb-4 px-2">
+                            <div class="flex gap-1.5">
+                                <div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+                                <div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+                                <div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+                            </div>
+                            <div class="w-16 h-2 bg-slate-100 rounded-full"></div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="p-3 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-3">
+                                <div class="w-10 h-10 bg-brand rounded-xl flex items-center justify-center shadow-md">
+                                    <i data-lucide="map-pin" class="w-5 h-5 text-white"></i>
+                                </div>
+                                <div class="text-left">
+                                    <p class="text-[10px] font-bold text-slate-800 uppercase">Kelola Presensi</p>
+                                    <p class="text-[9px] text-slate-500 font-medium">Geolokasi Terverifikasi</p>
+                                </div>
+                                <div
+                                    class="ml-auto w-8 h-4 bg-green-100 rounded-full flex items-center justify-center">
+                                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <i data-lucide="layout-list" class="w-4 h-4 text-brand"></i>
+                                    <p class="text-[10px] font-bold text-slate-800 uppercase tracking-tight">Task
+                                        Management</p>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                                        <div class="bg-brand h-full w-[75%] rounded-full"></div>
+                                    </div>
+                                    <span class="text-[9px] font-bold text-slate-600">75%</span>
+                                </div>
+                                <div class="flex -space-x-2">
+                                    <div class="w-5 h-5 rounded-full border-2 border-white bg-slate-300"></div>
+                                    <div class="w-5 h-5 rounded-full border-2 border-white bg-slate-400"></div>
+                                    <div
+                                        class="w-5 h-5 rounded-full border-2 border-white bg-brand flex items-center justify-center">
+                                        <span class="text-[8px] text-white font-bold">+3</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="text-4xl font-extrabold text-white mb-6 leading-tight">Kelola SDM Mendunia <br> dalam Satu
+                Genggaman</h2>
+            <p class="text-blue-100 text-lg font-medium max-w-sm mx-auto opacity-90 leading-relaxed">
+                Dari <b>Kelola Presensi</b> berbasis GPS hingga <b>Task Management</b> yang terorganisir, semua ada di
+                System Dashboard
+                Mendunia.id.
+            </p>
+
+            <div class="flex justify-center gap-3 mt-12">
+                <div class="h-1.5 w-12 bg-white rounded-full"></div>
+                <div class="h-1.5 w-2 bg-white/40 rounded-full"></div>
+                <div class="h-1.5 w-2 bg-white/40 rounded-full"></div>
+            </div>
+        </div>
+
+        <div class="absolute bottom-8 text-white/40 text-[10px] font-bold uppercase tracking-[0.2em]">
+            Sistem Absensi Mendunia.id v2.0
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        lucide.createIcons();
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        // Gunakan script AJAX Anda di sini seperti sebelumnya
+        $('#login').on('submit', function(e) {
+            // ... (Kode AJAX Anda)
+        });
+    </script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <!-- SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- SCRIPT -->
     <script>
-        // Initialize Lucide icons
-        lucide.createIcons();
+        // 1. Inisialisasi Variabel Global Captcha
+        let currentCaptcha = "";
 
-        // Setup CSRF token for AJAX
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        // Fungsi untuk Generate Captcha Angka Acak
+        function generateCaptcha() {
+            const chars = "0123456789";
+            let result = "";
+            for (let i = 0; i < 4; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
             }
+            currentCaptcha = result;
+            const captchaElement = document.getElementById('captchaCode');
+            if (captchaElement) {
+                captchaElement.innerText = result;
+            }
+            lucide.createIcons();
+        }
+
+        // 2. Jalankan saat dokumen siap
+        $(document).ready(function() {
+            lucide.createIcons();
+            generateCaptcha(); // Buat captcha pertama kali
+
+            // Setup CSRF token untuk Laravel AJAX
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
         });
 
-        // AJAX LOGIN
+        // 3. Logika Toggle Show/Hide Password
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        // 4. AJAX LOGIN dengan Validasi Captcha
         $('#login').on('submit', function(e) {
             e.preventDefault();
 
@@ -359,13 +329,33 @@
             let btn = $('#btnLogin');
             let originalText = btn.html();
 
+            // Ambil input captcha dari user
+            let userInputCaptcha = $('#captchaInput').val();
+
+            // Cek Captcha secara Client-side sebelum kirim AJAX
+            if (userInputCaptcha !== currentCaptcha) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Verifikasi Gagal',
+                    text: 'Kode captcha yang Anda masukkan salah. Silakan coba lagi.',
+                    confirmButtonColor: '#2563eb',
+                    customClass: {
+                        popup: 'rounded-2xl',
+                        title: 'text-xl font-bold'
+                    }
+                });
+                generateCaptcha(); // Reset captcha jika salah
+                $('#captchaInput').val(''); // Kosongkan input
+                return false;
+            }
+
             $.ajax({
                 url: form.attr('action'),
                 type: 'POST',
                 data: form.serialize(),
                 beforeSend() {
                     btn.prop('disabled', true).html(`
-                        <svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg class="animate-spin h-5 w-5 mx-auto text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -375,13 +365,12 @@
                     Swal.fire({
                         icon: 'success',
                         title: 'Login Berhasil',
-                        text: res.message ?? 'Selamat datang di dashboard',
+                        text: res.message ?? 'Akses diterima. Selamat datang kembali!',
                         timer: 1500,
                         showConfirmButton: false,
                         customClass: {
                             popup: 'rounded-2xl',
-                            title: 'text-xl font-bold',
-                            htmlContainer: 'text-sm'
+                            title: 'text-xl font-bold'
                         }
                     });
 
@@ -397,57 +386,41 @@
                         icon: 'error',
                         title: 'Login Gagal',
                         text: msg,
+                        confirmButtonColor: '#2563eb',
                         customClass: {
                             popup: 'rounded-2xl',
-                            title: 'text-xl font-bold',
-                            htmlContainer: 'text-sm'
-                        },
-                        confirmButtonColor: '#2563eb'
+                            title: 'text-xl font-bold'
+                        }
                     });
 
                     btn.prop('disabled', false).html(originalText);
+                    generateCaptcha(); // Ganti captcha jika login gagal (keamanan ekstra)
+                    $('#captchaInput').val('');
                 },
                 complete() {
-                    // Re-initialize icons after button content changes
                     lucide.createIcons();
                 }
             });
         });
 
-        // TOGGLE PASSWORD
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const eyeIcon = document.getElementById('eyeIcon');
-
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.setAttribute('data-lucide', 'eye-off');
-            } else {
-                passwordInput.type = 'password';
-                eyeIcon.setAttribute('data-lucide', 'eye');
-            }
-
-            lucide.createIcons();
-        }
-
-        // Add subtle animations on input focus
-        const inputs = document.querySelectorAll('input[type="email"], input[type="password"]');
+        // 5. Animasi Input Focus (Visual Enhancement)
+        const inputs = document.querySelectorAll('input[type="email"], input[type="password"], #captchaInput');
         inputs.forEach(input => {
             input.addEventListener('focus', function() {
-                this.parentElement.classList.add('scale-[1.02]');
+                this.parentElement.classList.add('scale-[1.01]');
+                this.parentElement.style.transition = "all 0.2s ease";
             });
 
             input.addEventListener('blur', function() {
-                this.parentElement.classList.remove('scale-[1.02]');
+                this.parentElement.classList.remove('scale-[1.01]');
             });
         });
 
-        // Prevent form resubmission on page refresh
+        // 6. Prevent Form Resubmission
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
         }
     </script>
-
 </body>
 
 </html>

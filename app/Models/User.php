@@ -15,7 +15,7 @@ class User extends Authenticatable
         'password',
         'role',
         'divisi_id',
-        'cabang_id',
+        'cabang_ids', // Ubah dari cabang_id ke cabang_ids
         'shift_id',      // PASTIKAN ADA
         'status',
         'nip',
@@ -46,8 +46,19 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
+        'cabang_ids' => 'array', // SANGAT PENTING untuk menyimpan multiple ID
         'last_login' => 'datetime',
     ];
+
+
+    // Ganti relasi lama dengan Accessor ini
+    public function getCabangAttribute()
+    {
+        if (!$this->cabang_ids) return collect();
+
+        // Mengambil semua data cabang yang ID-nya ada di dalam list cabang_ids
+        return \App\Models\Cabang::whereIn('id', $this->cabang_ids)->get();
+    }
 
     public function isHR()
     {
@@ -74,10 +85,10 @@ class User extends Authenticatable
         // Pastikan foreign key di tabel users adalah shift_id
         return $this->belongsTo(Shift::class, 'shift_id');
     }
-    public function cabang()
-    {
-        return $this->belongsTo(Cabang::class, 'cabang_id');
-    }
+    // public function cabang()
+    // {
+    //     return $this->belongsTo(Cabang::class, 'cabang_id');
+    // }
 
 
     public function absensi()
@@ -88,5 +99,9 @@ class User extends Authenticatable
     public function izins()
     {
         return $this->hasMany(Izin::class);
+    }
+    public function lembur()
+    {
+        return $this->hasMany(Lembur::class);
     }
 }

@@ -7,20 +7,59 @@
     <div class="container-fluid">
 
         {{-- HEADER --}}
-        <div class="page-header mb-3">
+        <div class="page-header mb-4">
             <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h4 class="m-b-10">Data Kehadiran Karyawan</h4>
+                <div class="col-md-4">
+                    <h4 class="m-0 text-dark fw-bold">Data Kehadiran Karyawan</h4>
+                    <p class="text-muted small mb-0">Kelola dan pantau absensi harian seluruh staf</p>
                 </div>
 
-                <div class="col-md-6 d-flex justify-content-md-end gap-2">
-                    <form method="GET" class="d-flex gap-2">
-                        <input type="date" name="start_date" value="{{ $start_date }}" class="form-control">
+                <div class="col-md-8">
+                    <form method="GET" action="">
+                        <div class="row g-2 justify-content-md-end">
+                            {{-- Filter Cabang --}}
+                            <div class="col-6 col-md-2">
+                                <select name="cabang_id" class="form-select form-select-sm shadow-sm">
+                                    <option value="">Semua Cabang</option>
+                                    @foreach ($list_cabang as $c)
+                                        <option value="{{ $c->id }}"
+                                            {{ request('cabang_id') == $c->id ? 'selected' : '' }}>
+                                            {{ $c->nama_cabang }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <input type="date" name="end_date" value="{{ $end_date }}" class="form-control">
-                        <button class="btn btn-primary">
-                            <i class="ph ph-magnifying-glass"></i>
-                        </button>
+                            {{-- Filter Divisi --}}
+                            <div class="col-6 col-md-2">
+                                <select name="divisi_id" class="form-select form-select-sm shadow-sm">
+                                    <option value="">Semua Divisi</option>
+                                    @foreach ($list_divisi as $d)
+                                        <option value="{{ $d->id }}"
+                                            {{ request('divisi_id') == $d->id ? 'selected' : '' }}>
+                                            {{ $d->nama_divisi }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Filter Tanggal --}}
+                            <div class="col-6 col-md-2">
+                                <input type="date" name="start_date" value="{{ $start_date }}"
+                                    class="form-control form-control-sm shadow-sm">
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <input type="date" name="end_date" value="{{ $end_date }}"
+                                    class="form-control form-control-sm shadow-sm">
+                            </div>
+
+                            {{-- Tombol Submit --}}
+                            <div class="col-12 col-md-1">
+                                <button type="submit" class="btn btn-primary btn-sm w-100 shadow-sm">
+                                    <i class="ph ph-magnifying-glass"></i>
+                                </button>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>

@@ -1,6 +1,7 @@
 @extends('app')
 
 @section('content')
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
     <div class="container-fluid">
 
         <div class="page-header mb-3">
@@ -51,15 +52,16 @@
 
             <div class="card-body p-0">
                 <div class="table-responsive p-4">
-                    <table class="table align-middle mb-0">
+                    <table class="table align-middle mb-0" id="izinTable">
                         <thead class="bg-blue-700 text-white">
                             <tr>
                                 <th class="px-4 py-3 text-left font-semibold  text-white">No</th>
+                                <th class="px-4 py-3 text-left font-semibold  text-white">Nama</th>
                                 <th class="px-4 py-3 text-left font-semibold  text-white">Jenis Izin</th>
                                 <th class="px-4 py-3 text-left font-semibold  text-white">Periode</th>
                                 <th class="px-4 py-3 text-left font-semibold  text-white">Alasan</th>
                                 <th class="px-4 py-3 text-left font-semibold  text-white">Lampiran</th>
-                                <th class="px-4 py-3 text-left font-semibold  text-white" >Status</th>
+                                <th class="px-4 py-3 text-left font-semibold  text-white">Status</th>
                                 <th class="px-4 py-3 text-center font-semibold  text-white">Aksi</th>
                             </tr>
                         </thead>
@@ -162,14 +164,7 @@
                                 </div>
                             @endforeach
 
-                            @if ($izins->isEmpty())
-                                <tr>
-                                    <td colspan="8" class="text-center text-muted py-4">
-                                        <i class="ph ph-calendar-x d-block fs-2 mb-2"></i>
-                                        Belum ada pengajuan izin
-                                    </td>
-                                </tr>
-                            @endif
+                           
 
                         </tbody>
                     </table>
@@ -177,4 +172,40 @@
             </div>
         </div>
     </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#izinTable').DataTable({
+                responsive: true,
+                autoWidth: false,
+                pageLength: 10,
+                lengthMenu: [5, 10, 25, 50],
+                order: [
+                    [1, 'asc']
+                ], // urutkan berdasarkan NIP
+
+
+                language: {
+                    search: "🔍 Cari:",
+                    lengthMenu: "Tampilkan _MENU_ data",
+                    zeroRecords: "Data tidak ditemukan",
+                    info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+                    infoEmpty: "Data tidak tersedia",
+                    paginate: {
+                        first: "Awal",
+                        last: "Akhir",
+                        next: "›",
+                        previous: "‹"
+                    }
+                }
+            });
+        });
+    </script>
 @endsection

@@ -2,20 +2,17 @@
 
 @section('content')
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
 
-    <!-- PAGE HEADER + BREADCRUMB -->
     <div class="page-header mb-3">
         <div class="page-block">
             <div class="row align-items-center">
 
-                <!-- TITLE -->
                 <div class="col-md-6">
                     <div class="page-header-title">
-
                     </div>
                 </div>
 
-                <!-- BREADCRUMB + BUTTON -->
                 <div class="col-md-6 d-flex justify-content-md-end align-items-center gap-2">
 
                     <ul class="breadcrumb mb-0 me-2">
@@ -28,7 +25,6 @@
                         <li class="breadcrumb-item active">Data Karyawan</li>
                     </ul>
 
-                    <!-- BUTTON TAMBAH -->
                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahKaryawan"
                         style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%); 
            border: none; 
@@ -38,13 +34,11 @@
            transition: all 0.3s ease;">
                         <i class="ph ph-plus-circle"></i> Tambah Karyawan
                     </button>
-
-
                 </div>
-
             </div>
         </div>
     </div>
+
     <div class="card mb-3">
         <div class="card-body">
             <form action="{{ route('karyawan.index') }}" method="GET" class="row g-3">
@@ -84,7 +78,6 @@
         </div>
     </div>
 
-    <!-- CARD TABLE -->
     <div class="card table-card">
         <div class="card-header">
             <h5>Daftar Karyawan</h5>
@@ -122,8 +115,15 @@
                                     <small class="text-muted">{{ $k->nip }}</small>
                                 </td>
                                 <td>
-                                    <span
-                                        class="badge bg-light text-dark border">{{ $k->cabang?->nama_cabang ?? '-' }}</span>
+                                    @if ($k->cabang && $k->cabang->count() > 0)
+                                        @foreach ($k->cabang as $c)
+                                            <span class="badge bg-light text-dark border mb-1">
+                                                {{ $c->nama_cabang }}
+                                            </span>
+                                        @endforeach
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
                                 </td>
                                 <td>{{ $k->divisi?->nama_divisi ?? '-' }}</td>
                                 <td>{{ $k->jabatan }}</td>
@@ -189,14 +189,21 @@
 
     {{-- modal tambah data --}}
     @include('karyawan.modal')
-    <!-- jQuery -->
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 
     <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 
-    <!-- SweetAlert -->
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
@@ -210,11 +217,11 @@
         ) {
             // Masukkan data ke input modal
             $('#edit_id').val(id);
-            $('#edit_nik').val(nik); // Field Baru
+            $('#edit_nik').val(nik); 
             $('#edit_nip').val(nip);
             $('#edit_name').val(name);
             $('#edit_jabatan').val(jabatan);
-            $('#edit_pendidikan_terakhir').val(pendidikan_terakhir); // Field Baru (Select Option)
+            $('#edit_pendidikan_terakhir').val(pendidikan_terakhir); 
 
             // Dropdown Relasi
             $('#edit_divisi').val(divisi_id);
@@ -236,7 +243,7 @@
 
             $('#edit_alamat').val(alamat);
 
-            // Ubah Action Form Update (Sesuaikan URL route-nya)
+            // Ubah Action Form Update
             $('#formEditKaryawan').attr('action', '/karyawan/' + id);
 
             // Tampilkan modal
@@ -248,14 +255,37 @@
                 responsive: true,
                 autoWidth: false,
                 pageLength: 10,
-                lengthMenu: [5, 10, 25, 50],
+                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Semua"]],
+                dom: "<'row mb-3'<'col-md-4'l><'col-md-4 text-center'B><'col-md-4'f>>" +
+                     "<'row'<'col-sm-12'tr>>" +
+                     "<'row mt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        text: '<i class="ph ph-file-xls me-1"></i> Excel',
+                        className: 'btn btn-success btn-sm',
+                        exportOptions: { columns: [0, 2, 3, 4, 5, 6, 7] }
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        text: '<i class="ph ph-file-pdf me-1"></i> PDF',
+                        className: 'btn btn-danger btn-sm',
+                        exportOptions: { columns: [0, 2, 3, 4, 5, 6, 7] }
+                    },
+                    {
+                        extend: 'print',
+                        text: '<i class="ph ph-printer me-1"></i> Print',
+                        className: 'btn btn-secondary btn-sm',
+                        exportOptions: { columns: [0, 2, 3, 4, 5, 6, 7] }
+                    }
+                ],
                 order: [
                     [1, 'asc']
-                ], // urutkan berdasarkan NIP
+                ],
                 columnDefs: [{
                         orderable: false,
-                        targets: [0, 7]
-                    } // kolom Foto & Aksi
+                        targets: [0, 1, 8]
+                    }
                 ],
                 language: {
                     search: "🔍 Cari:",
@@ -275,7 +305,6 @@
 
         // delete function
         function deleteKaryawan(id) {
-
             Swal.fire({
                 title: 'Hapus karyawan?',
                 text: 'Data yang dihapus tidak bisa dikembalikan',
@@ -284,9 +313,7 @@
                 confirmButtonText: 'Ya, Hapus',
                 cancelButtonText: 'Batal'
             }).then((result) => {
-
                 if (result.isConfirmed) {
-
                     $.ajax({
                         url: `/karyawan/${id}`,
                         type: 'POST',
@@ -295,7 +322,6 @@
                             _method: 'DELETE'
                         },
                         success: function(res) {
-
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Berhasil',
@@ -303,7 +329,6 @@
                                 timer: 1500,
                                 showConfirmButton: false
                             });
-
                             setTimeout(() => {
                                 location.reload();
                             }, 1500);
@@ -316,9 +341,7 @@
                             });
                         }
                     });
-
                 }
-
             });
         }
     </script>

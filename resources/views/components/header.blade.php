@@ -97,13 +97,22 @@
                         href="#" role="button" aria-haspopup="false" aria-expanded="false"
                         style="position: relative; transition: all 0.3s;">
                         <i class="ph ph-bell" style="font-size: 22px;"></i>
-                        @if ($countIzin > 0)
+
+                        {{-- Logika Badge: Hitung total izin + lembur secara aman --}}
+                        @php
+                            $totalNotif =
+                                (isset($notifIzin) ? $notifIzin->count() : 0) +
+                                (isset($notifLembur) ? $notifLembur->count() : 0);
+                        @endphp
+
+                        @if ($totalNotif > 0)
                             <span class="badge bg-danger rounded-pill"
                                 style="position: absolute; top: 8px; right: 8px; font-size: 10px; padding: 2px 5px;">
-                                {{ $countIzin }}
+                                {{ $totalNotif }}
                             </span>
                         @endif
                     </a>
+
                     <div class="dropdown-menu dropdown-menu-end pc-h-dropdown"
                         style="background: #fff; border: 1px solid rgba(30, 60, 114, 0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 320px;">
                         <div class="dropdown-header"
@@ -111,38 +120,52 @@
                             <h6 class="mb-0" style="color: #2a5298;">Notifikasi Pengajuan</h6>
                         </div>
                         <div class="dropdown-body" style="max-height: 350px; overflow-y: auto;">
-                            @if ($notifIzin->count() > 0)
-                                @foreach ($notifIzin as $item)
-                                    {{-- Redirect ke /absensi/izin --}}
-                                    <a href="{{ url('/izin-cuti') }}" class="dropdown-item"
-                                        style="border-bottom: 1px solid #f1f3f5; padding: 12px 20px; transition: all 0.3s;">
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0">
-                                                @php
-                                                    $iconColor =
-                                                        $item->jenis_izin == 'SAKIT'
-                                                            ? 'text-danger'
-                                                            : ($item->jenis_izin == 'CUTI'
-                                                                ? 'text-warning'
-                                                                : 'text-primary');
-                                                @endphp
-                                                <i class="ph ph-envelope-simple {{ $iconColor }}"
-                                                    style="font-size: 24px;"></i>
+
+                            {{-- Gunakan isset() untuk mencegah error 'Undefined variable' --}}
+                            @if ((isset($notifIzin) && $notifIzin->count() > 0) || (isset($notifLembur) && $notifLembur->count() > 0))
+
+                                {{-- Render Notifikasi Izin --}}
+                                @isset($notifIzin)
+                                    @foreach ($notifIzin as $item)
+                                        <a href="{{ url('/izin-cuti') }}" class="dropdown-item"
+                                            style="border-bottom: 1px solid #f1f3f5; padding: 12px 20px; transition: all 0.3s;">
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-shrink-0">
+                                                    <i class="ph ph-envelope-simple {{ $item->jenis_izin == 'SAKIT' ? 'text-danger' : 'text-primary' }}"
+                                                        style="font-size: 24px;"></i>
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <p class="mb-0" style="font-size: 13px; color: #495057;">
+                                                        <strong>{{ $item->user->name }}</strong>: {{ $item->jenis_izin }}
+                                                    </p>
+                                                    <small
+                                                        class="text-muted">{{ $item->created_at->diffForHumans() }}</small>
+                                                </div>
                                             </div>
-                                            <div class="flex-grow-1 ms-3">
-                                                <p class="mb-0"
-                                                    style="font-size: 13px; color: #495057; line-height: 1.4;">
-                                                    <strong>{{ $item->user->name }}</strong> mengajukan
-                                                    <strong>{{ $item->jenis_izin }}</strong>
-                                                </p>
-                                                <small class="text-muted" style="font-size: 11px;">
-                                                    <i
-                                                        class="ph ph-clock me-1"></i>{{ $item->created_at->diffForHumans() }}
-                                                </small>
+                                        </a>
+                                    @endforeach
+                                @endisset
+
+                                {{-- Render Notifikasi Lembur --}}
+                                @isset($notifLembur)
+                                    @foreach ($notifLembur as $lembur)
+                                        <a href="{{ url('/approval-lembur') }}" class="dropdown-item"
+                                            style="border-bottom: 1px solid #f1f3f5; padding: 12px 20px; transition: all 0.3s;">
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-shrink-0">
+                                                    <i class="ph ph-timer text-success" style="font-size: 24px;"></i>
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <p class="mb-0" style="font-size: 13px; color: #495057;">
+                                                        <strong>{{ $lembur->user->name }}</strong>: LEMBUR
+                                                    </p>
+                                                    <small
+                                                        class="text-muted">{{ $lembur->created_at->diffForHumans() }}</small>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </a>
-                                @endforeach
+                                        </a>
+                                    @endforeach
+                                @endisset
                             @else
                                 <div class="p-4 text-center">
                                     <i class="ph ph-bell-slash text-muted" style="font-size: 30px;"></i>
@@ -152,10 +175,13 @@
                             @endif
                         </div>
                         <div class="dropdown-footer text-center" style="border-top: 1px solid #dee2e6; padding: 10px;">
-                            <a href="{{ url('/izin-cuti') }}"
-                                style="color: #2a5298; text-decoration: none; font-size: 13px; font-weight: 500;">
-                                Lihat Semua Pengajuan
-                            </a>
+                            <div class="d-flex justify-content-around">
+                                <a href="{{ url('/izin-cuti') }}"
+                                    style="color: #2a5298; font-size: 12px; font-weight: 500;">Semua Izin</a>
+                                <span class="text-muted">|</span>
+                                <a href="{{ url('/approval-lembur') }}"
+                                    style="color: #2a5298; font-size: 12px; font-weight: 500;">Semua Lembur</a>
+                            </div>
                         </div>
                     </div>
                 </li>

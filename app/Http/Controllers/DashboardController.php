@@ -13,139 +13,123 @@ use Carbon\Carbon;
 class DashboardController extends Controller
 {
     public function index()
-    { {
-            $hariIni = Carbon::today()->toDateString();
-            $bulanIni = Carbon::now()->month;
-            $tahunIni = Carbon::now()->year;
+    {
+        $hariIni = Carbon::today()->toDateString();
+        $bulanIni = Carbon::now()->month;
+        $tahunIni = Carbon::now()->year;
 
-            // 1. Data Karyawan & Ringkasan (Box Bawah)
-            $karyawanAktif = User::where('role', 'KARYAWAN')->where('status', 'AKTIF')->count();
-            $izinPending = Izin::where('status', 'PENDING')->count(); // Pastikan model Izin ada
+        // 1. Ringkasan Box Atas
+        $karyawanAktif = User::where('role', 'KARYAWAN')->where('status', 'AKTIF')->count();
+        $izinPending = Izin::where('status', 'PENDING')->count();
 
-            // 2. Data Absensi HARI INI (Untuk Donut Chart & Box)
-            $tepatWaktu = Absensi::whereDate('tanggal', $hariIni)->where('status', 'HADIR')->count();
-            $terlambat = Absensi::whereDate('tanggal', $hariIni)->where('status', 'TERLAMBAT')->count();
-            $alpa = Absensi::whereDate('tanggal', $hariIni)->where('status', 'ALPA')->count();
-            $izinCuti = Absensi::whereDate('tanggal', $hariIni)->where('status', 'IZIN')->count();
+        // 2. Statistik Hari Ini (Query langsung ke DB agar akurat)
+        $stats = Absensi::whereDate('tanggal', $hariIni)
+            ->selectRaw("
+            count(case when status = 'HADIR' then 1 end) as tepatWaktu,
+            count(case when status = 'TERLAMBAT' then 1 end) as terlambat,
+            count(case when status = 'ALPA' then 1 end) as alpa,
+            count(case when status = 'IZIN' then 1 end) as izinCuti
+        ")->first();
 
-            $hadirHariIni = $tepatWaktu + $terlambat;
-            $belumAbsen = $karyawanAktif - ($hadirHariIni + $izinCuti);
-            $belumAbsen = ($belumAbsen < 0) ? 0 : $belumAbsen;
+        $tepatWaktu = $stats->tepatWaktu;
+        $terlambat = $stats->terlambat;
+        $alpa = $stats->alpa;
+        $izinCuti = $stats->izinCuti;
 
-            // Data untuk Donut Chart (Komposisi Hari Ini)
-            $donutData = [
-                'hadir' => $tepatWaktu,
-                'terlambat' => $terlambat,
-                'izin' => $izinCuti,
-                'alpa' => $alpa
-            ];
+        $hadirHariIni = $tepatWaktu + $terlambat;
+        $belumAbsen = max(0, $karyawanAktif - ($hadirHariIni + $izinCuti));
 
-            // 3. STATISTIK TREN 6 BULAN TERAKHIR (Grouped Bar Chart)
-            $labelsBar = [];
-            $dataHadirBar = [];
-            $dataTerlambatBar = [];
-            $dataAlpaBar = [];
+        $donutData = [
+            'hadir' => $tepatWaktu,
+            'terlambat' => $terlambat,
+            'izin' => $izinCuti,
+            'alpa' => $alpa
+        ];
 
-            for ($m = 5; $m >= 0; $m--) {
-                $date = Carbon::now()->subMonths($m);
-                $labelsBar[] = $date->translatedFormat('F Y'); // Contoh: Januari 2026
+        // Ganti query $dataIzinSakit yang lama dengan ini:
+        $dataIzinSakit = \App\Models\Izin::with(['user'])
+            ->orderBy('created_at', 'desc')
+            ->take(10) // Ambil 10 pengajuan terbaru
+            ->get();
 
-                // Hitung Hadir Tepat Waktu
-                $dataHadirBar[] = Absensi::whereMonth('tanggal', $date->month)
-                    ->whereYear('tanggal', $date->year)
-                    ->where('status', 'HADIR')
-                    ->count();
+        // 4. Data Absensi Umum (Untuk Map/Tabel Utama)
+        $absensis = Absensi::with(['user', 'cabang', 'shift'])
+            ->orderBy('tanggal', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->take(100)
+            ->get();
 
-                // Hitung Terlambat
-                $dataTerlambatBar[] = Absensi::whereMonth('tanggal', $date->month)
-                    ->whereYear('tanggal', $date->year)
-                    ->where('status', 'TERLAMBAT')
-                    ->count();
-
-                // Hitung Alpa
-                $dataAlpaBar[] = Absensi::whereMonth('tanggal', $date->month)
-                    ->whereYear('tanggal', $date->year)
-                    ->where('status', 'ALPA')
-                    ->count();
+        // 5. Statistik Per Divisi (Rasio)
+        $statistikDivisi = Divisi::withCount([
+            'users as total_hadir' => function ($query) use ($hariIni) {
+                $query->whereHas('absensi', fn($q) => $q->whereDate('tanggal', $hariIni)->whereIn('status', ['HADIR', 'TERLAMBAT']));
+            },
+            'users as total_terlambat' => function ($query) use ($hariIni) {
+                $query->whereHas('absensi', fn($q) => $q->whereDate('tanggal', $hariIni)->where('status', 'TERLAMBAT'));
             }
+        ])->get();
 
-            // 4. Data Map & Tabel Terbaru
-            $absensis = Absensi::with(['user', 'cabang', 'shift'])
-                ->orderBy('tanggal', 'desc') // Tanggal terbaru dulu
-                ->orderBy('created_at', 'desc') // Jika tanggal sama, jam terbaru (inputan terakhir) di atas
-                ->take(100)
-                ->get();
+        $labelsRasio = [];
+        $dataTotalKehadiran = [];
+        $dataPersentaseTerlambat = [];
 
-            $lokasiMarkers = $absensis->filter(fn($a) => $a->lat_masuk && $a->long_masuk)
-                ->map(fn($a) => [
-                    'lat' => $a->lat_masuk,
-                    'lng' => $a->long_masuk,
-                    'nama' => $a->user->name,
-                    'jam' => $a->jam_masuk,
-                    'tipe' => 'Masuk'
-                ])->values();
-
-
-            // rasio
-            // Ambil tanggal hari ini
-            $hariIni = date('Y-m-d');
-
-            // Hitung statistik per divisi langsung dari tabel users
-            $statistikDivisi = Divisi::withCount([
-                // Menghitung user yang hadir atau terlambat hari ini
-                'users as total_hadir' => function ($query) use ($hariIni) {
-                    $query->whereHas('absensi', function ($q) use ($hariIni) {
-                        $q->whereDate('tanggal', $hariIni)
-                            ->whereIn('status', ['HADIR', 'TERLAMBAT']);
-                    });
-                },
-                // Menghitung user yang khusus terlambat hari ini
-                'users as total_terlambat' => function ($query) use ($hariIni) {
-                    $query->whereHas('absensi', function ($q) use ($hariIni) {
-                        $q->whereDate('tanggal', $hariIni)
-                            ->where('status', 'TERLAMBAT');
-                    });
-                }
-            ])->get();
-
-            $labelsRasio = [];
-            $dataTotalKehadiran = [];
-            $dataPersentaseTerlambat = [];
-
-            foreach ($statistikDivisi as $divisi) {
-                $labelsRasio[] = $divisi->nama_divisi; // Pastikan kolom ini ada di tabel divisi
-                $dataTotalKehadiran[] = (int) $divisi->total_hadir;
-
-                // Hitung persentase keterlambatan
-                $persen = 0;
-                if ($divisi->total_hadir > 0) {
-                    $persen = round(($divisi->total_terlambat / $divisi->total_hadir) * 100);
-                }
-                $dataPersentaseTerlambat[] = $persen;
-            }
-
-            // 5. Return View dengan semua variabel
-            return view('admin.dashboard', compact(
-                'absensis',
-                'labelsRasio',
-                'dataTotalKehadiran',
-                'dataPersentaseTerlambat',
-                'lokasiMarkers',
-                'karyawanAktif',
-                'hadirHariIni',
-                'tepatWaktu',
-                'terlambat',
-                'belumAbsen',
-                'izinPending',
-                'labelsBar',
-                'dataHadirBar',
-                'dataTerlambatBar',
-                'dataAlpaBar',
-                'donutData'
-            ));
+        foreach ($statistikDivisi as $divisi) {
+            $labelsRasio[] = $divisi->nama_divisi;
+            $hadir = (int) $divisi->total_hadir;
+            $dataTotalKehadiran[] = $hadir;
+            $dataPersentaseTerlambat[] = ($hadir > 0) ? round(($divisi->total_terlambat / $hadir) * 100) : 0;
         }
-    }
 
+        // 6. Data Lembur
+        $notifLembur = \App\Models\Lembur::with('user')
+            ->where('status', 'PENDING')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // 7. Lokasi Markers
+        $lokasiMarkers = $absensis->filter(fn($a) => $a->lat_masuk && $a->long_masuk)
+            ->map(fn($a) => [
+                'lat' => $a->lat_masuk,
+                'lng' => $a->long_masuk,
+                'nama' => $a->user->name,
+                'jam' => $a->jam_masuk,
+                'tipe' => 'Masuk'
+            ])->values();
+
+        // 8. Statistik Tren (Loop tetap sama)
+        $labelsBar = [];
+        $dataHadirBar = [];
+        $dataTerlambatBar = [];
+        $dataAlpaBar = [];
+        for ($m = 5; $m >= 0; $m--) {
+            $date = Carbon::now()->subMonths($m);
+            $labelsBar[] = $date->translatedFormat('F Y');
+            $dataHadirBar[] = Absensi::whereMonth('tanggal', $date->month)->whereYear('tanggal', $date->year)->where('status', 'HADIR')->count();
+            $dataTerlambatBar[] = Absensi::whereMonth('tanggal', $date->month)->whereYear('tanggal', $date->year)->where('status', 'TERLAMBAT')->count();
+            $dataAlpaBar[] = Absensi::whereMonth('tanggal', $date->month)->whereYear('tanggal', $date->year)->where('status', 'ALPA')->count();
+        }
+
+        return view('admin.dashboard', compact(
+            'notifLembur',
+            'absensis',
+            'dataIzinSakit',
+            'labelsRasio',
+            'dataTotalKehadiran',
+            'dataPersentaseTerlambat',
+            'lokasiMarkers',
+            'karyawanAktif',
+            'hadirHariIni',
+            'tepatWaktu',
+            'terlambat',
+            'belumAbsen',
+            'izinPending',
+            'labelsBar',
+            'dataHadirBar',
+            'dataTerlambatBar',
+            'dataAlpaBar',
+            'donutData'
+        ));
+    }
     /**
      * Get filtered attendance data via AJAX
      */
