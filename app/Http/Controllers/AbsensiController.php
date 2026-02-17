@@ -609,179 +609,185 @@ class AbsensiController extends Controller
     }
 
 
- // Absen Foto (Multiple Branch Support)
-public function absenFoto(Request $request)
-{
-    $user  = Auth::user();
-    $today = Carbon::today()->toDateString();
-    $now   = Carbon::now();
+    // Absen Foto (Multiple Branch Support)
+    public function absenFoto(Request $request)
+    {
+        $user  = Auth::user();
+        // Pastikan Carbon menggunakan timezone Jakarta secara eksplisit
+        $today = Carbon::today('Asia/Jakarta')->toDateString();
+        $now   = Carbon::now('Asia/Jakarta');
 
-    // =====================================================
-    // 0. VALIDASI APAKAH SUDAH SELESAI ABSEN HARI INI
-    // =====================================================
-    // Cek dulu di database, jika sudah ada jam_masuk DAN jam_keluar, blokir akses.
-    $cekAbsensi = Absensi::where('user_id', $user->id)
-        ->where('tanggal', $today)
-        ->first();
+        // =====================================================
+        // 0. VALIDASI APAKAH SUDAH SELESAI ABSEN HARI INI
+        // =====================================================
+        // Cek dulu di database, jika sudah ada jam_masuk DAN jam_keluar, blokir akses.
+        $cekAbsensi = Absensi::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->first();
 
-    if ($cekAbsensi && $cekAbsensi->jam_masuk && $cekAbsensi->jam_keluar) {
-        return response()->json([
-            'message' => 'Anda sudah melakukan absen masuk dan pulang. Tidak dapat melakukan absensi lagi hari ini.'
-        ], 422);
-    }
-
-    // ===============================
-    // 1. VALIDASI INPUT
-    // ===============================
-    $request->validate([
-        'photo'     => 'required',
-        'latitude'  => 'required',
-        'longitude' => 'required',
-    ]);
-
-    // ===============================
-    // 2. VALIDASI HARI LIBUR
-    // ===============================
-    if (HariLibur::apakahLibur($today)) {
-        return response()->json([
-            'message' => 'Hari ini adalah hari libur. Absensi tidak dibuka.'
-        ], 403);
-    }
-
-    // ===========================================
-    // 3. VALIDASI CABANG & RADIUS (LOGIKA MULTIPLE)
-    // ===========================================
-    $userCabangIds = $user->cabang_ids;
-
-    if (!$userCabangIds || !is_array($userCabangIds) || count($userCabangIds) == 0) {
-        return response()->json(['message' => 'Anda tidak memiliki akses ke cabang manapun.'], 422);
-    }
-
-    $daftarCabang = \App\Models\Cabang::whereIn('id', $userCabangIds)->get();
-    $cabangTerdeteksi = null;
-    $logJarak = []; 
-
-    foreach ($daftarCabang as $cb) {
-        $jarak = $this->calculateDistance(
-            $request->latitude,
-            $request->longitude,
-            $cb->latitude,
-            $cb->longitude
-        );
-
-        $jarakMeter = round($jarak);
-        $logJarak[] = $cb->nama_cabang . " (" . $jarakMeter . "m)";
-
-        if ($jarak <= $cb->radius) {
-            $cabangTerdeteksi = $cb;
-            break;
-        }
-    }
-
-    if (!$cabangTerdeteksi) {
-        $daftarJarak = implode(", ", $logJarak);
-        return response()->json([
-            'message' => "Gagal! Anda berada di luar radius cabang penempatan. Jarak Anda saat ini: " . $daftarJarak
-        ], 422);
-    }
-
-    $cabang = $cabangTerdeteksi;
-
-    // ===============================
-    // 4. SIMPAN FOTO
-    // ===============================
-    $fotoPath = $this->saveBase64Photo($request->photo, 'absen_manual');
-
-    // ===============================
-    // 5. CEK DATA ABSENSI HARI INI
-    // ===============================
-    $absensi = $cekAbsensi; // Gunakan hasil query dari langkah 0
-
-    // -----------------------------------------------------
-    // MODE MASUK (Jika belum ada data absensi hari ini)
-    // -----------------------------------------------------
-    if (!$absensi) {
-        $shift = $user->shift;
-        if (!$shift) {
-            return response()->json(['message' => 'Jadwal shift Anda belum diatur.'], 422);
+        if ($cekAbsensi && $cekAbsensi->jam_masuk && $cekAbsensi->jam_keluar) {
+            return response()->json([
+                'message' => 'Anda sudah melakukan absen masuk dan pulang. Tidak dapat melakukan absensi lagi hari ini.'
+            ], 422);
         }
 
-        $jamMasukShift  = Carbon::parse($shift->jam_masuk);
-        $jamPulangShift = Carbon::parse($shift->jam_pulang);
+        // ===============================
+        // 1. VALIDASI INPUT
+        // ===============================
+        $request->validate([
+            'photo'     => 'required',
+            'latitude'  => 'required',
+            'longitude' => 'required',
+        ]);
+
+        // ===============================
+        // 2. VALIDASI HARI LIBUR
+        // ===============================
+        if (HariLibur::apakahLibur($today)) {
+            return response()->json([
+                'message' => 'Hari ini adalah hari libur. Absensi tidak dibuka.'
+            ], 403);
+        }
+
+        // ===========================================
+        // 3. VALIDASI CABANG & RADIUS (LOGIKA MULTIPLE)
+        // ===========================================
+        $userCabangIds = $user->cabang_ids;
+
+        if (!$userCabangIds || !is_array($userCabangIds) || count($userCabangIds) == 0) {
+            return response()->json(['message' => 'Anda tidak memiliki akses ke cabang manapun.'], 422);
+        }
+
+        $daftarCabang = \App\Models\Cabang::whereIn('id', $userCabangIds)->get();
+        $cabangTerdeteksi = null;
+        $logJarak = [];
+
+        foreach ($daftarCabang as $cb) {
+            $jarak = $this->calculateDistance(
+                $request->latitude,
+                $request->longitude,
+                $cb->latitude,
+                $cb->longitude
+            );
+
+            $jarakMeter = round($jarak);
+            $logJarak[] = $cb->nama_cabang . " (" . $jarakMeter . "m)";
+
+            if ($jarak <= $cb->radius) {
+                $cabangTerdeteksi = $cb;
+                break;
+            }
+        }
+
+        if (!$cabangTerdeteksi) {
+            $daftarJarak = implode(", ", $logJarak);
+            return response()->json([
+                'message' => "Gagal! Anda berada di luar radius cabang penempatan. Jarak Anda saat ini: " . $daftarJarak
+            ], 422);
+        }
+
+        $cabang = $cabangTerdeteksi;
+
+        // ===============================
+        // 4. SIMPAN FOTO
+        // ===============================
+        $fotoPath = $this->saveBase64Photo($request->photo, 'absen_manual');
+
+        // ===============================
+        // 5. CEK DATA ABSENSI HARI INI
+        // ===============================
+        $absensi = $cekAbsensi; // Gunakan hasil query dari langkah 0
+
+        // -----------------------------------------------------
+        // MODE MASUK (Jika belum ada data absensi hari ini)
+        // -----------------------------------------------------
+
+        if (!$absensi) {
+            $shift = $user->shift;
+            if (!$shift) {
+                return response()->json(['message' => 'Jadwal shift Anda belum diatur.'], 422);
+            }
+
+            // TAMBAHKAN setTimezone('Asia/Jakarta') saat parsing
+            $jamMasukShift  = Carbon::parse($shift->jam_masuk, 'Asia/Jakarta');
+            $jamPulangShift = Carbon::parse($shift->jam_pulang, 'Asia/Jakarta');
+
+            if ($jamPulangShift->lt($jamMasukShift)) {
+                $jamPulangShift->addDay();
+            }
+
+            $batasToleransi = $jamMasukShift->copy()->addMinutes($shift->toleransi);
+
+            // Logika status masuk
+            $status = ($now->gt($batasToleransi)) ? 'TERLAMBAT' : 'HADIR';
+
+            $absensi = Absensi::create([
+                'user_id'    => $user->id,
+                'cabang_id'  => $cabang->id,
+                'shift_id'   => $shift->id,
+                'tanggal'    => $today,
+                'jam_masuk'  => $now->toTimeString(),
+                'lat_masuk'  => $request->latitude,
+                'long_masuk' => $request->longitude,
+                'foto_masuk' => $fotoPath,
+                'status'     => $status,
+            ]);
+
+            return response()->json([
+                'message' => 'Absen masuk berhasil di ' . $cabang->nama_cabang . '. Status: ' . $status,
+                'status'  => $status,
+                'path'    => $fotoPath
+            ]);
+        }
+
+        // -----------------------------------------------------
+        // MODE PULANG (Jika sudah ada data masuk)
+        // -----------------------------------------------------
+
+        if ($absensi->jam_keluar) {
+            return response()->json(['message' => 'Anda sudah melakukan absen pulang hari ini.'], 422);
+        }
+
+        // Pastikan parsing jam shift menggunakan timezone yang sama dengan $now
+        $jamMasukShift  = Carbon::parse($absensi->shift->jam_masuk, 'Asia/Jakarta');
+        $jamPulangShift = Carbon::parse($absensi->shift->jam_pulang, 'Asia/Jakarta');
+
 
         if ($jamPulangShift->lt($jamMasukShift)) {
             $jamPulangShift->addDay();
         }
 
-        $batasToleransi = $jamMasukShift->copy()->addMinutes($shift->toleransi);
-        $status = ($now->gt($batasToleransi)) ? 'TERLAMBAT' : 'HADIR';
+        // Batas akhir absen pulang (5 jam setelah shift selesai)
+        $batasAkhir = $jamPulangShift->copy()->addHours(5);
 
-        $absensi = Absensi::create([
-            'user_id'    => $user->id,
-            'cabang_id'  => $cabang->id,
-            'shift_id'   => $shift->id,
-            'tanggal'    => $today,
-            'jam_masuk'  => $now->toTimeString(),
-            'lat_masuk'  => $request->latitude,
-            'long_masuk' => $request->longitude,
-            'foto_masuk' => $fotoPath,
-            'status'     => $status,
+        if ($now->gt($batasAkhir)) {
+            $absensi->update([
+                'status'     => 'TIDAK ABSEN PULANG',
+                'keterangan' => 'Terlambat absen pulang (melebihi batas 5 jam)'
+            ]);
+
+            return response()->json([
+                'message' => 'Waktu absen pulang telah berakhir. Status Anda: TIDAK ABSEN PULANG.'
+            ], 422);
+        }
+
+        $statusBaru = $absensi->status;
+        if ($now->lt($jamPulangShift)) {
+            $statusBaru = 'PULANG LEBIH AWAL';
+        }
+
+        $absensi->update([
+            'jam_keluar'  => $now->toTimeString(),
+            'lat_pulang'  => $request->latitude,
+            'long_pulang' => $request->longitude,
+            'foto_pulang' => $fotoPath,
+            'status'      => $statusBaru,
         ]);
 
         return response()->json([
-            'message' => 'Absen masuk berhasil di ' . $cabang->nama_cabang . '. Status: ' . $status,
-            'status'  => $status,
+            'message' => 'Absen pulang berhasil di ' . $cabang->nama_cabang . '. Status: ' . $statusBaru,
+            'status'  => $statusBaru,
             'path'    => $fotoPath
         ]);
     }
-
-    // -----------------------------------------------------
-    // MODE PULANG (Jika sudah ada data masuk)
-    // -----------------------------------------------------
-    // Catatan: Validasi "sudah absen pulang" sudah ditangani di langkah 0, 
-    // namun tetap dipertahankan di sini sebagai double-check layer kedua.
-    if ($absensi->jam_keluar) {
-        return response()->json(['message' => 'Anda sudah melakukan absen pulang hari ini.'], 422);
-    }
-
-    $jamMasukShift  = Carbon::parse($absensi->shift->jam_masuk);
-    $jamPulangShift = Carbon::parse($absensi->shift->jam_pulang);
-
-    if ($jamPulangShift->lt($jamMasukShift)) {
-        $jamPulangShift->addDay();
-    }
-
-    // Batas akhir absen pulang (5 jam setelah shift selesai)
-    $batasAkhir = $jamPulangShift->copy()->addHours(5);
-
-    if ($now->gt($batasAkhir)) {
-        $absensi->update([
-            'status'     => 'TIDAK ABSEN PULANG',
-            'keterangan' => 'Terlambat absen pulang (melebihi batas 5 jam)'
-        ]);
-
-        return response()->json([
-            'message' => 'Waktu absen pulang telah berakhir. Status Anda: TIDAK ABSEN PULANG.'
-        ], 422);
-    }
-
-    $statusBaru = $absensi->status;
-    if ($now->lt($jamPulangShift)) {
-        $statusBaru = 'PULANG LEBIH AWAL';
-    }
-
-    $absensi->update([
-        'jam_keluar'  => $now->toTimeString(),
-        'lat_pulang'  => $request->latitude,
-        'long_pulang' => $request->longitude,
-        'foto_pulang' => $fotoPath,
-        'status'      => $statusBaru,
-    ]);
-
-    return response()->json([
-        'message' => 'Absen pulang berhasil di ' . $cabang->nama_cabang . '. Status: ' . $statusBaru,
-        'status'  => $statusBaru,
-        'path'    => $fotoPath
-    ]);
-}
 }
