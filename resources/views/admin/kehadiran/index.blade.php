@@ -5,16 +5,15 @@
     <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css" rel="stylesheet">
 
     <div class="container-fluid">
-
         {{-- HEADER --}}
         <div class="page-header mb-4">
             <div class="row align-items-center">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <h4 class="m-0 text-dark fw-bold">Data Kehadiran Karyawan</h4>
                     <p class="text-muted small mb-0">Kelola dan pantau absensi harian seluruh staf</p>
                 </div>
 
-                <div class="col-md-8">
+                <div class="col-md-9">
                     <form method="GET" action="">
                         <div class="row g-2 justify-content-md-end">
                             {{-- Filter Cabang --}}
@@ -43,14 +42,38 @@
                                 </select>
                             </div>
 
+                            {{-- Filter Status (Disesuaikan dengan ENUM Database) --}}
+                            <div class="col-6 col-md-2">
+                                <select name="status" class="form-select form-select-sm shadow-sm">
+                                    <option value="">Semua Status</option>
+                                    @php
+                                        $statuses = [
+                                            'HADIR',
+                                            'TERLAMBAT',
+                                            'IZIN',
+                                            'ALPA',
+                                            'PULANG LEBIH AWAL',
+                                            'TIDAK ABSEN PULANG',
+                                            'LIBUR',
+                                        ];
+                                    @endphp
+                                    @foreach ($statuses as $status)
+                                        <option value="{{ $status }}"
+                                            {{ request('status') == $status ? 'selected' : '' }}>
+                                            {{ $status }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
                             {{-- Filter Tanggal --}}
                             <div class="col-6 col-md-2">
                                 <input type="date" name="start_date" value="{{ $start_date }}"
-                                    class="form-control form-control-sm shadow-sm">
+                                    class="form-control form-control-sm shadow-sm" title="Tanggal Mulai">
                             </div>
                             <div class="col-6 col-md-2">
                                 <input type="date" name="end_date" value="{{ $end_date }}"
-                                    class="form-control form-control-sm shadow-sm">
+                                    class="form-control form-control-sm shadow-sm" title="Tanggal Akhir">
                             </div>
 
                             {{-- Tombol Submit --}}
@@ -167,6 +190,7 @@
                                         <span
                                             class="badge
                             @if ($a->status == 'HADIR') bg-success
+                            @elseif ($a->status == 'LIBUR') bg-secondary
                             @elseif($a->status == 'TERLAMBAT') bg-warning
                             @elseif($a->status == 'IZIN') bg-info
                             @else bg-danger @endif">

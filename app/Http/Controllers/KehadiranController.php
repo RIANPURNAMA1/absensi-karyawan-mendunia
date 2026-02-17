@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Absensi;
 use Illuminate\Http\Request;
 
 class KehadiranController extends Controller
@@ -13,22 +14,31 @@ class KehadiranController extends Controller
         $list_divisi = \App\Models\Divisi::all();
 
         // 2. Inisialisasi Tanggal (Default: Awal bulan s/d hari ini)
-        $tanggal    = $request->tanggal ?? now()->toDateString();
-        $start_date = $request->start_date ?? now()->startOfMonth()->toDateString();
-        $end_date   = $request->end_date ?? now()->endOfMonth()->toDateString();
+        // Menggunakan Carbon agar lebih konsisten dengan timezone Jakarta
+        $tanggal    = $request->tanggal ?? now('Asia/Jakarta')->toDateString();
+        $start_date = $request->start_date ?? now('Asia/Jakarta')->startOfMonth()->toDateString();
+        $end_date   = $request->end_date ?? now('Asia/Jakarta')->endOfMonth()->toDateString();
 
-        // 3. Ambil Input Filter Cabang & Divisi
+        // 3. Ambil Input Filter
         $cabang_id  = $request->cabang_id;
         $divisi_id  = $request->divisi_id;
+        $status     = $request->status; // Ambil filter status dari request
 
         // 4. Query Absensi dengan Filter
         $absensis = \App\Models\Absensi::with(['user.shift', 'user.divisi', 'cabang'])
             // Filter berdasarkan rentang tanggal
             ->whereBetween('tanggal', [$start_date, $end_date])
 
+            // Filter berdasarkan Status (HADIR, TERLAMBAT, IZIN, dll)
+            ->when($status, function ($query) use ($status) {
+                return $query->where('status', $status);
+            })
+
             // Filter berdasarkan Cabang (jika dipilih)
+            // Menggunakan whereHas jika relasi ke user mendefinisikan penempatan cabang
             ->when($cabang_id, function ($query) use ($cabang_id) {
                 return $query->whereHas('user', function ($q) use ($cabang_id) {
+                    // Sesuaikan kolom di tabel users (apakah cabang_id atau lainnya)
                     $q->where('cabang_id', $cabang_id);
                 });
             })
@@ -45,13 +55,31 @@ class KehadiranController extends Controller
             ->get();
 
         // 5. Kirim semua variabel ke view
-        return view('admin.kehadiran.index', compact(
-            'absensis',
-            'start_date',
-            'end_date',
-            'tanggal',
-            'list_cabang',
-            'list_divisi'
-        ));
+        return view('admin.kehadiran.index', [
+            'absensis'    => $absensis,
+            'start_date'  => $start_date,
+            'end_date'    => $end_date,
+            'tanggal'     => $tanggal,
+            'list_cabang' => $list_cabang,
+            'list_divisi' => $list_divisi,
+            'status_selected' => $status // Opsional: untuk menandai status yang sedang aktif
+        ]);
+    }
+
+    // revisi
+    public function updateStatus(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:absensis,id',
+            'status' => 'required|in:HADIR,TERLAMBAT,IZIN,ALPA,PULANG LEBIH AWAL,LIBUR',
+        ]);
+
+        $absen = Absensi::findOrFail($request->id);
+
+        $absen->update([
+            'status' => $request->status,
+        ]);
+
+        return back()->with('success', 'Status absensi berhasil diperbarui');
     }
 }

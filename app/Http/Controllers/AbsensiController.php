@@ -17,8 +17,6 @@ use Illuminate\Support\Facades\Storage;
 
 class AbsensiController extends Controller
 {
-
-
     // public function ayo(){
     //   return view('absensi.ayo');
     // }
@@ -137,22 +135,6 @@ class AbsensiController extends Controller
         return view('absensi.profile', compact('user', 'stats'));
     }
 
-    // revisi
-    public function updateStatus(Request $request)
-    {
-        $request->validate([
-            'id' => 'required|exists:absensis,id',
-            'status' => 'required|in:HADIR,TERLAMBAT,IZIN,ALPA,PULANG LEBIH AWAL',
-        ]);
-
-        $absen = Absensi::findOrFail($request->id);
-
-        $absen->update([
-            'status' => $request->status,
-        ]);
-
-        return back()->with('success', 'Status absensi berhasil diperbarui');
-    }
 
 
 

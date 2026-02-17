@@ -96,7 +96,7 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
 
     // Kehadiran & Monitoring
     Route::get('/data-kehadiran', [KehadiranController::class, 'index']);
-    Route::post('/admin/absensi/update-status', [AbsensiController::class, 'updateStatus'])->name('admin.absensi.updateStatus');
+    Route::post('/admin/absensi/update-status', [KehadiranController::class, 'updateStatus'])->name('admin.absensi.updateStatus');
     Route::get('/rekap-absensi', [RekapController::class, 'rekap'])->name('absensi.rekap');
     Route::get('/monitoring-lokasi', [MonitoringController::class, 'monitoring'])->name('absensi.monitoring');
 
