@@ -13,6 +13,14 @@ return new class extends Migration
     {
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('project_list_id');
+            $table->string('judul_tugas');
+            $table->text('deskripsi_tugas')->nullable();
+            $table->enum('prioritas', ['RENDAH', 'SEDANG', 'TINGGI', 'DARURAT'])->default('SEDANG');
+            $table->date('tgl_mulai_tugas')->nullable(); // Untuk tampilan Timeline/Gantt
+            $table->date('tgl_selesai_tugas')->nullable(); // Untuk tampilan Timeline/Gantt
+            $table->integer('urutan_kartu')->default(0); // Posisi kartu di dalam satu kolom
+            $table->boolean('is_selesai')->default(false);
             $table->timestamps();
         });
     }

@@ -76,7 +76,10 @@
 
     <!-- [ Main Content ] start -->
     <div class="pc-container">
-        <div class="pc-content">
+        <div>
+             @yield('contentTask')
+        </div>
+        <div class="p-4">
             <!-- [ Main Content ] start -->
             @yield('content')
             <!-- [ Main Content ] end -->

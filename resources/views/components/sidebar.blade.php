@@ -125,31 +125,7 @@
                      <li class="pc-item">
                          <a href="/project/dashboard" class="pc-link">
                              <span class="pc-micon"><i class="ph ph-chart-pie"></i></span>
-                             <span class="pc-mtext">Dashboard Project</span>
-                         </a>
-                     </li>
-                     <li class="pc-item">
-                         <a href="/project/board" class="pc-link">
-                             <span class="pc-micon"><i class="ph ph-columns"></i></span>
-                             <span class="pc-mtext">Board Project</span>
-                         </a>
-                     </li>
-                     <li class="pc-item">
-                         <a href="/project/task" class="pc-link">
-                             <span class="pc-micon"><i class="ph ph-check-square"></i></span>
-                             <span class="pc-mtext">Daftar Task</span>
-                         </a>
-                     </li>
-                     <li class="pc-item">
-                         <a href="/project/progress" class="pc-link">
-                             <span class="pc-micon"><i class="ph ph-trend-up"></i></span>
-                             <span class="pc-mtext">Progress Pekerjaan</span>
-                         </a>
-                     </li>
-                     <li class="pc-item">
-                         <a href="/project/timeline" class="pc-link">
-                             <span class="pc-micon"><i class="ph ph-chart-line"></i></span>
-                             <span class="pc-mtext">Timeline Project</span>
+                             <span class="pc-mtext">Dashboard</span>
                          </a>
                      </li>
                  </ul>

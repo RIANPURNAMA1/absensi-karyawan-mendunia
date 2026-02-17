@@ -104,4 +104,17 @@ class User extends Authenticatable
     {
         return $this->hasMany(Lembur::class);
     }
+
+
+    // task 
+    // Di dalam class User
+    public function managedProjects()
+    {
+        return $this->hasMany(Projects::class, 'manager_id');
+    }
+
+    public function assignedTasks()
+    {
+        return $this->belongsToMany(Task::class, 'task_assignments');
+    }
 }

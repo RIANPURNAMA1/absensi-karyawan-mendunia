@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Models\Task;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Task extends Model
+class task_assignments extends Model
 {
     //
 }
