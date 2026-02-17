@@ -196,7 +196,7 @@
                                         <td class="text-center text-muted">{{ $index + 1 }}</td>
                                         <td class="text-start">
                                             <div class="fw-bold text-dark">{{ $r->nama }}</div>
-                                            <div class="text-xs text-muted text-uppercase">Staff Karyawan</div>
+                                            <div class="text-xs text-muted text-uppercase">{{$r->jabatan}}</div>
                                         </td>
                                         <td class="text-center">
                                             <span class="badge badge-outline rounded-pill">{{ $r->cabang }}</span>

@@ -77,6 +77,7 @@ class RekapController extends Controller
 
             return (object)[
                 'nama'             => $user->name,
+                'jabatan'             => $user->jabatan,
                 'cabang'           => $namaCabang, // Menggunakan hasil pluck tadi
                 'hadir'            => $hadir,
                 'terlambat'        => $terlambat,
