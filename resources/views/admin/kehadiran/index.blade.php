@@ -97,7 +97,7 @@
             <div class="card-body p-0">
                 <div class="table-responsive p-4">
                     <table class="table align-middle mb-0" id="absensiTable">
-                        <thead class="bg-blue-700" style=" color: white;">
+                        <thead class="bg-blue-700">
                             <tr>
                                 <th class="text-white">No</th>
                                 <th class="text-white">Karyawan</th>
@@ -116,92 +116,85 @@
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
 
+                                    {{-- Karyawan --}}
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
                                             <img src="{{ $a->user->foto_profil && file_exists(public_path('uploads/foto_profil/' . $a->user->foto_profil))
                                                 ? asset('uploads/foto_profil/' . $a->user->foto_profil)
                                                 : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' }}"
-                                                class="rounded-full object-cover border border-gray-100 shadow-sm"
-                                                alt="{{ $a->user->name }}"
-                                                style="width: 40px; height: 40px; border-radius: 100%; flex-shrink: 0;">
+                                                class="rounded-circle border border-gray-100" alt="{{ $a->user->name }}"
+                                                style="width: 35px; height: 35px; object-fit: cover; flex-shrink: 0;">
                                             <div>
-                                                <span class="fw-bold">{{ $a->user->name }}</span><br>
+                                                <div class="fw-bold mb-0" style="font-size: 0.9rem;">{{ $a->user->name }}
+                                                </div>
                                                 <small class="text-muted">{{ $a->user->nip }}</small>
                                             </div>
                                         </div>
                                     </td>
 
+                                    {{-- Shift --}}
                                     <td>
-                                        @if ($a->shift)
-                                            <span class="badge bg-light-primary text-primary border border-primary">
-                                                {{ $a->shift->nama_shift }}
-                                            </span>
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
+                                        <span class="text-dark small">{{ $a->shift->nama_shift ?? '-' }}</span>
                                     </td>
 
+                                    {{-- Foto Masuk --}}
                                     <td class="text-center">
                                         @if ($a->foto_masuk)
                                             <img src="{{ asset('storage/' . $a->foto_masuk) }}"
                                                 class="rounded border shadow-sm"
-                                                style="width: 60px; height: 60px; object-fit: cover;"
+                                                style="width: 45px; height: 45px; object-fit: cover;"
                                                 onclick="window.open(this.src)" role="button">
-                                        @elseif($a->jam_masuk)
-                                            <small class="text-primary fw-bold" style="font-size: 0.75rem;">
-                                                <i class="ph ph-scan text-primary"></i> Face Recognition
-                                            </small>
                                         @else
-                                            <span class="text-muted">-</span>
+                                            <span class="text-muted small">-</span>
                                         @endif
                                     </td>
 
+                                    {{-- Foto Pulang --}}
                                     <td class="text-center">
-                                        @if ($a->foto_keluar)
-                                            {{-- Ganti ke foto_pulang jika nama kolom di DB berbeda --}}
-                                            <img src="{{ asset('storage/' . $a->foto_keluar) }}"
+                                        @php $fotoPulang = $a->foto_pulang ?? $a->foto_keluar; @endphp
+                                        @if ($fotoPulang)
+                                            <img src="{{ asset('storage/' . $fotoPulang) }}"
                                                 class="rounded border shadow-sm"
-                                                style="width: 60px; height: 60px; object-fit: cover;"
+                                                style="width: 45px; height: 45px; object-fit: cover;"
                                                 onclick="window.open(this.src)" role="button">
-                                        @elseif($a->jam_keluar)
-                                            <small class="text-primary fw-bold" style="font-size: 0.75rem;">
-                                                <i class="ph ph-scan text-primary"></i> Face Recognition
-                                            </small>
                                         @else
-                                            <span class="text-muted">-</span>
+                                            <span class="text-muted small">-</span>
                                         @endif
                                     </td>
 
-                                    <td>
-                                        {{ $a->jam_masuk ? \Carbon\Carbon::parse($a->jam_masuk)->format('H:i') : '-' }}
+                                    {{-- Jam --}}
+                                    <td class="small">{{ $a->jam_masuk ? date('H:i', strtotime($a->jam_masuk)) : '-' }}
+                                    </td>
+                                    <td class="small">{{ $a->jam_keluar ? date('H:i', strtotime($a->jam_keluar)) : '-' }}
                                     </td>
 
-                                    <td>
-                                        {{ $a->jam_keluar ? \Carbon\Carbon::parse($a->jam_keluar)->format('H:i') : '-' }}
+                                    {{-- Cabang --}}
+                                    <td class="small text-muted">
+                                        {{ $a->cabang->nama_cabang ?? '-' }}
                                     </td>
 
-                                    <td>
-                                        <span class="badge bg-light-info text-info border border-info">
-                                            {{ $a->cabang->nama_cabang ?? '-' }}
-                                        </span>
+                                    {{-- Status (Teks Berwarna Tanpa Badge) --}}
+                                    <td class="fw-bold small">
+                                        @php
+                                            $color = 'text-danger';
+                                            if ($a->status == 'HADIR') {
+                                                $color = 'text-success';
+                                            } elseif ($a->status == 'TERLAMBAT') {
+                                                $color = 'text-warning';
+                                            } elseif ($a->status == 'IZIN') {
+                                                $color = 'text-info';
+                                            } elseif ($a->status == 'LIBUR') {
+                                                $color = 'text-secondary';
+                                            }
+                                        @endphp
+                                        <span class="{{ $color }}">{{ $a->status }}</span>
                                     </td>
 
-                                    <td>
-                                        <span
-                                            class="badge
-                            @if ($a->status == 'HADIR') bg-success
-                            @elseif ($a->status == 'LIBUR') bg-secondary
-                            @elseif($a->status == 'TERLAMBAT') bg-warning
-                            @elseif($a->status == 'IZIN') bg-info
-                            @else bg-danger @endif">
-                                            {{ $a->status }}
-                                        </span>
-                                    </td>
-
+                                    {{-- Aksi --}}
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-warning"
+                                        <button class="btn btn-sm btn-outline-warning border-0"
                                             onclick="ubahStatus('{{ $a->id }}','{{ $a->status }}')">
-                                            <i class="ph ph-pencil-simple"></i>
+                                            <i class="ph ph-pencil-simple fs-5"></i>
                                         </button>
                                     </td>
                                 </tr>
