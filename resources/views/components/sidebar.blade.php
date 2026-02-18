@@ -123,7 +123,7 @@
                  </a>
                  <ul class="pc-submenu">
                      <li class="pc-item">
-                         <a href="/project/dashboard" class="pc-link">
+                         <a href="/" class="pc-link">
                              <span class="pc-micon"><i class="ph ph-chart-pie"></i></span>
                              <span class="pc-mtext">Dashboard</span>
                          </a>
