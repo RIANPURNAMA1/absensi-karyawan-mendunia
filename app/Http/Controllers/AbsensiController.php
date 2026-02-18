@@ -112,7 +112,6 @@ class AbsensiController extends Controller
         return response()->json($riwayat);
     }
 
-
     public function riwayatSemua()
     {
         // Ambil semua absensi beserta relasi karyawan
@@ -134,9 +133,6 @@ class AbsensiController extends Controller
 
         return view('absensi.profile', compact('user', 'stats'));
     }
-
-
-
 
     public function absenMasuk(Request $request)
     {
@@ -355,8 +351,6 @@ class AbsensiController extends Controller
             'status'  => $statusBaru
         ]);
     }
-
-
 
     public function statusAbsensi(Request $request)
     {
@@ -589,7 +583,6 @@ class AbsensiController extends Controller
         // LOGIKA: Jika distance > 0.4, maka dianggap ORANG BERBEDA
         return $distance;
     }
-
 
     // Absen Foto (Multiple Branch Support)
     public function absenFoto(Request $request)
