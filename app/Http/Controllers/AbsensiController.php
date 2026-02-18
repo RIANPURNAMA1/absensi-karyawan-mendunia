@@ -583,7 +583,7 @@ class AbsensiController extends Controller
         // LOGIKA: Jika distance > 0.4, maka dianggap ORANG BERBEDA
         return $distance;
     }
-// Absen Foto (Multiple Branch Support)
+    // Absen Foto (Multiple Branch Support)
     public function absenFoto(Request $request)
     {
         $user  = Auth::user();
@@ -598,7 +598,7 @@ class AbsensiController extends Controller
             ->where('tanggal', $today)
             ->first();
 
-        // Blokir jika jam_masuk DAN jam_keluar sudah terisi
+        // Blokir jika jam_masuk DAN jam_keluar sudah terisi (Absensi sudah selesai sepenuhnya)
         if ($cekAbsensi && $cekAbsensi->jam_masuk && $cekAbsensi->jam_keluar) {
             return response()->json([
                 'message' => 'Anda sudah melakukan absen masuk dan pulang. Tidak dapat melakukan absensi lagi hari ini.'
@@ -670,13 +670,13 @@ class AbsensiController extends Controller
         // ===============================
         // 5. CEK DATA ABSENSI HARI INI
         // ===============================
-        $absensi = $cekAbsensi; 
+        $absensi = $cekAbsensi;
 
         // ---------------------------------------------------------------------
         // MODE MASUK 
-        // (Berjalan jika data belum ada ATAU data ada tapi jam_masuk masih kosong/ALPA)
+        // MODIFIKASI: Berjalan jika data belum ada ATAU data ada tapi jam_masuk masih kosong (ALPA Otomatis)
         // ---------------------------------------------------------------------
-        if (!$absensi || ($absensi->jam_masuk == null)) {
+        if (!$absensi || ($absensi->status == 'ALPA' && $absensi->jam_masuk == null)) {
             $shift = $user->shift;
             if (!$shift) {
                 return response()->json(['message' => 'Jadwal shift Anda belum diatur.'], 422);
@@ -685,11 +685,11 @@ class AbsensiController extends Controller
             $jamMasukShift  = Carbon::parse($shift->jam_masuk, 'Asia/Jakarta');
             $batasToleransi = $jamMasukShift->copy()->addMinutes($shift->toleransi);
 
-            // Tentukan status berdasarkan jam sekarang
+            // Tentukan status berdasarkan jam sekarang (HADIR atau TERLAMBAT)
             $status = ($now->gt($batasToleransi)) ? 'TERLAMBAT' : 'HADIR';
 
             if (!$absensi) {
-                // Buat record baru jika belum ada
+                // Jika benar-benar belum ada datanya, buat record baru
                 $absensi = Absensi::create([
                     'user_id'    => $user->id,
                     'cabang_id'  => $cabang->id,
@@ -702,7 +702,7 @@ class AbsensiController extends Controller
                     'status'     => $status,
                 ]);
             } else {
-                // Update record yang sudah ada (Misal record ALPA dari sistem)
+                // Jika sudah ada record ALPA otomatis, kita UPDATE datanya menjadi Masuk
                 $absensi->update([
                     'cabang_id'  => $cabang->id,
                     'shift_id'   => $shift->id,
@@ -710,8 +710,8 @@ class AbsensiController extends Controller
                     'lat_masuk'  => $request->latitude,
                     'long_masuk' => $request->longitude,
                     'foto_masuk' => $fotoPath,
-                    'status'     => $status,
-                    'keterangan' => null // Hapus keterangan ALPA otomatis
+                    'status'     => $status, // Berubah dari ALPA ke HADIR/TERLAMBAT
+                    'keterangan' => null     // Hapus alasan ALPA otomatis
                 ]);
             }
 
@@ -730,6 +730,7 @@ class AbsensiController extends Controller
             return response()->json(['message' => 'Anda sudah melakukan absen pulang hari ini.'], 422);
         }
 
+        // Ambil jam shift dari relasi absensi
         $jamMasukShift  = Carbon::parse($absensi->shift->jam_masuk, 'Asia/Jakarta');
         $jamPulangShift = Carbon::parse($absensi->shift->jam_pulang, 'Asia/Jakarta');
 
@@ -752,12 +753,13 @@ class AbsensiController extends Controller
         }
 
         // LOGIKA STATUS PULANG:
-        // Gunakan status yang sudah ada (HADIR/TERLAMBAT)
+        // Tetapkan status awal (HADIR atau TERLAMBAT dari absen masuk)
         $statusBaru = $absensi->status;
 
         // Jika sekarang belum jam pulang shift
         if ($now->lt($jamPulangShift)) {
             // Hanya ubah ke PULANG LEBIH AWAL jika paginya TIDAK TERLAMBAT
+            // Jika paginya TERLAMBAT, status tetap TERLAMBAT (Prioritas pelanggaran terberat)
             if ($statusBaru !== 'TERLAMBAT') {
                 $statusBaru = 'PULANG LEBIH AWAL';
             }
