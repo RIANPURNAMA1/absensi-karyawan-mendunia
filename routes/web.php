@@ -220,13 +220,15 @@ Route::middleware(['auth'])->group(function () {
 
 
 
+// Pastikan dibungkus middleware auth
+Route::middleware(['auth'])->group(function () {
+    // task management
+    Route::get('/project/dashboard', [TaskController::class, 'index']);
+    // Rute untuk menyimpan tugas baru (form modal)
+    Route::post('/tasks/store', [TaskController::class, 'store'])->name('tasks.store');
+    Route::post('/project-lists', [ProjectListsController::class, 'store'])->name('project-lists.store');
+    Route::post('/tasks/update-order', [TaskController::class, 'updateOrder'])->name('tasks.update-order');
+    // Route untuk handle upload dari CKEditor
+    Route::post('/tasks/upload-image', [TaskController::class, 'uploadImage'])->name('tasks.upload-image');
 
-
-// task management
-Route::get('/project/dashboard', [TaskController::class, 'index']);
-// Rute untuk menyimpan tugas baru (form modal)
-Route::post('/tasks/store', [TaskController::class, 'store'])->name('tasks.store');
-Route::post('/project-lists', [ProjectListsController::class, 'store'])->name('project-lists.store');
-Route::post('/tasks/update-order', [TaskController::class, 'updateOrder'])->name('tasks.update-order');
-// Route untuk handle upload dari CKEditor
-Route::post('/tasks/upload-image', [TaskController::class, 'uploadImage'])->name('tasks.upload-image');
+});
