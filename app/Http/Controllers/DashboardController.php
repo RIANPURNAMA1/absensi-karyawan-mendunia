@@ -12,9 +12,11 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
+
+
     public function index()
     {
-        $hariIni = Carbon::today()->toDateString();
+        // Variabel waktu tetap dipertahankan jika sewaktu-waktu dibutuhkan untuk label
         $bulanIni = Carbon::now()->month;
         $tahunIni = Carbon::now()->year;
 
@@ -22,22 +24,25 @@ class DashboardController extends Controller
         $karyawanAktif = User::where('role', 'KARYAWAN')->where('status', 'AKTIF')->count();
         $izinPending = Izin::where('status', 'PENDING')->count();
 
-        // 2. Statistik Hari Ini (Query langsung ke DB agar akurat)
-        $stats = Absensi::whereDate('tanggal', $hariIni)
-            ->selectRaw("
+        // 2. Statistik Keseluruhan (Menghapus filter hariIni)
+        $stats = Absensi::selectRaw("
             count(case when status = 'HADIR' then 1 end) as tepatWaktu,
             count(case when status = 'TERLAMBAT' then 1 end) as terlambat,
             count(case when status = 'ALPA' then 1 end) as alpa,
             count(case when status = 'IZIN' then 1 end) as izinCuti
         ")->first();
 
-        $tepatWaktu = $stats->tepatWaktu;
-        $terlambat = $stats->terlambat;
-        $alpa = $stats->alpa;
-        $izinCuti = $stats->izinCuti;
+        $tepatWaktu = $stats->tepatWaktu ?? 0;
+        $terlambat = $stats->terlambat ?? 0;
+        $alpa = $stats->alpa ?? 0;
+        $izinCuti = $stats->izinCuti ?? 0;
 
-        $hadirHariIni = $tepatWaktu + $terlambat;
-        $belumAbsen = max(0, $karyawanAktif - ($hadirHariIni + $izinCuti));
+        // Total kehadiran secara akumulatif
+        $totalHadirSemua = $tepatWaktu + $terlambat;
+
+        // Untuk 'belumAbsen' dalam konteks keseluruhan agak rancu, 
+        // namun jika tetap ingin ditampilkan, bisa dianggap sebagai total akumulasi alpa
+        $belumAbsen = $alpa;
 
         $donutData = [
             'hadir' => $tepatWaktu,
@@ -46,26 +51,26 @@ class DashboardController extends Controller
             'alpa' => $alpa
         ];
 
-        // Ganti query $dataIzinSakit yang lama dengan ini:
+        // 3. Data Pengajuan Izin/Sakit Terbaru
         $dataIzinSakit = \App\Models\Izin::with(['user'])
             ->orderBy('created_at', 'desc')
-            ->take(10) // Ambil 10 pengajuan terbaru
+            ->take(10)
             ->get();
 
-        // 4. Data Absensi Umum (Untuk Map/Tabel Utama)
+        // 4. Data Absensi Umum (Log Aktivitas Terbaru)
         $absensis = Absensi::with(['user', 'cabang', 'shift'])
             ->orderBy('tanggal', 'desc')
             ->orderBy('created_at', 'desc')
             ->take(100)
             ->get();
 
-        // 5. Statistik Per Divisi (Rasio)
+        // 5. Statistik Per Divisi (Keseluruhan/Akumulatif)
         $statistikDivisi = Divisi::withCount([
-            'users as total_hadir' => function ($query) use ($hariIni) {
-                $query->whereHas('absensi', fn($q) => $q->whereDate('tanggal', $hariIni)->whereIn('status', ['HADIR', 'TERLAMBAT']));
+            'users as total_hadir' => function ($query) {
+                $query->whereHas('absensi', fn($q) => $q->whereIn('status', ['HADIR', 'TERLAMBAT']));
             },
-            'users as total_terlambat' => function ($query) use ($hariIni) {
-                $query->whereHas('absensi', fn($q) => $q->whereDate('tanggal', $hariIni)->where('status', 'TERLAMBAT'));
+            'users as total_terlambat' => function ($query) {
+                $query->whereHas('absensi', fn($q) => $q->where('status', 'TERLAMBAT'));
             }
         ])->get();
 
@@ -80,23 +85,24 @@ class DashboardController extends Controller
             $dataPersentaseTerlambat[] = ($hadir > 0) ? round(($divisi->total_terlambat / $hadir) * 100) : 0;
         }
 
-        // 6. Data Lembur
+        // 6. Data Lembur Pending
         $notifLembur = \App\Models\Lembur::with('user')
             ->where('status', 'PENDING')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // 7. Lokasi Markers
+        // 7. Lokasi Markers (Dari 100 data terbaru)
         $lokasiMarkers = $absensis->filter(fn($a) => $a->lat_masuk && $a->long_masuk)
             ->map(fn($a) => [
                 'lat' => $a->lat_masuk,
                 'lng' => $a->long_masuk,
                 'nama' => $a->user->name,
                 'jam' => $a->jam_masuk,
+                'tanggal' => $a->tanggal,
                 'tipe' => 'Masuk'
             ])->values();
 
-        // 8. Statistik Tren (Loop tetap sama)
+        // 8. Statistik Tren Bulanan (Tetap 6 bulan terakhir)
         $labelsBar = [];
         $dataHadirBar = [];
         $dataTerlambatBar = [];
@@ -118,7 +124,7 @@ class DashboardController extends Controller
             'dataPersentaseTerlambat',
             'lokasiMarkers',
             'karyawanAktif',
-            'hadirHariIni',
+            'totalHadirSemua', // Variabel nama baru agar lebih deskriptif
             'tepatWaktu',
             'terlambat',
             'belumAbsen',

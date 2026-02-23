@@ -139,6 +139,20 @@
                 </div>
             </div>
 
+            <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                        <i class="ph ph-check-circle text-xl"></i>
+                    </div>
+                </div>
+                <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Kehadiran</p>
+                <h2 class="text-2xl font-bold text-gray-800">{{ $totalHadirSemua ?? 0 }}</h2>
+                <div class="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center text-xs">
+                    <span class="text-gray-400">Tepat Waktu</span>
+                    <span class="font-bold text-emerald-600">{{ $tepatWaktu ?? 0 }}</span>
+                </div>
+            </div>
+
             <!-- Terlambat Card -->
             <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md">
                 <div class="p-4">
