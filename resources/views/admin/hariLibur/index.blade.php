@@ -46,24 +46,32 @@
                         <form action="{{ route('hari-libur.store') }}" method="POST">
                             @csrf
                             <div class="mb-3">
-                                <label class="form-label">Tanggal Libur</label>
-                                <input type="date" name="tanggal"
-                                    class="form-control @error('tanggal') is-invalid @enderror" required>
-                                @error('tanggal')
+                                <label class="form-label fw-semibold">Dari Tanggal</label>
+                                <input type="date" name="tgl_mulai"
+                                    class="form-control @error('tgl_mulai') is-invalid @enderror" required>
+                                @error('tgl_mulai')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Keterangan</label>
-                                <input type="text" name="keterangan" class="form-control"
-                                    placeholder="Contoh: Idul Fitri" required>
+                                <label class="form-label fw-semibold">Sampai Tanggal</label>
+                                <input type="date" name="tgl_selesai"
+                                    class="form-control @error('tgl_selesai') is-invalid @enderror" required>
+                                @error('tgl_selesai')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
-                            <div class="alert alert-info py-2 shadow-none border-0 mb-3" style="font-size: 0.85rem;">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Keterangan</label>
+                                <input type="text" name="keterangan" class="form-control"
+                                    placeholder="Contoh: Libur Lebaran" required>
+                            </div>
+                            <div class="alert alert-info py-2 border-0 mb-3" style="font-size:0.85rem">
                                 <i class="ph ph-info me-1"></i>
-                                Sabtu & Minggu otomatis libur oleh sistem.
+                                Tanggal yang sudah terdaftar akan dilewati otomatis.
                             </div>
                             <button type="submit" class="btn btn-primary w-100">
-                                <i class="ph ph-plus-circle me-1"></i> Simpan Tanggal
+                                <i class="ph ph-plus-circle me-1"></i> Simpan Rentang Tanggal
                             </button>
                         </form>
                     </div>
@@ -89,12 +97,13 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($hariLiburs as $libur)
+                                    @forelse ($hariLiburs as $libur)
                                         <tr>
-                                            <td>{{ $loop->iteration }}</td>
+                                            <td>{{ $hariLiburs->firstItem() + $loop->index }}</td>
                                             <td>
-                                                <span
-                                                    class="fw-bold">{{ \Carbon\Carbon::parse($libur->tanggal)->format('d F Y') }}</span>
+                                                <span class="fw-bold">
+                                                    {{ \Carbon\Carbon::parse($libur->tanggal)->format('d F Y') }}
+                                                </span>
                                             </td>
                                             <td>
                                                 <span class="badge bg-light-danger text-danger border border-danger">
@@ -114,19 +123,28 @@
                                                 </form>
                                             </td>
                                         </tr>
-                                    @endforeach
-
-                                    @if ($hariLiburs->isEmpty())
+                                    @empty
                                         <tr>
                                             <td colspan="5" class="text-center text-muted py-5">
                                                 <i class="ph ph-calendar-blank d-block fs-1 mb-2"></i>
                                                 Belum ada libur nasional yang ditambahkan
                                             </td>
                                         </tr>
-                                    @endif
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
+
+                        {{-- Pagination --}}
+                        @if ($hariLiburs->hasPages())
+                            <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top">
+                                <small class="text-muted">
+                                    Menampilkan {{ $hariLiburs->firstItem() }}–{{ $hariLiburs->lastItem() }}
+                                    dari {{ $hariLiburs->total() }} data
+                                </small>
+                                {{ $hariLiburs->links('pagination::bootstrap-5') }}
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

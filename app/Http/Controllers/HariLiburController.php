@@ -9,21 +9,34 @@ class HariLiburController extends Controller
     public function index()
     {
         // Ambil data hari libur diurutkan dari yang terdekat
-        $hariLiburs = HariLibur::orderBy('tanggal', 'asc')->get();
+    $hariLiburs = HariLibur::orderBy('tanggal', 'asc')->paginate(10);
         return view('admin.hariLibur.index', compact('hariLiburs'));
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'tanggal' => 'required|date|unique:hari_liburs,tanggal',
-            'keterangan' => 'required|string|max:255',
-        ]);
+ public function store(Request $request)
+{
+    $request->validate([
+        'tgl_mulai'   => 'required|date',
+        'tgl_selesai' => 'required|date|after_or_equal:tgl_mulai',
+        'keterangan'  => 'required|string|max:255',
+    ]);
 
-        HariLibur::create($request->all());
+    $start = \Carbon\Carbon::parse($request->tgl_mulai);
+    $end   = \Carbon\Carbon::parse($request->tgl_selesai);
+    $added = 0;
 
-        return back()->with('success', 'Hari libur berhasil ditambahkan!');
+    while ($start->lte($end)) {
+        // Skip jika sudah ada
+        HariLibur::firstOrCreate(
+            ['tanggal'     => $start->format('Y-m-d')],
+            ['keterangan'  => $request->keterangan]
+        ) && $added++;
+
+        $start->addDay();
     }
+
+    return back()->with('success', "Berhasil menambahkan {$added} tanggal libur!");
+}
 
     public function destroy($id)
     {
