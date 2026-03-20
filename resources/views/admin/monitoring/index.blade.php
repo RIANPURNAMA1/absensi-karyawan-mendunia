@@ -137,7 +137,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($absensis as $a)
+                            @foreach ($absensis as $a)
                                 <tr>
                                     <td class="px-4 py-3">
                                         <div class="fw-bold">{{ $a->user->name }}</div>
@@ -205,14 +205,8 @@
                                         </div>
                                     </td>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="8" class="text-center text-muted py-5">
-                                        <i class="ph ph-map-pin d-block fs-1 mb-2 text-gray-300"></i>
-                                        Tidak ada data lokasi pada periode ini
-                                    </td>
-                                </tr>
-                            @endforelse
+                           
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
