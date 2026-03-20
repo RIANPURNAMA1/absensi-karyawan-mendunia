@@ -1098,52 +1098,48 @@
                 }
             });
 
-            const ctxDonut = document.getElementById('compositionDonutChart').getContext('2d');
-            const donutRaw = @json($donutData ?? []);
-            const donutValues = [
-                donutRaw.hadir ?? 0,
-                donutRaw.terlambat ?? 0,
-                donutRaw.izin ?? 0,
-                donutRaw.alpa ?? 0,
-                donutRaw.libur ?? 0,
-            ];
-            new Chart(ctxDonut, {
-                type: 'doughnut',
-                data: {
-                    labels: ['HADIR', 'TERLAMBAT', 'IZIN', 'ALPA', 'LIBUR'],
-                    datasets: [{
-                        data: donutValues,
-                        backgroundColor: [
-                            'rgba(34,197,94,0.9)',
-                            'rgba(251,191,36,0.9)',
-                            'rgba(251,146,60,0.9)',
-                            'rgba(239,68,68,0.9)',
-                            'rgba(148,163,184,0.9)'
-                        ],
-                        borderColor: '#ffffff',
-                        borderWidth: 3,
-                        hoverOffset: 10
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '65%',
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 12,
-                                    weight: 'bold'
-                                },
-                                padding: 15,
-                                usePointStyle: true
-                            }
-                        }
-                    }
+            // 3. DONUT — Komposisi Hari Ini
+const donutEl = document.getElementById('compositionDonutChart');
+if (donutEl) {
+    const donutRaw = @json($donutData ?? []);
+    const donutArr = [
+        donutRaw.hadir     ?? 0,
+        donutRaw.terlambat ?? 0,
+        donutRaw.izin      ?? 0,
+        donutRaw.alpa      ?? 0,
+        donutRaw.libur     ?? 0,
+    ];
+    new Chart(donutEl.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['HADIR', 'TERLAMBAT', 'IZIN', 'ALPA', 'LIBUR'],
+            datasets: [{
+                data: donutArr,
+                backgroundColor: [
+                    'rgba(34,197,94,0.9)',
+                    'rgba(251,191,36,0.9)',
+                    'rgba(251,146,60,0.9)',
+                    'rgba(239,68,68,0.9)',
+                    'rgba(148,163,184,0.9)'
+                ],
+                borderColor: '#ffffff',
+                borderWidth: 3,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 12, weight: 'bold' }, padding: 15, usePointStyle: true }
                 }
-            });
+            }
+        }
+    });
+}
         }
     </script>
 @endsection
