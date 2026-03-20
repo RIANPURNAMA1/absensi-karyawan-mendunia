@@ -60,19 +60,21 @@ public function index()
     // -------------------------------------------------------
     // 2. DONUT CHART — Komposisi Hari Ini
     // -------------------------------------------------------
-    $donutToday = Absensi::selectRaw("
-        COUNT(CASE WHEN status = 'HADIR'     THEN 1 END) AS hadir,
-        COUNT(CASE WHEN status = 'TERLAMBAT' THEN 1 END) AS terlambat,
-        COUNT(CASE WHEN status = 'IZIN'      THEN 1 END) AS izin,
-        COUNT(CASE WHEN status = 'ALPA'      THEN 1 END) AS alpa
-    ")->whereDate('tanggal', Carbon::today())->first();
+   $donutToday = Absensi::selectRaw("
+    COUNT(CASE WHEN status = 'HADIR'     THEN 1 END) AS hadir,
+    COUNT(CASE WHEN status = 'TERLAMBAT' THEN 1 END) AS terlambat,
+    COUNT(CASE WHEN status = 'IZIN'      THEN 1 END) AS izin,
+    COUNT(CASE WHEN status = 'ALPA'      THEN 1 END) AS alpa,
+    COUNT(CASE WHEN status = 'LIBUR'     THEN 1 END) AS libur
+")->whereDate('tanggal', Carbon::today())->first();
 
-    $donutData = [
-        'hadir'     => (int) ($donutToday->hadir     ?? 0),
-        'terlambat' => (int) ($donutToday->terlambat ?? 0),
-        'izin'      => (int) ($donutToday->izin      ?? 0),
-        'alpa'      => (int) ($donutToday->alpa      ?? 0),
-    ];
+$donutData = [
+    'hadir'     => (int) ($donutToday->hadir     ?? 0),
+    'terlambat' => (int) ($donutToday->terlambat ?? 0),
+    'izin'      => (int) ($donutToday->izin      ?? 0),
+    'alpa'      => (int) ($donutToday->alpa      ?? 0),
+    'libur'     => (int) ($donutToday->libur     ?? 0),
+];
 
     // -------------------------------------------------------
     // 3. DATA IZIN/SAKIT TERBARU
