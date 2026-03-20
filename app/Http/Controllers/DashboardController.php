@@ -74,17 +74,30 @@ class DashboardController extends Controller
             }
         ])->get();
 
-        $labelsRasio = [];
-        $dataTotalKehadiran = [];
-        $dataPersentaseTerlambat = [];
+       // 5. Statistik Per Divisi
+$statistikDivisi = Divisi::with(['users'])->get()->map(function ($divisi) {
+    $hadir = Absensi::whereIn('user_id', $divisi->users->pluck('id'))
+        ->where('status', 'HADIR')->count();
+    $terlambat = Absensi::whereIn('user_id', $divisi->users->pluck('id'))
+        ->where('status', 'TERLAMBAT')->count();
+    $total = $hadir + $terlambat;
 
-        foreach ($statistikDivisi as $divisi) {
-            $labelsRasio[] = $divisi->nama_divisi;
-            $hadir = (int) $divisi->total_hadir;
-            $dataTotalKehadiran[] = $hadir;
-            $dataPersentaseTerlambat[] = ($hadir > 0) ? round(($divisi->total_terlambat / $hadir) * 100) : 0;
-        }
+    return [
+        'nama'              => $divisi->nama_divisi,
+        'hadir'             => $hadir,
+        'terlambat'         => $terlambat,
+        'total'             => $total,
+        'persen_hadir'      => $total > 0 ? round(($hadir / $total) * 100, 1) : 0,
+        'persen_terlambat'  => $total > 0 ? round(($terlambat / $total) * 100, 1) : 0,
+    ];
+})->filter(fn($d) => $d['total'] > 0)->values();
 
+$labelsRasio            = $statistikDivisi->pluck('nama')->toArray();
+$dataTotalKehadiran     = $statistikDivisi->pluck('total')->toArray();
+$dataHadir              = $statistikDivisi->pluck('hadir')->toArray();
+$dataTerlambat          = $statistikDivisi->pluck('terlambat')->toArray();
+$dataPersenHadir        = $statistikDivisi->pluck('persen_hadir')->toArray();
+$dataPersentaseTerlambat = $statistikDivisi->pluck('persen_terlambat')->toArray();
         // 6. Data Lembur Pending
         $notifLembur = \App\Models\Lembur::with('user')
             ->where('status', 'PENDING')
@@ -116,12 +129,12 @@ class DashboardController extends Controller
         }
 
         return view('admin.dashboard', compact(
+            'dataHadir', 'dataTerlambat', 'dataPersenHadir', 'dataPersentaseTerlambat',
             'notifLembur',
             'absensis',
             'dataIzinSakit',
             'labelsRasio',
             'dataTotalKehadiran',
-            'dataPersentaseTerlambat',
             'lokasiMarkers',
             'karyawanAktif',
             'totalHadirSemua', // Variabel nama baru agar lebih deskriptif
