@@ -51,149 +51,136 @@
         </div>
 
         <!-- Stats Cards Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-
-            <!-- Total Karyawan -->
-            <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md">
-                <div class="p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                            <i class="ph ph-users text-xl"></i>
-                        </div>
-                        <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full uppercase">Aktif</span>
-                    </div>
-                    <div>
-                        <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Karyawan</p>
-                        <div class="flex items-baseline gap-1">
-                            <h2 class="text-2xl font-bold text-gray-800">{{ $totalKaryawan ?? 0 }}</h2>
-                            <span class="text-[10px] text-gray-400">org</span>
-                        </div>
-                    </div>
-                    <div class="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center text-xs">
-                        <span class="text-gray-400">Aktif</span>
-                        <span class="font-bold text-gray-700">{{ $karyawanAktif ?? 0 }}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Hadir -->
-            <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md">
-                <div class="p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
-                            <i class="ph ph-check-circle text-xl"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Hadir</p>
-                        <div class="flex items-baseline gap-1">
-                            <h2 class="text-2xl font-bold text-gray-800">{{ $hadirHariIni ?? 0 }}</h2>
-                            <span class="text-[10px] text-emerald-500 font-medium">Masuk</span>
-                        </div>
-                    </div>
-                    <div class="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center text-xs">
-                        <span class="text-gray-400">On-Time</span>
-                        <span class="font-bold text-emerald-600">{{ $tepatWaktu ?? 0 }}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Total Kehadiran -->
-            <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+           {{-- ══════════════════════════════════════════════════════════════════
+             STAT CARDS — 7 kartu
+        ══════════════════════════════════════════════════════════════════ --}}
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-8">
+ 
+            {{-- 1. Total Karyawan --}}
+            <div class="stat-card fade-up bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
                 <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500">
+                        <i class="ph ph-users text-xl"></i>
+                    </div>
+                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wide">Aktif</span>
+                </div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Karyawan</p>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl font-extrabold text-gray-800">{{ $totalKaryawan ?? 0 }}</span>
+                    <span class="text-[10px] text-gray-400">org</span>
+                </div>
+                <div class="mt-3 pt-2.5 border-t border-gray-50 flex justify-between text-[11px]">
+                    <span class="text-gray-400">Aktif</span>
+                    <span class="font-bold text-gray-700">{{ $karyawanAktif ?? 0 }}</span>
+                </div>
+            </div>
+ 
+            {{-- 2. Hadir Hari Ini --}}
+            <div class="stat-card fade-up bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                         <i class="ph ph-check-circle text-xl"></i>
                     </div>
                 </div>
-                <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Kehadiran</p>
-                <h2 class="text-2xl font-bold text-gray-800">{{ $totalHadirSemua ?? 0 }}</h2>
-                <div class="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center text-xs">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Hadir Hari Ini</p>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl font-extrabold text-emerald-600">{{ $hadirHariIni ?? 0 }}</span>
+                    <span class="text-[10px] text-gray-400">karyawan</span>
+                </div>
+                <div class="mt-3 pt-2.5 border-t border-gray-50 flex justify-between text-[11px]">
                     <span class="text-gray-400">Tepat Waktu</span>
                     <span class="font-bold text-emerald-600">{{ $tepatWaktu ?? 0 }}</span>
                 </div>
             </div>
-
-            <!-- Terlambat -->
-            <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md">
-                <div class="p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-amber-500 group-hover:text-white transition-colors duration-300">
-                            <i class="ph ph-clock text-xl"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Terlambat</p>
-                        <h2 class="text-2xl font-bold text-gray-800">{{ $terlambat ?? 0 }}</h2>
-                    </div>
-                    <div class="mt-4">
-                        @php $persenTerlambat = $karyawanAktif > 0 ? round(($terlambat / $karyawanAktif) * 100) : 0; @endphp
-                        <div class="w-full bg-gray-100 rounded-full h-1">
-                            <div class="bg-amber-500 h-1 rounded-full" style="width: {{ $persenTerlambat }}%"></div>
-                        </div>
+ 
+            {{-- 3. Total Kehadiran (akumulatif) --}}
+            <div class="stat-card fade-up bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                        <i class="ph ph-calendar-check text-xl"></i>
                     </div>
                 </div>
-            </div>
-
-            <!-- Alpa -->
-            <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md">
-                <div class="p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-rose-600 group-hover:text-white transition-colors duration-300">
-                            <i class="ph ph-x-circle text-xl"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Alpa</p>
-                        <div class="flex items-baseline gap-1">
-                            <h2 class="text-2xl font-bold text-gray-800">{{ $tidakHadir ?? 0 }}</h2>
-                        </div>
-                    </div>
-                    <div class="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center text-xs">
-                        <span class="text-gray-400">Status</span>
-                        <span class="font-bold text-rose-600 italic">Cek</span>
-                    </div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Kehadiran</p>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-2xl font-extrabold text-gray-800">{{ $totalHadirSemua ?? 0 }}</span>
+                    <span class="text-[10px] text-gray-400">record</span>
+                </div>
+                <div class="mt-3 pt-2.5 border-t border-gray-50 flex justify-between text-[11px]">
+                    <span class="text-gray-400">On-time</span>
+                    <span class="font-bold text-blue-600">{{ $tepatWaktu ?? 0 }}</span>
                 </div>
             </div>
-
-            <!-- Project -->
-            <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md">
-                <div class="p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-                            <i class="ph ph-kanban text-xl"></i>
-                        </div>
+ 
+            {{-- 4. Terlambat --}}
+            <div class="stat-card fade-up bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                @php
+                    $ptg = ($totalHadirSemua ?? 0) > 0
+                        ? round(($terlambat / $totalHadirSemua) * 100)
+                        : 0;
+                @endphp
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-amber-50 text-amber-500">
+                        <i class="ph ph-clock text-xl"></i>
                     </div>
-                    <div>
-                        <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Project</p>
-                        <h2 class="text-2xl font-bold text-gray-800">{{ $projectAktif ?? 0 }}</h2>
-                    </div>
-                    <div class="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center text-xs">
-                        <span class="text-gray-400">Done</span>
-                        <span class="font-bold text-indigo-600">{{ $projectSelesai ?? 0 }}</span>
-                    </div>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full
+                        {{ $ptg >= 30 ? 'text-rose-600 bg-rose-50' : 'text-amber-600 bg-amber-50' }}">
+                        {{ $ptg }}%
+                    </span>
+                </div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Terlambat</p>
+                <span class="text-2xl font-extrabold text-amber-600">{{ $terlambat ?? 0 }}</span>
+                <div class="mt-3 w-full bg-gray-100 rounded-full h-1.5">
+                    <div class="bg-amber-400 h-1.5 rounded-full transition-all duration-700"
+                         style="width:{{ min($ptg,100) }}%"></div>
                 </div>
             </div>
-
-            <!-- Izin/Sakit -->
-            <div class="stat-card group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md">
-                <div class="p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-300">
-                            <i class="ph ph-file-text text-xl"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Izin/Sakit</p>
-                        <h2 class="text-2xl font-bold text-gray-800">{{ $izinCuti ?? 0 }}</h2>
-                    </div>
-                    <div class="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center text-xs">
-                        <span class="text-gray-400">Pending</span>
-                        <span class="font-bold text-orange-500">{{ $izinPendingCount ?? 0 }}</span>
+ 
+            {{-- 5. Alpa --}}
+            <div class="stat-card fade-up bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-500">
+                        <i class="ph ph-x-circle text-xl"></i>
                     </div>
                 </div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Alpa</p>
+                <span class="text-2xl font-extrabold text-rose-600">{{ $tidakHadir ?? 0 }}</span>
+                <div class="mt-3 pt-2.5 border-t border-gray-50 flex justify-between text-[11px]">
+                    <span class="text-gray-400">Status</span>
+                    <span class="font-bold text-rose-500 italic">Perlu Cek</span>
+                </div>
             </div>
-
-        </div>
+ 
+            {{-- 6. Izin / Sakit --}}
+            <div class="stat-card fade-up bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                        <i class="ph ph-file-text text-xl"></i>
+                    </div>
+                </div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Izin / Sakit</p>
+                <span class="text-2xl font-extrabold text-gray-800">{{ $izinCuti ?? 0 }}</span>
+                <div class="mt-3 pt-2.5 border-t border-gray-50 flex justify-between text-[11px]">
+                    <span class="text-gray-400">Pending</span>
+                    <span class="font-bold text-orange-500">{{ $izinPendingCount ?? 0 }}</span>
+                </div>
+            </div>
+ 
+            {{-- 7. Project --}}
+            <div class="stat-card fade-up bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                        <i class="ph ph-kanban text-xl"></i>
+                    </div>
+                </div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Project</p>
+                <span class="text-2xl font-extrabold text-gray-800">{{ $projectAktif ?? 0 }}</span>
+                <div class="mt-3 pt-2.5 border-t border-gray-50 flex justify-between text-[11px]">
+                    <span class="text-gray-400">Selesai</span>
+                    <span class="font-bold text-indigo-600">{{ $projectSelesai ?? 0 }}</span>
+                </div>
+            </div>
+ 
+        </div>{{-- /stat cards --}}
 
         <!-- ============================================================ -->
         <!--  RASIO KETERLAMBATAN — Stacked Horizontal Bar (% Hadir vs %) -->
