@@ -77,7 +77,7 @@ public function index()
     // -------------------------------------------------------
     // 3. DATA IZIN/SAKIT TERBARU
     // -------------------------------------------------------
-    $dataIzinSakit = \App\Models\Izin::with(['user', 'cabang'])
+    $dataIzinSakit = \App\Models\Izin::with(['user'])
         ->orderBy('created_at', 'desc')
         ->take(10)
         ->get();
