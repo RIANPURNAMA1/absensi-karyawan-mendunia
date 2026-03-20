@@ -1098,11 +1098,15 @@
                 }
             });
 
-            // ==========================================
-            // 3. DONUT — Komposisi Hari Ini
-            // ==========================================
             const ctxDonut = document.getElementById('compositionDonutChart').getContext('2d');
-            const donutValues = Object.values(@json($donutData ?? []));
+            const donutRaw = @json($donutData ?? []);
+            const donutValues = [
+                donutRaw.hadir ?? 0,
+                donutRaw.terlambat ?? 0,
+                donutRaw.izin ?? 0,
+                donutRaw.alpa ?? 0,
+                donutRaw.libur ?? 0,
+            ];
             new Chart(ctxDonut, {
                 type: 'doughnut',
                 data: {
@@ -1110,11 +1114,11 @@
                     datasets: [{
                         data: donutValues,
                         backgroundColor: [
-                            'rgba(34,197,94,0.9)', // hijau — hadir
-                            'rgba(251,191,36,0.9)', // kuning — terlambat
-                            'rgba(251,146,60,0.9)', // orange — izin
-                            'rgba(239,68,68,0.9)', // merah — alpa
-                            'rgba(148,163,184,0.9)' // slate — libur
+                            'rgba(34,197,94,0.9)',
+                            'rgba(251,191,36,0.9)',
+                            'rgba(251,146,60,0.9)',
+                            'rgba(239,68,68,0.9)',
+                            'rgba(148,163,184,0.9)'
                         ],
                         borderColor: '#ffffff',
                         borderWidth: 3,
