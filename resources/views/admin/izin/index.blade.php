@@ -1,4 +1,3 @@
-```blade
 @extends('app')
 
 @section('content')
