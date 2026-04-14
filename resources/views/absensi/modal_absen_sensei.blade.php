@@ -102,7 +102,7 @@
         const video = document.getElementById('videoSensei');
         try {
             videoStreamSensei = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' },
+                video: { facingMode: 'user' },
                 audio: false 
             });
             video.srcObject = videoStreamSensei;
