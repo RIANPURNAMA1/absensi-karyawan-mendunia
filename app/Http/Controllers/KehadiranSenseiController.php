@@ -24,6 +24,26 @@ class KehadiranSenseiController extends Controller
 
         $list_kelas = KelasSensei::orderBy('nama_kelas', 'asc')->get();
 
+        // Get all kelas sensei grouped by user (creator)
+        $kelasByUser = User::where('role', 'KARYAWAN')
+            ->whereHas('kelasSensei')
+            ->with(['kelasSensei' => function ($q) {
+                $q->orderBy('tanggal_mulai', 'desc');
+            }])
+            ->get()
+            ->map(function ($user) {
+                foreach ($user->kelasSensei as $kelas) {
+                    $tglMulai = \Carbon\Carbon::parse($kelas->tanggal_mulai);
+                    $tglSelesai = \Carbon\Carbon::parse($kelas->tanggal_selesai);
+                    $kelas->total_pertemuan = $tglMulai->copy()->diffInDaysFiltered(function ($date) {
+                        return $date->dayOfWeek !== 0 && $date->dayOfWeek !== 6;
+                    }, $tglSelesai->addDay()) + 1;
+                    $kelas->jumlah_absen = \App\Models\AbsensiSensei::where('kelas_sensei_id', $kelas->id)->count();
+                }
+
+                return $user;
+            });
+
         $start_date = $request->start_date ?? now('Asia/Jakarta')->startOfMonth()->toDateString();
         $end_date = $request->end_date ?? now('Asia/Jakarta')->toDateString();
         $user_id = $request->user_id;
@@ -79,13 +99,25 @@ class KehadiranSenseiController extends Controller
             $tanggalMulai = \Carbon\Carbon::parse($kelas->tanggal_mulai);
             $tanggalSelesai = \Carbon\Carbon::parse($kelas->tanggal_selesai);
 
-            // Hitung total pertemuan dari selisih tanggal
-            $totalPertemuan = $tanggalMulai->diffInDays($tanggalSelesai) + 1;
+            // Hitung total pertemuan (hanya hari Senin-Jumat)
+            $totalPertemuan = $tanggalMulai->diffInDaysFiltered(function ($date) {
+                return $date->dayOfWeek !== 0 && $date->dayOfWeek !== 6;
+            }, $tanggalSelesai->addDay()) + 1;
 
             // Hitung pertemuan ke- untuk setiap absensi
             $items = $items->map(function ($absen) use ($tanggalMulai) {
                 $tanggalAbsen = \Carbon\Carbon::parse($absen->tanggal);
-                $absen->pertemuan_ke = $tanggalMulai->diffInDays($tanggalAbsen) + 1;
+
+                // Hitung pertemuan ke dengan skip weekend
+                $pertemuanKe = 1;
+                $checkDate = $tanggalMulai->copy();
+                while ($checkDate->lt($tanggalAbsen)) {
+                    if ($checkDate->dayOfWeek !== 0 && $checkDate->dayOfWeek !== 5) {
+                        $pertemuanKe++;
+                    }
+                    $checkDate->addDay();
+                }
+                $absen->pertemuan_ke = $pertemuanKe;
 
                 return $absen;
             });
@@ -116,6 +148,7 @@ class KehadiranSenseiController extends Controller
             'list_divisi' => $list_divisi,
             'list_sensei' => $list_sensei,
             'list_kelas' => $list_kelas,
+            'kelasByUser' => $kelasByUser,
             'user_id_selected' => $user_id,
             'kelas_id_selected' => $kelas_id,
             'status_selected' => $status,
@@ -192,6 +225,13 @@ class KehadiranSenseiController extends Controller
                     continue;
                 }
 
+                // Skip hari Sabtu (5) dan Minggu (0)
+                if ($current->dayOfWeek === 0 || $current->dayOfWeek === 5) {
+                    $current->addDay();
+
+                    continue;
+                }
+
                 $existingAbsensi = AbsensiSensei::where('kelas_sensei_id', $kelas->id)
                     ->where('user_id', $sensei->id)
                     ->where('tanggal', $tanggalStr)
@@ -247,7 +287,11 @@ class KehadiranSenseiController extends Controller
 
         $tanggalMulai = \Carbon\Carbon::parse($kelas->tanggal_mulai);
         $tanggalSelesai = \Carbon\Carbon::parse($kelas->tanggal_selesai);
-        $totalPertemuan = $tanggalMulai->diffInDays($tanggalSelesai) + 1;
+
+        // Hitung total pertemuan (hanya hari Senin-Jumat)
+        $totalPertemuan = $tanggalMulai->copy()->diffInDaysFiltered(function ($date) {
+            return $date->dayOfWeek !== 0 && $date->dayOfWeek !== 6;
+        }, $tanggalSelesai->addDay()) + 1;
 
         $absensis = AbsensiSensei::where('user_id', $userId)
             ->where('kelas_sensei_id', $kelasId)
@@ -255,7 +299,17 @@ class KehadiranSenseiController extends Controller
             ->get()
             ->map(function ($absen) use ($tanggalMulai) {
                 $tanggalAbsen = \Carbon\Carbon::parse($absen->tanggal);
-                $absen->pertemuan_ke = $tanggalMulai->diffInDays($tanggalAbsen) + 1;
+
+                // Hitung pertemuan ke dengan skip weekend
+                $pertemuanKe = 1;
+                $checkDate = $tanggalMulai->copy();
+                while ($checkDate->lt($tanggalAbsen)) {
+                    if ($checkDate->dayOfWeek !== 0 && $checkDate->dayOfWeek !== 5) {
+                        $pertemuanKe++;
+                    }
+                    $checkDate->addDay();
+                }
+                $absen->pertemuan_ke = $pertemuanKe;
 
                 return $absen;
             });
@@ -280,6 +334,47 @@ class KehadiranSenseiController extends Controller
             'total_pertemuan' => $totalPertemuan,
             'absensis' => $absensis,
             'stats' => $stats,
+        ]);
+    }
+
+    public function kelasIndex(Request $request)
+    {
+        $user_id = $request->user_id;
+        $status = $request->status;
+
+        $query = KelasSensei::with('user');
+
+        if ($user_id) {
+            $query->where('user_id', $user_id);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $kelas = $query->orderBy('tanggal_mulai', 'desc')->get();
+
+        $kelas = $kelas->map(function ($kelasItem) {
+            $tglMulai = \Carbon\Carbon::parse($kelasItem->tanggal_mulai);
+            $tglSelesai = \Carbon\Carbon::parse($kelasItem->tanggal_selesai);
+            $kelasItem->total_pertemuan = $tglMulai->copy()->diffInDaysFiltered(function ($date) {
+                return $date->dayOfWeek !== 0 && $date->dayOfWeek !== 6;
+            }, $tglSelesai->addDay()) + 1;
+            $kelasItem->jumlah_absen = \App\Models\AbsensiSensei::where('kelas_sensei_id', $kelasItem->id)->count();
+
+            return $kelasItem;
+        });
+
+        $list_sensei = User::where('role', 'KARYAWAN')
+            ->whereHas('kelasSensei')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        return view('admin.kelas_sensei.index', [
+            'kelas' => $kelas,
+            'list_sensei' => $list_sensei,
+            'user_id_selected' => $user_id,
+            'status_selected' => $status,
         ]);
     }
 }

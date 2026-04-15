@@ -12,6 +12,7 @@ use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\KehadiranController;
 use App\Http\Controllers\KehadiranSenseiController;
 use App\Http\Controllers\LemburController;
+use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RekapController;
 use App\Http\Controllers\SenseiController;
@@ -103,10 +104,14 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::get('/admin/kehadiran-sensei/kelas/{userId}', [KehadiranSenseiController::class, 'getKelasByUser']);
     Route::post('/admin/kehadiran-sensei/update-status', [KehadiranSenseiController::class, 'updateStatus']);
 
+    // Kelas Sensei (menu terpisah)
+    Route::get('/kelas-sensei', [KehadiranSenseiController::class, 'kelasIndex']);
+
     // Agenda
     Route::get('/data-agenda', [App\Http\Controllers\Admin\AgendaController::class, 'index'])->name('admin.agenda.index');
 
     // Monitoring
+    Route::get('/monitoring-lokasi', [MonitoringController::class, 'monitoring']);
 
     // User Management
     Route::get('/daftar-user', [UserController::class, 'userKaryawan'])->name('user.karyawan');
