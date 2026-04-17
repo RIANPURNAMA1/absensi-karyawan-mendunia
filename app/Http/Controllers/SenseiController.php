@@ -46,7 +46,7 @@ class SenseiController extends Controller
     {
         $request->validate([
             'nama_kelas' => 'required|string|max:255',
-            'level' => 'required|in:pemula,menengah,mahir,lanjutan',
+            'level' => 'required|in:1,2,3,4',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'catatan' => 'nullable|string',

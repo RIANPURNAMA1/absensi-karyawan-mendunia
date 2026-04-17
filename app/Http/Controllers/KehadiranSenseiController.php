@@ -50,6 +50,28 @@ class KehadiranSenseiController extends Controller
             ->orderBy('jam_masuk', 'asc')
             ->get();
 
+        $this->generateAlphaForRange($start_date, $end_date);
+
+        $absensis = AbsensiSensei::with(['user', 'kelasSensei'])
+            ->whereBetween('tanggal', [$start_date, $end_date]);
+
+        if ($user_id) {
+            $absensis->where('user_id', $user_id);
+        }
+
+        if ($kelas_id) {
+            $absensis->where('kelas_sensei_id', $kelas_id);
+        }
+
+        if ($status) {
+            $absensis->where('status', $status);
+        }
+
+        $absensis = $absensis->orderBy('kelas_sensei_id', 'asc')
+            ->orderBy('tanggal', 'desc')
+            ->orderBy('jam_masuk', 'asc')
+            ->get();
+
         // Group by kelas
         $groupedAbsensis = $absensis->groupBy('kelas_sensei_id')->map(function ($items) {
             $firstItem = $items->first();
@@ -77,6 +99,8 @@ class KehadiranSenseiController extends Controller
                 'terlambat' => $items->where('status', 'TERLAMBAT')->count(),
                 'pulang_cepat' => $items->where('status', 'PULANG LEBIH AWAL')->count(),
                 'tidak_pulang' => $items->where('status', 'TIDAK ABSEN PULANG')->count(),
+                'alpa' => $items->where('status', 'ALPA')->count(),
+                'libur' => $items->where('status', 'LIBUR')->count(),
             ];
         });
 
@@ -115,6 +139,86 @@ class KehadiranSenseiController extends Controller
         ];
     }
 
+    private function generateAlphaForRange($startDate, $endDate)
+    {
+        $start = \Carbon\Carbon::parse($startDate, 'Asia/Jakarta');
+        $end = \Carbon\Carbon::parse($endDate, 'Asia/Jakarta');
+        $now = \Carbon\Carbon::now('Asia/Jakarta');
+
+        $kelasAktif = KelasSensei::where('status', 'aktif')
+            ->with('user')
+            ->get();
+
+        foreach ($kelasAktif as $kelas) {
+            $sensei = $kelas->user;
+            if (! $sensei) {
+                continue;
+            }
+
+            $tanggalMulai = \Carbon\Carbon::parse($kelas->tanggal_mulai, 'Asia/Jakarta');
+            $tanggalSelesai = \Carbon\Carbon::parse($kelas->tanggal_selesai, 'Asia/Jakarta');
+
+            if ($tanggalSelesai->lt($start) || $tanggalMulai->gt($end)) {
+                continue;
+            }
+
+            $shift = $sensei->shift;
+            $jamMasukShift = $shift
+                ? \Carbon\Carbon::parse($shift->jam_masuk, 'Asia/Jakarta')
+                : \Carbon\Carbon::parse('09:00:00', 'Asia/Jakarta');
+            $toleransi = $shift ? ($shift->toleransi ?? 0) : 0;
+            $batasJamMasuk = $jamMasukShift->copy()->addMinutes(30 + $toleransi);
+
+            $current = $start->copy();
+            while ($current->lte($end)) {
+                $tanggalStr = $current->toDateString();
+
+                if ($current->gt($now)) {
+                    $current->addDay();
+
+                    continue;
+                }
+
+                if ($current->lt($tanggalMulai) || $current->gt($tanggalSelesai)) {
+                    $current->addDay();
+
+                    continue;
+                }
+
+                $hariLibur = \App\Models\HariLibur::apakahLibur($tanggalStr);
+                if ($hariLibur) {
+                    $current->addDay();
+
+                    continue;
+                }
+
+                $existingAbsensi = AbsensiSensei::where('kelas_sensei_id', $kelas->id)
+                    ->where('user_id', $sensei->id)
+                    ->where('tanggal', $tanggalStr)
+                    ->first();
+
+                if (! $existingAbsensi) {
+                    $jamMasukBatas = $batasJamMasuk->copy()->setTimeFromTimeString($current->format('H:i:s'));
+                    if ($jamMasukBatas->lt($jamMasukShift)) {
+                        $jamMasukBatas->addDay();
+                    }
+
+                    if ($now->gte($jamMasukBatas)) {
+                        AbsensiSensei::create([
+                            'kelas_sensei_id' => $kelas->id,
+                            'user_id' => $sensei->id,
+                            'tanggal' => $tanggalStr,
+                            'status' => 'ALPA',
+                            'catatan' => 'Sistem otomatis: Tidak melakukan absensi setelah melewati batas jam masuk shift.',
+                        ]);
+                    }
+                }
+
+                $current->addDay();
+            }
+        }
+    }
+
     public function getKelasByUser($userId)
     {
         $kelas = KelasSensei::where('user_id', $userId)
@@ -128,7 +232,7 @@ class KehadiranSenseiController extends Controller
     {
         $request->validate([
             'id' => 'required|exists:absensi_sensei,id',
-            'status' => 'required|in:HADIR,TERLAMBAT,PULANG LEBIH AWAL,TIDAK ABSEN PULANG',
+            'status' => 'required|in:HADIR,TERLAMBAT,PULANG LEBIH AWAL,TIDAK ABSEN PULANG,ALPA,LIBUR',
         ]);
 
         $absen = AbsensiSensei::findOrFail($request->id);
@@ -161,6 +265,8 @@ class KehadiranSenseiController extends Controller
             'terlambat' => $absensis->where('status', 'TERLAMBAT')->count(),
             'pulang_cepat' => $absensis->where('status', 'PULANG LEBIH AWAL')->count(),
             'tidak_pulang' => $absensis->where('status', 'TIDAK ABSEN PULANG')->count(),
+            'alpa' => $absensis->where('status', 'ALPA')->count(),
+            'libur' => $absensis->where('status', 'LIBUR')->count(),
         ];
 
         return response()->json([

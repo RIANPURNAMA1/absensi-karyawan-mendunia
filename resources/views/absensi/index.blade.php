@@ -236,7 +236,7 @@
                 <span class="text-[11px] font-medium text-gray-700">Sensei</span>
             </button>
 
-            <button onclick="location.href='/absensi/agenda'"
+            <button onclick="openModalAgenda()"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
                 <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="calendar-check" class="w-5 h-5 text-amber-600"></i>
@@ -245,6 +245,76 @@
             </button>
         </div>
     </div>
+
+    <!-- AGENDA HARI INI -->
+    @if($agendaHariIni && $agendaHariIni->count() > 0)
+    <div class="px-5 pb-5">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-bold text-gray-900">Agenda Hari Ini</h2>
+            <button onclick="openModalAgenda()" class="text-amber-600 text-sm font-semibold flex items-center gap-1">
+                <i data-lucide="plus" class="w-4 h-4"></i> Tambah
+            </button>
+        </div>
+        <div class="space-y-3">
+            @foreach($agendaHariIni as $agenda)
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-amber-100">
+                <div class="flex items-start gap-3">
+                    @if($agenda->foto)
+                    <img src="{{ asset('uploads/agenda/'.$agenda->foto) }}" alt="Foto" class="w-16 h-16 object-cover rounded-xl">
+                    @else
+                    <div class="w-16 h-16 bg-amber-100 rounded-xl flex items-center justify-center">
+                        <i data-lucide="camera" class="w-8 h-8 text-amber-600"></i>
+                    </div>
+                    @endif
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            @if($agenda->keterangan)
+                            <h3 class="font-semibold text-gray-900">{{ $agenda->keterangan }}</h3>
+                            @else
+                            <h3 class="font-semibold text-gray-900">Agenda tanpa keterangan</h3>
+                            @endif
+                            @if($agenda->jam_absen_masuk && $agenda->jam_absen_keluar)
+                            <span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">Selesai</span>
+                            @elseif($agenda->jam_absen_masuk)
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full">Hadir</span>
+                            @else
+                            <span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full">Terjadwal</span>
+                            @endif
+                        </div>
+                        <div class="flex items-center gap-1 mt-2">
+                            <i data-lucide="clock" class="w-3 h-3 text-gray-400"></i>
+                            <span class="text-[10px] text-gray-500">
+                                {{ $agenda->jam_absen_masuk ? \Carbon\Carbon::parse($agenda->jam_absen_masuk)->format('H:i') : '' }}
+                                {{ $agenda->jam_absen_keluar ? '- '.\Carbon\Carbon::parse($agenda->jam_absen_keluar)->format('H:i') : '' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                @if($agenda->jam_absen_masuk && !$agenda->jam_absen_keluar)
+                <button onclick="absenAgendaPulang({{ $agenda->id }})" class="mt-3 w-full py-2.5 bg-green-600 text-white rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    Absen Pulang
+                </button>
+                @endif
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @else
+    <div class="px-5 pb-5">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-bold text-gray-900">Agenda Hari Ini</h2>
+            <button onclick="openModalAgenda()" class="text-amber-600 text-sm font-semibold flex items-center gap-1">
+                <i data-lucide="plus" class="w-4 h-4"></i> Tambah
+            </button>
+        </div>
+        <div class="text-center py-8 text-gray-400 bg-gray-50 rounded-2xl">
+            <i data-lucide="camera" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
+            <p class="text-sm">Belum ada agenda hari ini</p>
+            <p class="text-xs mt-1">Klik + untuk absen agenda</p>
+        </div>
+    </div>
+    @endif
 
     <!-- KELAS SENSEI AKTIF -->
     <div class="px-5 pb-5" id="sectionKelasSensei">
@@ -282,7 +352,7 @@
                                 </div>
                                 <div>
                                     <h3 class="font-bold text-gray-900">{{ $kelas->nama_kelas }}</h3>
-                                    <p class="text-xs text-gray-500 capitalize">{{ $kelas->level }} - {{ \Carbon\Carbon::parse($kelas->tanggal_mulai)->format('d M') }} - {{ \Carbon\Carbon::parse($kelas->tanggal_selesai)->format('d M') }}</p>
+                                    <p class="text-xs text-gray-500">Level {{ $kelas->level }} - {{ \Carbon\Carbon::parse($kelas->tanggal_mulai)->format('d M') }} - {{ \Carbon\Carbon::parse($kelas->tanggal_selesai)->format('d M') }}</p>
                                 </div>
                             </div>
                             @if($sudahMasuk && !$sudahPulang)
@@ -297,7 +367,7 @@
                                     Absen Masuk
                                 </button>
                             @elseif(!$sudahPulang)
-                                <button onclick="absenSenseiPulang({{ $kelas->id }})" class="flex-1 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl text-sm font-bold active:scale-95 transition">
+                                <button onclick="absenSenseiPulang({{ $kelas->id }})" class="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-bold active:scale-95 transition">
                                     Absen Pulang
                                 </button>
                             @else
@@ -402,7 +472,7 @@
         <div class="space-y-3">
             <div id="riwayatContainer">
                 @forelse ($riwayat as $a)
-                    <div class="bg-white rounded-2xl p-4 mb-2 shadow-sm flex items-center gap-4">
+                    <div class="bg-white rounded-2xl p-4 mb-2 shadow-sm flex items-center gap-4 border-l-4 border-blue-500">
                         <a href="{{ route('absensi.riwayat') }}"
                             class="flex items-center gap-4 p-4 hover:bg-gray-50 transition w-full">
                             <div
@@ -418,7 +488,10 @@
                             </div>
 
                             <div class="flex-1">
-                                <h3 class="font-semibold text-gray-900 mb-1">{{ $a->status }}</h3>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">KARYAWAN</span>
+                                    <h3 class="font-semibold text-gray-900">{{ $a->status }}</h3>
+                                </div>
                                 <div class="flex gap-4 text-xs text-gray-500">
                                     <span>In: {{ $a->jam_masuk ?? '-' }}</span>
                                     <span>Out: {{ $a->jam_keluar ?? '-' }}</span>
@@ -430,8 +503,31 @@
                     </div>
                 @empty
                     <div class="text-center text-gray-500 text-sm">
-                        Belum ada riwayat absensi
+                        Belum ada riwayat absensi karyawan
                     </div>
+                @endforelse
+
+                {{-- Riwayat Sensei --}}
+                @forelse ($riwayatSensei as $a)
+                    <a href="{{ route('absensi.detailSensei', ['tanggal' => $a->tanggal, 'kelasId' => $a->kelas_sensei_id]) }}"
+                        class="block bg-white rounded-xl p-3 border border-gray-100">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                                <span class="text-sm font-semibold text-blue-600">{{ \Carbon\Carbon::parse($a->tanggal)->format('d') }}</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-medium text-blue-500">SENSEI</span>
+                                    <span class="text-xs text-gray-400">{{ $a->kelasSensei->nama_kelas ?? '-' }}</span>
+                                </div>
+                                <div class="text-xs text-gray-400">
+                                    {{ $a->jam_masuk ?? '-' }} - {{ $a->jam_keluar ?? '-' }}
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+                        </div>
+                    </a>
+                @empty
                 @endforelse
             </div>
 
@@ -439,10 +535,31 @@
     </div>
 
 
-    <!-- BOTTOM NAV -->
+<!-- BOTTOM NAV -->
     @include('components.bottom_Nav')
     @include('absensi.modal_manual')
-@include('absensi.modal_sensei')
+    @include('absensi.modal_sensei')
+    @include('absensi.modal_agenda')
+
+    <!-- Modal Kamera untuk Agenda -->
+    <div id="modalKameraAgenda" class="fixed inset-0 z-[9999] bg-black hidden">
+        <video id="videoPreviewAgenda" class="w-full h-full object-cover transform scale-x-[-1]" autoplay playsinline muted></video>
+        
+        <div class="absolute inset-0 flex flex-col justify-between items-center p-6">
+            <div class="w-full flex justify-end">
+                <button onclick="hentikanKameraAgenda()" class="bg-black/50 backdrop-blur-md p-3 rounded-full text-white">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="flex flex-col items-center gap-6 pb-12">
+                <button onclick="ambilFotoAgenda()" class="group relative w-20 h-20 bg-white rounded-full p-1 shadow-[0_0_30px_rgba(255,255,255,0.6)] active:scale-95">
+                    <div class="w-full h-full rounded-full border-[3px] border-gray-800"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+    <canvas id="canvasAgenda" class="hidden"></canvas>
 
     <!-- Modal Kamera Absensi - FIXED VERSION -->
     <div id="modalKameraAbsen" class="fixed inset-0 z-[9999] bg-black hidden items-center justify-center">
@@ -822,18 +939,19 @@
                 url: "{{ route('absensi.riwayat.json') }}",
                 method: "GET",
                 cache: false, // penting biar gak ambil cache lama
-                success: function(data) {
+                success: function(response) {
+                    const dataKaryawan = response.karyawan || [];
+                    const dataSensei = response.sensei || [];
 
                     let html = '';
 
-                    if (!data || data.length === 0) {
+                    if ((!dataKaryawan || dataKaryawan.length === 0) && (!dataSensei || dataSensei.length === 0)) {
                         html = `<div class="text-center text-gray-500 text-sm">
                             Belum ada riwayat absensi
                         </div>`;
                     } else {
-
-                        data.forEach(a => {
-
+                        // Karyawan
+                        dataKaryawan.forEach(a => {
                             const date = new Date(a.tanggal);
                             const day = date.toLocaleDateString('id-ID', {
                                 weekday: 'short'
@@ -844,28 +962,72 @@
                             const jamKeluar = a.jam_keluar ? a.jam_keluar : '-';
 
                             html += `
-                    <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4 animate-fadeIn">
-                        <a href="/absensi/riwayat"
-                           class="flex items-center gap-4 p-4 hover:bg-gray-50 transition w-full">
+                            <div class="bg-white rounded-2xl p-4 mb-2 shadow-sm flex items-center gap-4 border-l-4 border-blue-500 animate-fadeIn">
+                                <a href="/absensi/riwayat"
+                                   class="flex items-center gap-4 p-4 hover:bg-gray-50 transition w-full">
 
-                            <div class="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
-                                <div class="text-center">
-                                    <div class="text-xs text-blue-600 font-medium">${day}</div>
-                                    <div class="text-xl font-bold text-blue-700">${dayNumber}</div>
-                                </div>
-                            </div>
+                                    <div class="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
+                                        <div class="text-center">
+                                            <div class="text-xs text-blue-600 font-medium">${day}</div>
+                                            <div class="text-xl font-bold text-blue-700">${dayNumber}</div>
+                                        </div>
+                                    </div>
 
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-gray-900 mb-1">${a.status}</h3>
-                                <div class="flex gap-4 text-xs text-gray-500">
-                                    <span>In: ${jamMasuk}</span>
-                                    <span>Out: ${jamKeluar}</span>
-                                </div>
-                            </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">KARYAWAN</span>
+                                        </div>
+                                        <h3 class="font-semibold text-gray-900 mb-1">${a.status || '-'}</h3>
+                                        <div class="flex gap-4 text-xs text-gray-500">
+                                            <span>In: ${jamMasuk}</span>
+                                            <span>Out: ${jamKeluar}</span>
+                                        </div>
+                                    </div>
 
-                            <i class="w-5 h-5 text-gray-400" data-lucide="chevron-right"></i>
-                        </a>
-                    </div>`;
+                                    <i class="w-5 h-5 text-gray-400" data-lucide="chevron-right"></i>
+                                </a>
+                            </div>`;
+                        });
+
+                        // Sensei
+                        dataSensei.forEach(a => {
+                            const date = new Date(a.tanggal);
+                            const day = date.toLocaleDateString('id-ID', {
+                                weekday: 'short'
+                            });
+                            const dayNumber = String(date.getDate()).padStart(2, '0');
+
+                            const jamMasuk = a.jam_masuk ? a.jam_masuk : '-';
+                            const jamKeluar = a.jam_keluar ? a.jam_keluar : '-';
+                            const kelasNama = a.kelas_sensei ? a.kelas_sensei.nama_kelas : '-';
+
+                            html += `
+                            <div class="bg-white rounded-2xl p-4 mb-2 shadow-sm flex items-center gap-4 border-l-4 border-violet-500 animate-fadeIn">
+                                <a href="/absensi/riwayat"
+                                   class="flex items-center gap-4 p-4 hover:bg-gray-50 transition w-full">
+
+                                    <div class="w-16 h-16 bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl flex items-center justify-center">
+                                        <div class="text-center">
+                                            <div class="text-xs text-violet-600 font-medium">${day}</div>
+                                            <div class="text-xl font-bold text-violet-700">${dayNumber}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="text-[10px] font-bold text-violet-600 bg-violet-100 px-2 py-0.5 rounded">SENSEI</span>
+                                            <span class="text-xs text-gray-500">${kelasNama}</span>
+                                        </div>
+                                        <h3 class="font-semibold text-gray-900 mb-1">${a.status || '-'}</h3>
+                                        <div class="flex gap-4 text-xs text-gray-500">
+                                            <span>In: ${jamMasuk}</span>
+                                            <span>Out: ${jamKeluar}</span>
+                                        </div>
+                                    </div>
+
+                                    <i class="w-5 h-5 text-gray-400" data-lucide="chevron-right"></i>
+                                </a>
+                            </div>`;
                         });
                     }
 
@@ -919,108 +1081,178 @@
                 window.focus();
                 this.close();
             };
-        }
+                }
+            }
+        });
     </script>
 
-    {{-- <script>
-        function openAbsenManual() {
-            const modal = document.getElementById('modalAbsenManual');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeAbsenManual() {
-            const modal = document.getElementById('modalAbsenManual');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-    </script> --}}
-
-    {{-- <script>
-        const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
-
-        async function startCamera(videoElement) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: true
-                });
-                videoElement.srcObject = stream;
-            } catch (err) {
-                console.error("Gagal akses kamera:", err);
-            }
-        }
-
-
-        async function detectFace(videoElement) {
-            const canvas = faceapi.createCanvasFromMedia(videoElement);
-            videoElement.parentElement.appendChild(canvas);
-            const displaySize = {
-                width: videoElement.clientWidth,
-                height: videoElement.clientHeight
-            };
-            faceapi.matchDimensions(canvas, displaySize);
-
-            const interval = setInterval(async () => {
-                const detections = await faceapi.detectAllFaces(
-                    videoElement,
-                    new faceapi.TinyFaceDetectorOptions()
-                ).withFaceLandmarks().withFaceDescriptors();
-
-                // Tampilkan bounding box
-                const resizedDetections = faceapi.resizeResults(detections, displaySize);
-                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-                faceapi.draw.drawDetections(canvas, resizedDetections);
-
-                if (detections.length > 0) {
-                    const faceEmbedding = detections[0].descriptor;
-
-                    // Kirim otomatis ke backend
-                    fetch('/absensi/masuk', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({
-                                face_embedding: JSON.stringify(faceEmbedding),
-                                latitude: null, // nanti bisa pakai geolocation
-                                longitude: null
-                            })
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            console.log(data);
-                            if (data.absensi) {
-                                alert("Absen berhasil: " + data.message);
-                                videoElement.srcObject.getTracks().forEach(track => track.stop());
-                                clearInterval(interval);
-                            }
-                        })
-                        .catch(err => console.error(err));
+    <script>
+        window.absenAgendaPulang = function(id) {
+            fetch('/absensi/agenda/absen-pulang', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ id: id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    Swal.fire('Berhasil', 'Absen pulang agenda berhasil', 'success').then(() => {
+                        location.reload();
+                    });
                 }
-            }, 1000);
-        }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'Gagal absen pulang', 'error');
+            });
+        };
+    </script>
 
-        function openAbsenManual() {
-            const modal = document.getElementById('modalAbsenManual');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-
-            const video = document.getElementById('videoStream');
-            startCamera(video);
-        }
-
-        function closeAbsenManual() {
-            const modal = document.getElementById('modalAbsenManual');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-
-            const video = document.getElementById('videoStream');
-            if (video.srcObject) {
-                video.srcObject.getTracks().forEach(track => track.stop());
+    <script>
+        // Agenda functions - globally accessible
+        function openModalAgenda() {
+            const modal = document.getElementById('modalAgenda');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                startAgendaCamera();
             }
         }
-    </script> --}}
+
+        function closeModalAgenda() {
+            const modal = document.getElementById('modalAgenda');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+                stopAgendaCamera();
+            }
+        }
+
+        function startAgendaCamera() {
+            const video = document.getElementById('videoAgenda');
+            if (video && !video.srcObject) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(s => {
+                        window.streamAgenda = s;
+                        video.srcObject = s;
+                    })
+                    .catch(err => {
+                        console.error('Kamera error:', err);
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire('Error', 'Tidak dapat akses kamera', 'error');
+                        }
+                    });
+            }
+        }
+
+        function stopAgendaCamera() {
+            if (window.streamAgenda) {
+                window.streamAgenda.getTracks().forEach(track => track.stop());
+                window.streamAgenda = null;
+            }
+        }
+
+        function captureAgendaPhoto() {
+            const video = document.getElementById('videoAgenda');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            return canvas.toDataURL('image/jpeg', 0.8);
+        }
+
+        function handleAmbilFoto() {
+            const photoData = captureAgendaPhoto();
+            stopAgendaCamera();
+            
+            const photoPreview = document.getElementById('agendaPhotoPreview');
+            const previewImg = document.getElementById('previewAgendaImg');
+            const cameraPreview = document.getElementById('agendaCameraPreview');
+            const btnSimpan = document.getElementById('btnSimpanAgenda');
+            
+            if (photoPreview && previewImg) {
+                previewImg.src = photoData;
+                photoPreview.classList.remove('hidden');
+                cameraPreview.classList.add('hidden');
+                
+                // Hide Ambil Foto button, show Simpan button
+                const btnAmbil = document.querySelector('button[onclick="startAgendaCamera()"]');
+                if (btnAmbil) btnAmbil.classList.add('hidden');
+                if (btnSimpan) btnSimpan.classList.remove('hidden');
+                
+                // Save to hidden input
+                fetch(photoData)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const file = new File([blob], 'agenda_foto.jpg', { type: 'image/jpeg' });
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        const fotoInput = document.getElementById('agendaFotoInput');
+                        if (fotoInput) fotoInput.files = dataTransfer.files;
+                    });
+            }
+        }
+
+        function retakeAgendaPhoto() {
+            const photoPreview = document.getElementById('agendaPhotoPreview');
+            const cameraPreview = document.getElementById('agendaCameraPreview');
+            const btnAmbil = document.querySelector('button[onclick="startAgendaCamera()"]');
+            const btnSimpan = document.getElementById('btnSimpanAgenda');
+            
+            if (photoPreview) photoPreview.classList.add('hidden');
+            if (cameraPreview) cameraPreview.classList.remove('hidden');
+            if (btnAmbil) btnAmbil.classList.remove('hidden');
+            if (btnSimpan) btnSimpan.classList.add('hidden');
+            
+            startAgendaCamera();
+        }
+
+        // Override button onclick after page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnAmbil = document.querySelector('button[onclick="startAgendaCamera()"]');
+            if (btnAmbil) {
+                btnAmbil.onclick = handleAmbilFoto;
+            }
+            
+            // Agenda form submit handler
+            const agendaForm = document.getElementById('agendaForm');
+            if (agendaForm) {
+                agendaForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(this);
+                    
+                    fetch('/absensi/agenda/store', {
+                        method: 'POST',
+                        headers: { 
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            closeModalAgenda();
+                            Swal.fire('Berhasil', 'Agenda berhasil disimpan', 'success').then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Peringatan', data.message, 'warning');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error:', err);
+                        Swal.fire('Error', 'Gagal menyimpan agenda', 'error');
+                    });
+                });
+            }
+        });
+    </script>
 
     @include('absensi.modal_absen_sensei')
 

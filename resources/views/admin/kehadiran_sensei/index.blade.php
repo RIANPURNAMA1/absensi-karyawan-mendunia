@@ -123,7 +123,7 @@
                                 <span class="badge bg-primary">{{ $group['total'] ?? 0 }} Pertemuan</span>
                             </div>
                             <div class="d-flex gap-3 text-muted small">
-                                <span><i class="ph ph-graduation-cap me-1"></i> {{ ucfirst($group['kelas']->level ?? '-') }}</span>
+                                <span><i class="ph ph-graduation-cap me-1"></i> Level {{ $group['kelas']->level ?? '-' }}</span>
                                 <span><i class="ph ph-calendar-range me-1"></i> {{ \Carbon\Carbon::parse($group['kelas']->tanggal_mulai)->format('d M Y') }} - {{ \Carbon\Carbon::parse($group['kelas']->tanggal_selesai)->format('d M Y') }}</span>
                                 <span><i class="ph ph-user me-1"></i> {{ $group['kelas']->user->name ?? '-' }}</span>
                             </div>
@@ -176,7 +176,7 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group gap-2">
-                                            <button class="btn btn-sm btn-outline-primary rounded-2" onclick="showRiwayat({{ $absen->user_id }}, {{ $absen->kelas_sensei_id }}, '{{ $group['kelas']->nama_kelas }}', '{{ $group['kelas']->level }}', '{{ \Carbon\Carbon::parse($group['kelas']->tanggal_mulai)->format('d M Y') }}', '{{ \Carbon\Carbon::parse($group['kelas']->tanggal_selesai)->format('d M Y') }}')" title="Riwayat">
+                                            <button class="btn btn-sm btn-outline-primary rounded-2" onclick="showRiwayat({{ $absen->user_id }}, {{ $absen->kelas_sensei_id }})" title="Riwayat">
                                                 <i class="ph ph-clock-counter-clockwise"></i>
                                             </button>
                                             <button class="btn btn-sm btn-outline-secondary rounded-2" onclick="editStatus({{ $absen->id }}, '{{ $absen->status }}')" title="Edit Status">
@@ -233,44 +233,26 @@
 
     {{-- MODAL RIWAYAT --}}
     <div class="modal fade" id="modalRiwayat" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Riwayat Absensi Sensei</h5>
+                    <h5 class="modal-title">Riwayat Absensi</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <div id="riwayatHeader" class="mb-4 p-3 bg-light rounded-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6 id="riwayatKelas" class="fw-bold mb-2"></h6>
-                                <p class="mb-1 small text-muted">
-                                    <i class="ph ph-graduation-cap me-1"></i> Level: <span id="riwayatLevel"></span>
-                                </p>
-                                <p class="mb-0 small text-muted">
-                                    <i class="ph ph-calendar-range me-1"></i> Periode: <span id="riwayatPeriode"></span>
-                                </p>
-                            </div>
-                            <div class="col-md-6 text-end">
-                                <div id="riwayatStats" class="d-flex gap-3 justify-content-md-end flex-wrap"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="text-center" style="width: 100px;">Pertemuan</th>
-                                    <th>Tanggal</th>
-                                    <th>Jam Masuk</th>
-                                    <th>Jam Pulang</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="riwayatBody">
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="modal-body p-0">
+                    <table class="table table-bordered table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Tanggal</th>
+                                <th>Masuk</th>
+                                <th>Pulang</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="riwayatBody">
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -280,56 +262,29 @@
         function editStatus(id, status) {
             document.getElementById('editId').value = id;
             document.getElementById('editStatus').value = status;
-            
-            var modal = new bootstrap.Modal(document.getElementById('modalEditStatus'));
-            modal.show();
+            new bootstrap.Modal(document.getElementById('modalEditStatus')).show();
         }
 
-        function showRiwayat(userId, kelasId, namaKelas, level, tglMulai, tglSelesai) {
-            document.getElementById('riwayatKelas').textContent = namaKelas;
-            document.getElementById('riwayatLevel').textContent = level.charAt(0).toUpperCase() + level.slice(1);
-            document.getElementById('riwayatPeriode').textContent = tglMulai + ' - ' + tglSelesai;
-
+        function showRiwayat(userId, kelasId) {
             var groupedData = {!! json_encode($groupedAbsensis) !!};
             var kelasData = groupedData[kelasId];
-            
+            var tbody = document.getElementById('riwayatBody');
+            tbody.innerHTML = '';
+
             if (kelasData && kelasData.absensis) {
-                var absensis = kelasData.absensis;
-                var total = absensis.length;
-                var hadir = 0, terlambat = 0, pulangCepat = 0, tidakPulang = 0;
-
-                var tbody = document.getElementById('riwayatBody');
-                tbody.innerHTML = '';
-
-                absensis.forEach(function(absen, index) {
-                    var statusClass = 'bg-secondary-subtle text-secondary';
-                    if (absen.status === 'HADIR') { statusClass = 'bg-success-subtle text-success'; hadir++; }
-                    else if (absen.status === 'TERLAMBAT') { statusClass = 'bg-danger-subtle text-danger'; terlambat++; }
-                    else if (absen.status === 'PULANG LEBIH AWAL') { statusClass = 'bg-warning-subtle text-warning'; pulangCepat++; }
-                    else if (absen.status === 'TIDAK ABSEN PULANG') { statusClass = 'bg-dark-subtle text-dark'; tidakPulang++; }
-
-                    var row = '<tr>' +
-                        '<td class="text-center">' +
-                            '<span class="badge bg-primary rounded-circle" style="width:28px;height:28px;line-height:20px;font-size:11px;">' + (index + 1) + '</span>' +
-                            '<div class="small text-muted">ke-' + (index + 1) + '</div>' +
-                        '</td>' +
+                kelasData.absensis.forEach(function(absen, index) {
+                    var statusClass = absen.status === 'HADIR' ? 'success' : (absen.status === 'TERLAMBAT' ? 'danger' : (absen.status === 'PULANG LEBIH AWAL' ? 'warning' : 'secondary'));
+                    tbody.innerHTML += '<tr>' +
+                        '<td class="text-center">' + (index + 1) + '</td>' +
                         '<td>' + absen.tanggal + '</td>' +
                         '<td>' + (absen.jam_masuk || '-') + '</td>' +
                         '<td>' + (absen.jam_keluar || '-') + '</td>' +
-                        '<td><span class="badge rounded-pill ' + statusClass + '">' + absen.status + '</span></td>' +
+                        '<td><span class="badge bg-' + statusClass + '">' + absen.status + '</span></td>' +
                     '</tr>';
-                    tbody.innerHTML += row;
                 });
-
-                document.getElementById('riwayatStats').innerHTML = 
-                    '<span class="text-success small"><i class="ph ph-check-circle me-1"></i>' + hadir + ' Hadir</span>' +
-                    '<span class="text-danger small"><i class="ph ph-x-circle me-1"></i>' + terlambat + ' Terlambat</span>' +
-                    '<span class="text-warning small"><i class="ph ph-arrow-left me-1"></i>' + pulangCepat + ' Pulang Cepat</span>' +
-                    '<span class="text-secondary small"><i class="ph ph-minus-circle me-1"></i>' + tidakPulang + ' Tidak Pulang</span>';
             }
 
-            var modal = new bootstrap.Modal(document.getElementById('modalRiwayat'));
-            modal.show();
+            new bootstrap.Modal(document.getElementById('modalRiwayat')).show();
         }
     </script>
 @endsection

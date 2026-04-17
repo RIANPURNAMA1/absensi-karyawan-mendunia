@@ -88,6 +88,16 @@
                 data-filter="semua">
                 Semua
             </button>
+            <button onclick="filterData('karyawan')"
+                class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200"
+                data-filter="karyawan">
+                Karyawan
+            </button>
+            <button onclick="filterData('sensei')"
+                class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200"
+                data-filter="sensei">
+                Sensei
+            </button>
             <button onclick="filterData('hadir')"
                 class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200"
                 data-filter="hadir">
@@ -98,20 +108,10 @@
                 data-filter="terlambat">
                 Terlambat
             </button>
-            <button onclick="filterData('pulang lebih awal')"
-            class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200"
-            data-filter="pulang lebih awal">
-            Pulang Awal
-        </button>
-            <button onclick="filterData('izin')"
+            <button onclick="filterData('alpa')"
                 class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200"
-                data-filter="izin">
-                Izin
-            </button>
-            <button onclick="filterData('sakit')"
-                class="filter-btn px-4 py-2 bg-white text-gray-700 rounded-xl font-medium text-sm whitespace-nowrap border border-gray-200"
-                data-filter="sakit">
-                Sakit
+                data-filter="alpa">
+                Alpa
             </button>
         </div>
     </div>
@@ -153,13 +153,16 @@
 
         // Data dari Laravel (akan di-replace dengan data aktual)
         let absensiData = @json($absensi);
+        let absensiSenseiData = @json($absensiSensei ?? []);
         let filteredData = [...absensiData];
+        let filteredSenseiData = [...absensiSenseiData];
         let currentFilter = 'semua';
         let selectedMonth = new Date().getMonth();
         let selectedYear = new Date().getFullYear();
 
         // Get status badge
         function getStatusBadge(status) {
+            if (!status) return '';
             const statusLower = status.toLowerCase();
             const colorMap = {
                 'hadir': {
@@ -182,10 +185,31 @@
                     text: 'text-red-700',
                     icon: 'heart-pulse'
                 },
-                'alpha': {
+                'alpha':
+                {
                     bg: 'bg-gray-100',
                     text: 'text-gray-700',
                     icon: 'x-circle'
+                },
+                'alpa': {
+                    bg: 'bg-gray-100',
+                    text: 'text-gray-700',
+                    icon: 'x-circle'
+                },
+                'libur': {
+                    bg: 'bg-purple-100',
+                    text: 'text-purple-700',
+                    icon: 'sun'
+                },
+                'pulang lebih awal': {
+                    bg: 'bg-amber-100',
+                    text: 'text-amber-700',
+                    icon: 'clock'
+                },
+                'tidak absen pulang': {
+                    bg: 'bg-red-100',
+                    text: 'text-red-700',
+                    icon: 'alert-circle'
                 }
             };
 
@@ -254,9 +278,19 @@
             // Filter data
             if (filter === 'semua') {
                 filteredData = [...absensiData];
+                filteredSenseiData = [...absensiSenseiData];
+            } else if (filter === 'karyawan') {
+                filteredData = [...absensiData];
+                filteredSenseiData = [];
+            } else if (filter === 'sensei') {
+                filteredData = [];
+                filteredSenseiData = [...absensiSenseiData];
             } else {
                 filteredData = absensiData.filter(a =>
-                    a.status.toLowerCase() === filter.toLowerCase()
+                    a.status && a.status.toLowerCase() === filter.toLowerCase()
+                );
+                filteredSenseiData = absensiSenseiData.filter(a =>
+                    a.status && a.status.toLowerCase() === filter.toLowerCase()
                 );
             }
 
@@ -269,14 +303,21 @@
             const container = document.getElementById('riwayatContainer');
             const emptyState = document.getElementById('emptyState');
 
-            // Filter by selected month
+            // Filter by selected month for Karyawan
             const monthFiltered = filteredData.filter(a => {
                 const date = new Date(a.tanggal);
                 return date.getMonth() === selectedMonth &&
                     date.getFullYear() === selectedYear;
             });
 
-            if (monthFiltered.length === 0) {
+            // Filter by selected month for Sensei
+            const monthFilteredSensei = filteredSenseiData.filter(a => {
+                const date = new Date(a.tanggal);
+                return date.getMonth() === selectedMonth &&
+                    date.getFullYear() === selectedYear;
+            });
+
+            if (monthFiltered.length === 0 && monthFilteredSensei.length === 0) {
                 container.innerHTML = '';
                 emptyState.classList.remove('hidden');
                 return;
@@ -285,6 +326,7 @@
             emptyState.classList.add('hidden');
             container.innerHTML = '';
 
+            // Render Karyawan data
             monthFiltered.forEach(a => {
                 const date = new Date(a.tanggal);
                 const dayNames = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
@@ -299,12 +341,10 @@
                     String(d.getDate()).padStart(2, '0');
 
                 card.href = `/absensi/detail/${tanggal}`;
-
-
                 card.className = 'block';
 
                 card.innerHTML = `
-                    <div class="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                    <div class="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all border-l-4 border-blue-500">
                         <div class="flex items-center gap-4">
                             <!-- Date Box -->
                             <div class="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -317,8 +357,69 @@
                             <!-- Content -->
                             <div class="flex-1">
                                 <div class="flex items-center justify-between mb-2">
-                                    <h3 class="font-semibold text-gray-900 text-sm">${date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">KARYAWAN</span>
+                                        <h3 class="font-semibold text-gray-900 text-sm">${date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
+                                    </div>
                                 </div>
+                                
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="flex items-center gap-1.5 text-xs text-gray-600">
+                                        <i data-lucide="log-in" class="w-3.5 h-3.5 text-green-600"></i>
+                                        <span class="font-medium">${a.jam_masuk || '-'}</span>
+                                    </div>
+                                    <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
+                                    <div class="flex items-center gap-1.5 text-xs text-gray-600">
+                                        <i data-lucide="log-out" class="w-3.5 h-3.5 text-red-600"></i>
+                                        <span class="font-medium">${a.jam_keluar || '-'}</span>
+                                    </div>
+                                </div>
+
+                                ${getStatusBadge(a.status)}
+                            </div>
+
+                            <!-- Arrow -->
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 flex-shrink-0"></i>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            // Render Sensei data
+            monthFilteredSensei.forEach(a => {
+                const date = new Date(a.tanggal);
+                const dayNames = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
+                const dayName = dayNames[date.getDay()];
+                const dayNumber = date.getDate();
+                const kelasNama = a.kelas_sensei ? a.kelas_sensei.nama_kelas : '-';
+
+                const card = document.createElement('a');
+                card.href = `/admin/kehadiran-sensei`;
+                card.className = 'block';
+
+                card.innerHTML = `
+                    <div class="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all border-l-4 border-violet-500">
+                        <div class="flex items-center gap-4">
+                            <!-- Date Box -->
+                            <div class="w-16 h-16 bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <div class="text-center">
+                                    <div class="text-xs text-violet-600 font-medium">${dayName}</div>
+                                    <div class="text-xl font-bold text-violet-700">${dayNumber}</div>
+                                </div>
+                            </div>
+
+                            <!-- Content -->
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] font-bold text-violet-600 bg-violet-100 px-2 py-0.5 rounded">SENSEI</span>
+                                        <span class="text-xs text-gray-500">${kelasNama}</span>
+                                    </div>
+                                </div>
+                                
+                                <h3 class="font-semibold text-gray-900 text-sm mb-1">${date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
                                 
                                 <div class="flex items-center gap-3 mb-2">
                                     <div class="flex items-center gap-1.5 text-xs text-gray-600">

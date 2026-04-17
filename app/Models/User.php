@@ -126,4 +126,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(AbsensiSensei::class);
     }
+
+    public function agenda()
+    {
+        return $this->hasMany(Agenda::class);
+    }
 }

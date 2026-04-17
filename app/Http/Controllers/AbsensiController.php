@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Absensi;
+use App\Models\AbsensiSensei;
+use App\Models\Agenda;
 use App\Models\Cabang;
 use App\Models\HariLibur;
 use App\Models\Karyawan;
@@ -42,8 +44,15 @@ class AbsensiController extends Controller
             $pesanErrorCabang = 'Anda belum terdaftar di cabang manapun. Fitur absensi dinonaktifkan.';
         }
 
-        // 3. Ambil 10 riwayat terakhir
+        // 3. Ambil 10 riwayat terakhir (karyawan)
         $riwayat = Absensi::where('user_id', $user->id)
+            ->orderBy('tanggal', 'desc')
+            ->take(10)
+            ->get();
+
+        // 3b. Ambil 10 riwayat terakhir sensei
+        $riwayatSensei = AbsensiSensei::where('user_id', $user->id)
+            ->with('kelasSensei')
             ->orderBy('tanggal', 'desc')
             ->take(10)
             ->get();
@@ -97,12 +106,20 @@ class AbsensiController extends Controller
         // 7. Cek apakah hari ini libur (untuk sensei)
         $isLibur = HariLibur::apakahLibur($today);
 
+        // 8. Ambil agenda hari ini
+        $agendaHariIni = \App\Models\Agenda::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->orderBy('jam_mulai', 'asc')
+            ->get();
+
         return view('absensi.index', [
             'riwayat' => $riwayat,
+            'riwayatSensei' => $riwayatSensei,
             'shifts' => $allShifts,
             'currentShift' => $currentShift,
             'kelasSenseiAktif' => $kelasSenseiAktif,
             'isLibur' => $isLibur,
+            'agendaHariIni' => $agendaHariIni,
 
             // Data Geofencing (Aman meski $cabangTerpilih null karena menggunakan null coalescing ??)
             'cabangLat' => $cabangTerpilih->latitude ?? 0,
@@ -467,7 +484,12 @@ class AbsensiController extends Controller
             ->orderBy('tanggal', 'desc')
             ->get();
 
-        return view('absensi.riwayat', compact('absensi'));
+        $absensiSensei = AbsensiSensei::where('user_id', $user->id)
+            ->with('kelasSensei')
+            ->orderBy('tanggal', 'desc')
+            ->get();
+
+        return view('absensi.riwayat', compact('absensi', 'absensiSensei'));
     }
 
     public function riwayatJson()
@@ -477,7 +499,16 @@ class AbsensiController extends Controller
             ->limit(10)
             ->get();
 
-        return response()->json($riwayat);
+        $riwayatSensei = AbsensiSensei::where('user_id', Auth::id())
+            ->with('kelasSensei')
+            ->orderBy('tanggal', 'desc')
+            ->limit(10)
+            ->get();
+
+        return response()->json([
+            'karyawan' => $riwayat,
+            'sensei' => $riwayatSensei,
+        ]);
     }
 
     public function detail($tanggal)
@@ -493,6 +524,23 @@ class AbsensiController extends Controller
         }
 
         return view('absensi.detail', compact('absensi'));
+    }
+
+    public function detailSensei($tanggal, $kelasId)
+    {
+        $user = Auth::user();
+
+        $absensi = AbsensiSensei::where('user_id', $user->id)
+            ->where('tanggal', $tanggal)
+            ->where('kelas_sensei_id', $kelasId)
+            ->with('kelasSensei')
+            ->first();
+
+        if (! $absensi) {
+            abort(404, 'Data absensi sensei tidak ditemukan');
+        }
+
+        return view('absensi.detail_sensei', compact('absensi'));
     }
 
     // Riwayat absensi karyawan login

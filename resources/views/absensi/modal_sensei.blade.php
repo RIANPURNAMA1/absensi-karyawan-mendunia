@@ -36,10 +36,10 @@
                         class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                         required>
                         <option value="">Pilih Level</option>
-                        <option value="pemula">Pemula</option>
-                        <option value="menengah">Menengah</option>
-                        <option value="mahir">Mahir</option>
-                        <option value="lanjutan">Lanjutan</option>
+                        <option value="1">Level 1</option>
+                        <option value="2">Level 2</option>
+                        <option value="3">Level 3</option>
+                        <option value="4">Level 4</option>
                     </select>
                 </div>
 

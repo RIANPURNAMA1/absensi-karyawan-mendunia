@@ -1,22 +1,23 @@
 <?php
 
-use App\Http\Controllers\AbsensiController;
-use App\Http\Controllers\AgendaController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\CabangController;
-use App\Http\Controllers\CalendarController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DivisiController;
-use App\Http\Controllers\IzinController;
-use App\Http\Controllers\KaryawanController;
-use App\Http\Controllers\KehadiranController;
-use App\Http\Controllers\KehadiranSenseiController;
-use App\Http\Controllers\LemburController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RekapController;
-use App\Http\Controllers\SenseiController;
-use App\Http\Controllers\ShiftController;
-use App\Http\Controllers\UserController;
+use App\\Http\\Controllers\\AbsensiController;
+use App\\Http\\Controllers\\AgendaController;
+use App\\Http\\Controllers\\AuthController;
+use AppHttpControllers\CabangController;
+use AppHttpControllers\CalendarController;
+use AppHttpControllers\DashboardController;
+use AppHttpControllers\DivisiController;
+use AppHttpControllers\IzinController;
+use AppHttpControllers\KaryawanController;
+use AppHttpControllers\KehadiranController;
+use AppHttpControllers\KehadiranSenseiController;
+use AppHttpControllers\LemburController;
+use AppHttpControllers\MonitoringController;
+use AppHttpControllers\ProfileController;
+use AppHttpControllers\RekapController;
+use AppHttpControllers\SenseiController;
+use AppHttpControllers\ShiftController;
+use AppHttpControllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/keep-alive', function () {
@@ -98,15 +99,11 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::get('/rekap-absensi', [RekapController::class, 'rekap'])->name('absensi.rekap');
 
     // Kehadiran Sensei
-    Route::get('/data-kehadiran-sensei', [KehadiranSenseiController::class, 'index']);
+    Route::get('/data-kehadiran-sensei', [KehadiranSenseiController::class, 'index'])->name('admin.kehadiran.sensei.index');
     Route::get('/admin/kehadiran-sensei/riwayat/{userId}/{kelasId}', [KehadiranSenseiController::class, 'getRiwayat']);
     Route::get('/admin/kehadiran-sensei/kelas/{userId}', [KehadiranSenseiController::class, 'getKelasByUser']);
     Route::post('/admin/kehadiran-sensei/update-status', [KehadiranSenseiController::class, 'updateStatus']);
-
-    // Agenda
-    Route::get('/data-agenda', [App\Http\Controllers\Admin\AgendaController::class, 'index'])->name('admin.agenda.index');
-
-    // Monitoring
+    Route::get('/monitoring-lokasi', [MonitoringController::class, 'monitoring'])->name('absensi.monitoring');
 
     // User Management
     Route::get('/daftar-user', [UserController::class, 'userKaryawan'])->name('user.karyawan');
@@ -199,18 +196,11 @@ Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
 
     // Agenda
     Route::get('/absensi/agenda', [AgendaController::class, 'index'])->name('agenda.index');
-    Route::get('/absensi/agenda/test', function () {
-        return response()->json(['test' => 'oke']);
-    });
-
-    Route::get('/absensi/agenda/{id}', [AgendaController::class, 'show']);
     Route::post('/absensi/agenda/store', [AgendaController::class, 'store'])->name('agenda.store');
     Route::put('/absensi/agenda/{id}', [AgendaController::class, 'update'])->name('agenda.update');
     Route::delete('/absensi/agenda/{id}', [AgendaController::class, 'destroy'])->name('agenda.destroy');
     Route::post('/absensi/agenda/{id}/complete', [AgendaController::class, 'complete'])->name('agenda.complete');
     Route::get('/absensi/agenda/by-date', [AgendaController::class, 'getByDate'])->name('agenda.byDate');
-    Route::post('/absensi/agenda/absen-masuk', [AgendaController::class, 'absenMasuk'])->name('agenda.absenMasuk');
-    Route::post('/absensi/agenda/absen-pulang', [AgendaController::class, 'absenPulang'])->name('agenda.absenPulang');
 });
 
 /*
@@ -224,15 +214,15 @@ Route::middleware('auth')->group(function () {
 });
 
 // hari libur
-use App\Http\Controllers\HariLiburController;
-use App\Http\Controllers\ProjectListsController;
+use AppHttpControllers\HariLiburController;
+use AppHttpControllers\ProjectListsController;
 
 Route::get('/hari-libur', [HariLiburController::class, 'index'])->name('hari-libur.index');
 Route::post('/hari-libur', [HariLiburController::class, 'store'])->name('hari-libur.store');
 Route::delete('/hari-libur/{id}', [HariLiburController::class, 'destroy'])->name('hari-libur.destroy');
 
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\TaskController;
+use AppHttpControllers\ReportController;
+use AppHttpControllers\TaskController;
 
 Route::middleware(['auth'])->group(function () {
     // View Utama Report

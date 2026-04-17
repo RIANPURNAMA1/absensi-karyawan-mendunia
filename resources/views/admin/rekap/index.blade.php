@@ -139,8 +139,11 @@
                                 <th class="text-center col-libur">Libur</th>
                                 <th class="text-center col-highlight-blue">Lembur (X)</th>
                                 <th class="text-center col-highlight-blue">Jam Lembur</th>
+                                <th class="text-center" style="background-color:#f0fdf4 !important; color:#15803d !important;">Kehadiran Sensei</th>
+                                <th class="text-center" style="background-color:#faf5ff !important; color:#7c3aed !important;">Total Agenda</th>
                                 <th class="text-center col-highlight-dark">Jam Kerja</th>
                                 <th class="text-center col-grand-total">Grand Total</th>
+                                <th class="text-center" style="background-color:#fff7ed !important; color:#c2410c !important;">Total Kehadiran</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -171,8 +174,17 @@
                                         {{ $r->jumlah_lembur }}<span class="text-xs">x</span>
                                     </td>
                                     <td class="text-center col-highlight-blue">{{ $r->total_jam_lembur }}</td>
+                                    <td class="text-center" style="background-color:#f0fdf4 !important; color:#15803d !important; font-weight:600;">
+                                        {{ $r->sensei_kehadiran }}<span class="text-xs">x</span>
+                                    </td>
+                                    <td class="text-center" style="background-color:#faf5ff !important; color:#7c3aed !important; font-weight:600;">
+                                        {{ $r->total_agenda }}
+                                    </td>
                                     <td class="text-center col-highlight-dark">{{ $r->total_jam_kerja }}</td>
                                     <td class="text-center col-grand-total">{{ $r->grand_total_jam }}</td>
+                                    <td class="text-center" style="background-color:#fff7ed !important; color:#c2410c !important; font-weight:700;">
+                                        {{ $r->total_kehadiran }}
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -195,12 +207,34 @@
 
     <script>
         $(function () {
-            $('#rekapTable').DataTable({
+            var table = $('#rekapTable').DataTable({
                 dom: '<"d-flex justify-content-between align-items-center border-bottom p-3"Bf>t<"d-flex justify-content-between align-items-center p-3"ip>',
                 buttons: [
-                    { extend:'excel', className:'btn btn-sm btn-outline-secondary', text:'<i class="bi bi-file-earmark-excel me-1"></i> Excel' },
-                    { extend:'pdf',   className:'btn btn-sm btn-outline-secondary', text:'<i class="bi bi-file-earmark-pdf me-1"></i> PDF' },
-                    { extend:'print', className:'btn btn-sm btn-outline-secondary', text:'<i class="bi bi-printer me-1"></i> Cetak' },
+                    {
+                        extend:'excel',
+                        className:'btn btn-sm btn-outline-success',
+                        text:'<i class="bi bi-file-earmark-excel me-1"></i> Excel',
+                        title: 'Rekapitulasi Absensi Karyawan',
+                        messageTop: 'Periode: {{ \Carbon\Carbon::parse($start_date)->format("d/m/Y") }} - {{ \Carbon\Carbon::parse($end_date)->format("d/m/Y") }}',
+                        exportOptions: { columns: ':visible' }
+                    },
+                    {
+                        extend:'pdf',
+                        className:'btn btn-sm btn-outline-danger',
+                        text:'<i class="bi bi-file-earmark-pdf me-1"></i> PDF',
+                        title: 'Rekapitulasi Absensi Karyawan',
+                        messageTop: 'Periode: {{ \Carbon\Carbon::parse($start_date)->format("d/m/Y") }} - {{ \Carbon\Carbon::parse($end_date)->format("d/m/Y") }}',
+                        orientation: 'landscape',
+                        exportOptions: { columns: ':visible' }
+                    },
+                    {
+                        extend:'print',
+                        className:'btn btn-sm btn-outline-secondary',
+                        text:'<i class="bi bi-printer me-1"></i> Cetak',
+                        title: 'Rekapitulasi Absensi Karyawan',
+                        messageTop: 'Periode: {{ \Carbon\Carbon::parse($start_date)->format("d/m/Y") }} - {{ \Carbon\Carbon::parse($end_date)->format("d/m/Y") }}',
+                        exportOptions: { columns: ':visible' }
+                    },
                 ],
                 pageLength: 25,
                 language: {
