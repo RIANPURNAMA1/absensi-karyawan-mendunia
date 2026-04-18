@@ -96,14 +96,20 @@
                          <span class="pc-mtext">Rekap Absensi</span>
                      </a>
                  </li>
-                 <li class="pc-item">
-                     <a href="/monitoring-lokasi" class="pc-link">
-                         <span class="pc-micon"><i class="ph ph-map-pin"></i></span>
-                         <span class="pc-mtext">Monitoring Lokasi</span>
-                     </a>
-                 </li>
-             </ul>
-         </li>
+<li class="pc-item">
+                      <a href="/monitoring-lokasi" class="pc-link">
+                          <span class="pc-micon"><i class="ph ph-map-pin"></i></span>
+                          <span class="pc-mtext">Monitoring Lokasi</span>
+                      </a>
+                  </li>
+                  <li class="pc-item">
+                      <a href="/data-kehadiran-sensei" class="pc-link">
+                          <span class="pc-micon"><i class="ph ph-graduation-cap"></i></span>
+                          <span class="pc-mtext">Kehadiran Sensei</span>
+                      </a>
+                  </li>
+              </ul>
+          </li>
 
 
          @php

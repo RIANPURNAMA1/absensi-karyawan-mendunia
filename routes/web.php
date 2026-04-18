@@ -1,24 +1,23 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AbsensiController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CabangController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DivisiController;
 use App\Http\Controllers\IzinController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\KehadiranController;
-use App\Http\Controllers\MonitoringController;
-use App\Http\Controllers\RekapController;
-use App\Http\Controllers\AbsensiController;
-use App\Http\Controllers\CabangController;
-use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\KehadiranSenseiController;
 use App\Http\Controllers\LemburController;
+use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\ProfileController;
-
-
-
+use App\Http\Controllers\RekapController;
+use App\Http\Controllers\SenseiController;
+use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/keep-alive', function () {
     return response()->json(['status' => 'active']);
@@ -28,7 +27,6 @@ Route::get('/keep-alive', function () {
 | Authentication Routes
 |--------------------------------------------------------------------------
 */
-
 
 // Tampilkan form lupa password / ubah password
 Route::get('/forgot-password', [AuthController::class, 'show'])->name('password.request');
@@ -56,15 +54,15 @@ Route::middleware(['auth', 'role:MANAGER,HR'])->group(function () {
 });
 
 Route::middleware(['auth', 'role:HR'])->group(function () {
-    Route::get('/hr/dashboard', fn() => view('dashboard'))->name('hr.dashboard');
+    Route::get('/hr/dashboard', fn () => view('dashboard'))->name('hr.dashboard');
 });
 
 Route::middleware(['auth', 'role:MANAGER'])->group(function () {
-    Route::get('/manager/dashboard', fn() => view('dashboard'))->name('manager.dashboard');
+    Route::get('/manager/dashboard', fn () => view('dashboard'))->name('manager.dashboard');
 });
 
 Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
-    Route::get('/karyawan/dashboard', fn() => view('karyawan.dashboard'))->name('karyawan.dashboard');
+    Route::get('/karyawan/dashboard', fn () => view('karyawan.dashboard'))->name('karyawan.dashboard');
 });
 
 /*
@@ -98,6 +96,12 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::get('/data-kehadiran', [KehadiranController::class, 'index']);
     Route::post('/admin/absensi/update-status', [KehadiranController::class, 'updateStatus'])->name('admin.absensi.updateStatus');
     Route::get('/rekap-absensi', [RekapController::class, 'rekap'])->name('absensi.rekap');
+
+    // Kehadiran Sensei
+    Route::get('/data-kehadiran-sensei', [KehadiranSenseiController::class, 'index']);
+    Route::get('/admin/kehadiran-sensei/riwayat/{userId}/{kelasId}', [KehadiranSenseiController::class, 'getRiwayat']);
+    Route::get('/admin/kehadiran-sensei/kelas/{userId}', [KehadiranSenseiController::class, 'getKelasByUser']);
+    Route::post('/admin/kehadiran-sensei/update-status', [KehadiranSenseiController::class, 'updateStatus']);
     Route::get('/monitoring-lokasi', [MonitoringController::class, 'monitoring'])->name('absensi.monitoring');
 
     // User Management
@@ -113,7 +117,6 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::get('/pengaturan', [UserController::class, 'index']);
     Route::post('/pengaturan', [UserController::class, 'store'])->name('users.store');
     Route::put('/pengaturan/{id}', [UserController::class, 'update'])->name('pengaturan.update');
-
 
     // lembur
     Route::get('/approval-lembur', [LemburController::class, 'approvalIndex'])->name('lembur.approval');
@@ -142,12 +145,11 @@ Route::middleware(['auth', 'role:HR,MANAGER,KARYAWAN'])->group(function () {
 Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
     Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
 
-
     // absensi foto
     Route::post('/absensi/foto/proses', [AbsensiController::class, 'absenFoto'])->middleware('auth');
 
     // Absensi
-    Route::get('/absensi/mobile', fn() => view('absensi.mobile'))->name('absensi.mobile');
+    Route::get('/absensi/mobile', fn () => view('absensi.mobile'))->name('absensi.mobile');
     Route::post('/absen/masuk', [AbsensiController::class, 'absenMasuk'])->name('absen.masuk');
     Route::post('/absensi/masuk', [AbsensiController::class, 'absenMasuk']);
     Route::post('/absensi/pulang', [AbsensiController::class, 'absenPulang'])->name('absen.pulang');
@@ -178,13 +180,18 @@ Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
     Route::get('/calendar', [CalendarController::class, 'index']);
     Route::get('/absensi/riwayat-kalender', [CalendarController::class, 'getRiwayatKalender'])->name('riwayatKalender');
 
-
-
     // lembur
     Route::get('/absensi/lembur', [LemburController::class, 'index'])->name('lembur.index');
     Route::post('/absensi/lembur/store', [LemburController::class, 'store'])->name('absensi.lembur.store');
-});
 
+    // Sensei
+    Route::get('/absensi/sensei', [SenseiController::class, 'index'])->name('sensei.index');
+    Route::post('/absensi/sensei/store-kelas', [SenseiController::class, 'storeKelas'])->name('sensei.storeKelas');
+    Route::get('/absensi/sensei/kelas-aktif', [SenseiController::class, 'getKelasAktif'])->name('sensei.kelasAktif');
+    Route::post('/absensi/sensei/absen-masuk', [SenseiController::class, 'absenMasuk'])->name('sensei.absenMasuk');
+    Route::post('/absensi/sensei/absen-pulang', [SenseiController::class, 'absenPulang'])->name('sensei.absenPulang');
+    Route::delete('/absensi/sensei/{id}', [SenseiController::class, 'destroy'])->name('sensei.destroy');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -196,7 +203,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/user/update-face', [AbsensiController::class, 'updateFace'])->name('user.update-face');
 });
 
-
 // hari libur
 use App\Http\Controllers\HariLiburController;
 use App\Http\Controllers\ProjectListsController;
@@ -204,7 +210,6 @@ use App\Http\Controllers\ProjectListsController;
 Route::get('/hari-libur', [HariLiburController::class, 'index'])->name('hari-libur.index');
 Route::post('/hari-libur', [HariLiburController::class, 'store'])->name('hari-libur.store');
 Route::delete('/hari-libur/{id}', [HariLiburController::class, 'destroy'])->name('hari-libur.destroy');
-
 
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TaskController;
@@ -216,9 +221,6 @@ Route::middleware(['auth'])->group(function () {
     // API untuk data kalender (jika diperlukan oleh script kalender)
     Route::get('/api/report/calendar', [ReportController::class, 'getCalendarData'])->name('report.calendar');
 });
-
-
-
 
 // Pastikan dibungkus middleware auth
 Route::middleware(['auth'])->group(function () {

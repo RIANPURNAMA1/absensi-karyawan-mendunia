@@ -228,7 +228,94 @@
                 </div>
                 <span class="text-[11px] font-medium text-gray-700">Jadwal</span>
             </button>
+            <button onclick="openModalSensei()"
+                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+                <div class="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">
+                    <i data-lucide="graduation-cap" class="w-5 h-5 text-violet-600"></i>
+                </div>
+                <span class="text-[11px] font-medium text-gray-700">Sensei</span>
+            </button>
+
+            <button onclick="location.href='/absensi/agenda'"
+                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <i data-lucide="calendar-check" class="w-5 h-5 text-amber-600"></i>
+                </div>
+                <span class="text-[11px] font-medium text-gray-700">Agenda</span>
+            </button>
         </div>
+    </div>
+
+    <!-- KELAS SENSEI AKTIF -->
+    <div class="px-5 pb-5" id="sectionKelasSensei">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-bold text-gray-900">Kelas Sensei</h2>
+            @if(!$isLibur)
+            <button onclick="openModalSensei()" class="text-violet-600 text-sm font-semibold flex items-center gap-1">
+                <i data-lucide="plus" class="w-4 h-4"></i> Tambah Kelas
+            </button>
+            @endif
+        </div>
+
+        <div id="kelasSenseiContainer" class="space-y-3">
+            <!-- Loaded via JS -->
+        </div>
+        @if($isLibur)
+            <div id="serverKelasSensei" class="text-center py-8 text-gray-400 bg-gray-50 rounded-2xl">
+                <i data-lucide="calendar-off" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
+                <p class="text-sm">Hari ini sedang libur</p>
+                <p class="text-xs mt-1">Absensi sensei tidak tersedia</p>
+            </div>
+        @elseif($kelasSenseiAktif && $kelasSenseiAktif->count() > 0)
+            <div id="serverKelasSensei" class="space-y-3">
+                @foreach($kelasSenseiAktif as $kelas)
+                    @php
+                        $absensiHariIni = $kelas->absensi->first();
+                        $sudahMasuk = $absensiHariIni && $absensiHariIni->jam_masuk;
+                        $sudahPulang = $absensiHariIni && $absensiHariIni->jam_keluar;
+                    @endphp
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-violet-100" data-kelas-id="{{ $kelas->id }}">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+                                    <i data-lucide="graduation-cap" class="w-6 h-6 text-white"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900">{{ $kelas->nama_kelas }}</h3>
+                                    <p class="text-xs text-gray-500 capitalize">{{ $kelas->level }} - {{ \Carbon\Carbon::parse($kelas->tanggal_mulai)->format('d M') }} - {{ \Carbon\Carbon::parse($kelas->tanggal_selesai)->format('d M') }}</p>
+                                </div>
+                            </div>
+                            @if($sudahMasuk && !$sudahPulang)
+                                <span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">HADIR</span>
+                            @elseif($sudahMasuk && $sudahPulang)
+                                <span class="px-2 py-1 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-full">SELESAI</span>
+                            @endif
+                        </div>
+                        <div class="flex gap-2">
+                            @if(!$sudahMasuk)
+                                <button onclick="absenSenseiMasuk({{ $kelas->id }})" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold active:scale-95 transition">
+                                    Absen Masuk
+                                </button>
+                            @elseif(!$sudahPulang)
+                                <button onclick="absenSenseiPulang({{ $kelas->id }})" class="flex-1 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl text-sm font-bold active:scale-95 transition">
+                                    Absen Pulang
+                                </button>
+                            @else
+                                <div class="flex-1 py-2.5 bg-gray-100 text-gray-500 rounded-xl text-sm font-semibold text-center">
+                                    {{ $absensiHariIni->jam_masuk }} - {{ $absensiHariIni->jam_keluar }}
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="text-center py-8 text-gray-400" id="serverEmptyKelasSensei">
+                <i data-lucide="book-open" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
+                <p class="text-sm">Belum ada kelas aktif</p>
+                <p class="text-xs mt-1">Tambahkan kelas baru untuk mulai absen</p>
+            </div>
+        @endif
     </div>
 
     {{-- Modal Jadwal Dinamis --}}
@@ -355,6 +442,7 @@
     <!-- BOTTOM NAV -->
     @include('components.bottom_Nav')
     @include('absensi.modal_manual')
+@include('absensi.modal_sensei')
 
     <!-- Modal Kamera Absensi - FIXED VERSION -->
     <div id="modalKameraAbsen" class="fixed inset-0 z-[9999] bg-black hidden items-center justify-center">
@@ -621,6 +709,113 @@
             absenPulang: "{{ url('/absensi/pulang') }}"
         };
 
+        // Sensei Functions
+        function loadKelasAktif() {
+            // Hide server-rendered content first
+            const serverContent = document.getElementById('serverKelasSensei');
+            const serverEmpty = document.getElementById('serverEmptyKelasSensei');
+            if (serverContent) serverContent.classList.add('hidden');
+            if (serverEmpty) serverEmpty.classList.add('hidden');
+
+            // Add cache-busting timestamp
+            const timestamp = new Date().getTime();
+            fetch('/absensi/sensei/kelas-aktif?_=' + timestamp)
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById('kelasSenseiContainer');
+                    
+                    if (!data || data.length === 0) {
+                        if (container) {
+                            container.innerHTML = `<div class="text-center py-8 text-gray-400">
+                                <i data-lucide="book-open" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
+                                <p class="text-sm">Belum ada kelas aktif</p>
+                                <p class="text-xs mt-1">Tambahkan kelas baru untuk mulai absen</p>
+                            </div>`;
+                            lucide.createIcons();
+                        }
+                        return;
+                    }
+
+                    let html = '';
+                    data.forEach(kelas => {
+                        const absensi = kelas.absensi && kelas.absensi[0] ? kelas.absensi[0] : null;
+                        const sudahMasuk = absensi && absensi.jam_masuk;
+                        const sudahPulang = absensi && absensi.jam_keluar;
+                        const status = absensi ? absensi.status : '';
+                        
+                        let statusBadge = '';
+                        let buttonHtml = '';
+
+                        // Status badges sesuai dengan AbsensiController
+                        const statusConfig = {
+                            'HADIR': { bg: 'bg-green-100', text: 'text-green-700', label: 'HADIR' },
+                            'TERLAMBAT': { bg: 'bg-red-100', text: 'text-red-700', label: 'TERLAMBAT' },
+                            'PULANG LEBIH AWAL': { bg: 'bg-amber-100', text: 'text-amber-700', label: 'PULANG LEBIH AWAL' },
+                            'TIDAK ABSEN PULANG': { bg: 'bg-red-100', text: 'text-red-700', label: 'TIDAK ABSEN PULANG' }
+                        };
+
+                        if (sudahMasuk && !sudahPulang) {
+                            const cfg = statusConfig[status] || statusConfig['HADIR'];
+                            statusBadge = `<span class="px-2 py-1 ${cfg.bg} ${cfg.text} text-[10px] font-bold rounded-full">${cfg.label}</span>`;
+                            buttonHtml = `<button onclick="absenSenseiPulang(${kelas.id})" class="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-bold active:scale-95 transition">Absen Pulang</button>`;
+                        } else if (sudahMasuk && sudahPulang) {
+                            const cfg = statusConfig[status] || { bg: 'bg-gray-100', text: 'text-gray-600', label: status };
+                            statusBadge = `<span class="px-2 py-1 ${cfg.bg} ${cfg.text} text-[10px] font-bold rounded-full">${cfg.label}</span>`;
+                            buttonHtml = `<div class="flex-1 py-2.5 bg-gray-100 text-gray-500 rounded-xl text-sm font-semibold text-center">${absensi.jam_masuk} - ${absensi.jam_keluar}</div>`;
+                        } else {
+                            buttonHtml = `<button onclick="absenSenseiMasuk(${kelas.id})" class="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-bold active:scale-95 transition">Absen Masuk</button>`;
+                        }
+
+                        const levelLabels = {
+                            'pemula': 'Pemula',
+                            'menengah': 'Menengah',
+                            'mahir': 'Mahir',
+                            'lanjutan': 'Lanjutan'
+                        };
+
+                        const tglMulai = new Date(kelas.tanggal_mulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+                        const tglSelesai = new Date(kelas.tanggal_selesai).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+
+                        html += `
+                            <div class="bg-white rounded-2xl p-4 shadow-sm border border-violet-100" data-kelas-id="${kelas.id}">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+                                            <i data-lucide="graduation-cap" class="w-6 h-6 text-white"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-gray-900">${kelas.nama_kelas}</h3>
+                                            <p class="text-xs text-gray-500">${levelLabels[kelas.level] || kelas.level} - ${tglMulai} - ${tglSelesai}</p>
+                                        </div>
+                                    </div>
+                                    ${statusBadge}
+                                </div>
+                                <div class="flex gap-2">
+                                    ${buttonHtml}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    if (container) {
+                        container.innerHTML = html;
+                        lucide.createIcons();
+                    }
+                });
+        }
+
+        function absenSenseiMasuk(kelasId) {
+            openModalAbsenSensei(kelasId, 'masuk');
+        }
+
+        function absenSenseiPulang(kelasId) {
+            openModalAbsenSensei(kelasId, 'pulang');
+        }
+
+        // Load kelas aktif saat halaman load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadKelasAktif();
+        });
 
         function loadRiwayatRealtime() {
             $.ajax({
@@ -826,6 +1021,8 @@
             }
         }
     </script> --}}
+
+    @include('absensi.modal_absen_sensei')
 
 </body>
 

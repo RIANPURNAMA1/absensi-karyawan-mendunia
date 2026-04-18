@@ -37,9 +37,8 @@ class User extends Authenticatable
         'tanggal_lahir',
         'jenis_kelamin',
         'agama',
-        'status_pernikahan'
+        'status_pernikahan',
     ];
-
 
     protected $hidden = [
         'password',
@@ -50,11 +49,12 @@ class User extends Authenticatable
         'last_login' => 'datetime',
     ];
 
-
     // Ganti relasi lama dengan Accessor ini
     public function getCabangAttribute()
     {
-        if (!$this->cabang_ids) return collect();
+        if (! $this->cabang_ids) {
+            return collect();
+        }
 
         // Mengambil semua data cabang yang ID-nya ada di dalam list cabang_ids
         return \App\Models\Cabang::whereIn('id', $this->cabang_ids)->get();
@@ -75,11 +75,11 @@ class User extends Authenticatable
         return $this->role === 'KARYAWAN';
     }
 
-
     public function divisi()
     {
         return $this->belongsTo(Divisi::class);
     }
+
     public function shift()
     {
         // Pastikan foreign key di tabel users adalah shift_id
@@ -90,7 +90,6 @@ class User extends Authenticatable
     //     return $this->belongsTo(Cabang::class, 'cabang_id');
     // }
 
-
     public function absensi()
     {
         return $this->hasMany(\App\Models\Absensi::class, 'user_id');
@@ -100,13 +99,13 @@ class User extends Authenticatable
     {
         return $this->hasMany(Izin::class);
     }
+
     public function lembur()
     {
         return $this->hasMany(Lembur::class);
     }
 
-
-    // task 
+    // task
     // Di dalam class User
     public function managedProjects()
     {
@@ -116,5 +115,15 @@ class User extends Authenticatable
     public function assignedTasks()
     {
         return $this->belongsToMany(Task::class, 'task_assignments');
+    }
+
+    public function kelasSensei()
+    {
+        return $this->hasMany(KelasSensei::class);
+    }
+
+    public function absensiSensei()
+    {
+        return $this->hasMany(AbsensiSensei::class);
     }
 }

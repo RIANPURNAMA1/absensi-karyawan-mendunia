@@ -12,5 +12,8 @@ Artisan::command('inspire', function () {
 // Agar tidak mengganggu karyawan yang sedang absen di jam kerja
 Schedule::command('absensi:generate-alpha')->dailyAt('23:55');
 
+// Generate Alpha/Libur untuk Sensei
+Schedule::command('absensi:generate-alpha-sensei')->dailyAt('23:55');
+
 // Cek absen pulang bisa tetap setiap 10 menit atau di akhir shift
 Schedule::command('app:cek-absen-pulang')->everyTenMinutes();
