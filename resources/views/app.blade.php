@@ -122,13 +122,15 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
-    <!-- [Page Specific JS] start -->
-    <script src="../assets/js/plugins/apexcharts.min.js"></script>
-    <script src="../assets/js/plugins/jsvectormap.min.js"></script>
-    <script src="../assets/js/plugins/world.js"></script>
-    <script src="../assets/js/plugins/world-merc.js"></script>
-    <script src="../assets/js/pages/dashboard-sales.js"></script>
-    <!-- [Page Specific JS] end -->
+     <!-- [Page Specific JS] start -->
+     <script src="../assets/js/plugins/apexcharts.min.js"></script>
+     <script src="../assets/js/plugins/jsvectormap.min.js"></script>
+     <script src="../assets/js/plugins/world.js"></script>
+     <script src="../assets/js/plugins/world-merc.js"></script>
+     <script src="../assets/js/pages/dashboard-sales.js"></script>
+     <!-- SweetAlert JS -->
+     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+     <!-- [Page Specific JS] end -->
     <!-- Required Js -->
     <script src="../assets/js/plugins/popper.min.js"></script>
     <script src="../assets/js/plugins/simplebar.min.js"></script>

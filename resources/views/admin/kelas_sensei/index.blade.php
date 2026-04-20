@@ -72,37 +72,47 @@
                                 <th>Level</th>
                                 <th>Nama Sensei</th>
                                 <th>Tanggal Mulai</th>
-                                <th>Tanggal Selesai</th>
-                                <th class="text-center">Total Pertemuan</th>
-                                <th class="text-center">Absen Terisi</th>
-                                <th>Status</th>
+                                 <th>Tanggal Selesai</th>
+                                 <th class="text-center">Total Pertemuan</th>
+                                 <th class="text-center">Absen Terisi</th>
+                                 <th>Status</th>
+                                 <th class="text-center" style="width: 80px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @php $no = 1; @endphp
                             @foreach($kelas as $kelasItem)
                                 <tr>
-                                    <td class="text-center">{{ $no++ }}</td>
-                                    <td class="fw-bold text-primary">{{ $kelasItem->nama_kelas }}</td>
-                                    <td><span class="badge bg-secondary">{{ $kelasItem->level }}</span></td>
-                                    <td>{{ $kelasItem->user->name ?? '-' }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($kelasItem->tanggal_mulai)->format('d M Y') }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($kelasItem->tanggal_selesai)->format('d M Y') }}</td>
-                                    <td class="text-center">{{ $kelasItem->total_pertemuan }}</td>
-                                    <td class="text-center">{{ $kelasItem->jumlah_absen }}</td>
-                                    <td>
-                                        @php
-                                            $badgeClass = [
-                                                'aktif' => 'success',
-                                                'selesai' => 'primary',
-                                                'dibatalkan' => 'danger',
-                                            ];
-                                        @endphp
-                                        <span class="badge bg-{{ $badgeClass[$kelasItem->status] ?? 'secondary' }}">
-                                            {{ ucfirst($kelasItem->status) }}
-                                        </span>
-                                    </td>
-                                </tr>
+                                 <td class="text-center">{{ $no++ }}</td>
+                                     <td class="fw-bold text-primary">{{ $kelasItem->nama_kelas }}</td>
+                                     <td><span class="badge bg-secondary">{{ $kelasItem->level }}</span></td>
+                                     <td>{{ $kelasItem->user->name ?? '-' }}</td>
+                                     <td>{{ \Carbon\Carbon::parse($kelasItem->tanggal_mulai)->format('d M Y') }}</td>
+                                     <td>{{ \Carbon\Carbon::parse($kelasItem->tanggal_selesai)->format('d M Y') }}</td>
+                                     <td class="text-center">{{ $kelasItem->total_pertemuan }}</td>
+                                     <td class="text-center">{{ $kelasItem->jumlah_absen }}</td>
+                                     <td>
+                                         @php
+                                             $badgeClass = [
+                                                 'aktif' => 'success',
+                                                 'selesai' => 'primary',
+                                                 'dibatalkan' => 'danger',
+                                             ];
+                                         @endphp
+                                         <span class="badge bg-{{ $badgeClass[$kelasItem->status] ?? 'secondary' }}">
+                                             {{ ucfirst($kelasItem->status) }}
+                                         </span>
+                                     </td>
+                                      <td class="text-center">
+                                          <form method="POST" action="{{ route('kelas-sensei.destroy', $kelasItem->id) }}" class="delete-form-{{ $kelasItem->id }}">
+                                              @csrf
+                                              @method('DELETE')
+                                              <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="{{ $kelasItem->id }}">
+                                                  <i class="ph ph-trash"></i>
+                                              </button>
+                                          </form>
+                                      </td>
+                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
@@ -115,7 +125,34 @@
                 <i class="ph ph-books fs-1 opacity-50"></i>
                 <p class="mb-0 mt-2">Belum ada data kelas sensei</p>
             </div>
-        </div>
-        @endif
+         </div>
+@endif
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle delete buttons with SweetAlert
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const classId = this.getAttribute('data-id');
+                    const form = document.querySelector(`.delete-form-${classId}`);
+                    
+                    Swal.fire({
+                        title: 'Apakah Anda yakin?',
+                        text: "Kelas ini akan dihapus secara permanen!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Ya, hapus!',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        });
+    </script>
 @endsection
