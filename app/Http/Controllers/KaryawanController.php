@@ -72,6 +72,10 @@ class KaryawanController extends Controller
             'cabang_ids'        => 'required|array|min:1',
             'cabang_ids.*'      => 'exists:cabangs,id',
 
+            // Multiple Shifts
+            'shift_ids'        => 'nullable|array',
+            'shift_ids.*'      => 'exists:shifts,id',
+
             'shift_id'          => 'nullable|exists:shifts,id',
             'tanggal_masuk'     => 'nullable|date',
             'status_kerja'      => 'nullable|in:TETAP,KONTRAK,MAGANG',
@@ -128,6 +132,9 @@ class KaryawanController extends Controller
 
             // SIMPAN CABANG SEBAGAI ARRAY/JSON
             'cabang_ids'        => $request->cabang_ids,
+
+            // Multiple Shifts
+            'shift_ids'        => $request->shift_ids,
 
             'shift_id'          => $request->shift_id,
             'jabatan'           => $request->jabatan,
@@ -395,7 +402,11 @@ class KaryawanController extends Controller
         'cabang_ids'        => 'required|array|min:1',
         'cabang_ids.*'      => 'exists:cabangs,id',
         
-        'shift_id'          => 'required|exists:shifts,id',
+        // Multiple Shifts
+        'shift_ids'        => 'nullable|array',
+        'shift_ids.*'      => 'exists:shifts,id',
+
+        'shift_id'          => 'nullable|exists:shifts,id',
         'no_hp'             => 'required|string|max:20',
         'alamat'            => 'nullable|string',
         'tanggal_masuk'     => 'required|date',
@@ -458,6 +469,9 @@ class KaryawanController extends Controller
         // SESUAIKAN: Update kolom cabang_ids (Array otomatis jadi JSON karena casts di Model)
         'cabang_ids'        => $request->cabang_ids, 
         
+        // Multiple Shifts
+        'shift_ids'        => $request->shift_ids,
+
         'shift_id'          => $request->shift_id,
         'no_hp'             => $request->no_hp,
         'alamat'            => $request->alamat,

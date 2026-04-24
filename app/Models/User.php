@@ -16,6 +16,7 @@ class User extends Authenticatable
         'role',
         'divisi_id',
         'cabang_ids', // Ubah dari cabang_id ke cabang_ids
+        'shift_ids', // Multiple shift support
         'shift_id',      // PASTIKAN ADA
         'status',
         'nip',
@@ -46,6 +47,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'cabang_ids' => 'array', // SANGAT PENTING untuk menyimpan multiple ID
+        'shift_ids' => 'array', // Multiple shift
         'last_login' => 'datetime',
     ];
 
@@ -84,6 +86,15 @@ class User extends Authenticatable
     {
         // Pastikan foreign key di tabel users adalah shift_id
         return $this->belongsTo(Shift::class, 'shift_id');
+    }
+
+    // Accessor untuk multiple shifts ( seperti getCabangAttribute )
+    public function getShiftsAttribute()
+    {
+        if (!$this->shift_ids) {
+            return collect();
+        }
+        return Shift::whereIn('id', $this->shift_ids)->get();
     }
     // public function cabang()
     // {

@@ -79,16 +79,22 @@
                                </select>
                            </div>
 
-                           <div class="col-md-6">
-                               <label class="form-label fw-bold text-primary">Shift Kerja <span
-                                       class="text-danger">*</span></label>
-                               <select name="shift_id" class="form-select border-primary" required>
-                                   <option value="">-- Pilih Shift --</option>
-                                   @foreach ($shifts as $s)
-                                       <option value="{{ $s->id }}">{{ $s->nama_shift }}</option>
-                                   @endforeach
-                               </select>
-                           </div>
+<div class="col-md-6">
+                                <label class="form-label fw-bold text-primary">Shift Kerja <span
+                                        class="text-danger">*</span></label>
+                                <div class="border rounded p-3" style="max-height: 150px; overflow-y: auto;">
+                                    @foreach ($shifts as $s)
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="shift_ids[]" value="{{ $s->id }}" id="shift_{{ $s->id }}">
+                                            <label class="form-check-label" for="shift_{{ $s->id }}">
+                                                <span class="badge bg-primary">{{ $s->nama_shift }}</span>
+                                                <small class="text-muted">({{ \Carbon\Carbon::parse($s->jam_masuk)->format('H:i') }} - {{ \Carbon\Carbon::parse($s->jam_pulang)->format('H:i') }})</small>
+                                            </label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <small class="text-muted">Centang satu atau lebih shift</small>
+                            </div>
 
                            <div class="col-md-6">
                                <label class="form-label fw-bold">No HP <span class="text-danger">*</span></label>
@@ -292,21 +298,22 @@
                                    bertugas.</small>
                            </div>
 
-                           <div class="col-md-6">
-                               <label class="form-label fw-bold text-primary">Shift Kerja <span
-                                       class="text-danger">*</span></label>
-                               <select name="shift_id" id="edit_shift_id" class="form-select border-primary"
-                                   required>
-                                   <option value="">-- Pilih Shift --</option>
-                                   @foreach ($shifts as $s)
-                                       <option value="{{ $s->id }}">
-                                           {{ $s->nama_shift }}
-                                           ({{ \Carbon\Carbon::parse($s->jam_masuk)->format('H:i') }} -
-                                           {{ \Carbon\Carbon::parse($s->jam_pulang)->format('H:i') }})
-                                       </option>
-                                   @endforeach
-                               </select>
-                           </div>
+<div class="col-md-6">
+                                <label class="form-label fw-bold text-primary">Shift Kerja <span
+                                        class="text-danger">*</span></label>
+                                <div class="border rounded p-3" style="max-height: 150px; overflow-y: auto;">
+                                    @foreach ($shifts as $s)
+                                        <div class="form-check">
+                                            <input class="form-check-input edit-shift-checkbox" type="checkbox" name="shift_ids[]" value="{{ $s->id }}" id="edit_shift_{{ $s->id }}">
+                                            <label class="form-check-label" for="edit_shift_{{ $s->id }}">
+                                                <span class="badge bg-primary">{{ $s->nama_shift }}</span>
+                                                <small class="text-muted">({{ \Carbon\Carbon::parse($s->jam_masuk)->format('H:i') }} - {{ \Carbon\Carbon::parse($s->jam_pulang)->format('H:i') }})</small>
+                                            </label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <small class="text-muted">Centang satu atau lebih shift</small>
+                            </div>
 
                            <div class="col-md-6">
                                <label class="form-label fw-semibold">Status Kerja <span

@@ -10,6 +10,7 @@ use App\Models\HariLibur;
 use App\Models\Karyawan;
 use App\Models\KelasSensei;
 use App\Models\Shift;
+use App\Models\ShiftJadwal;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -197,14 +198,27 @@ class AbsensiController extends Controller
             return response()->json(['message' => 'Anda sudah absen masuk hari ini'], 422);
         }
 
-        // 3. Ambil cabang & shift
-        $cabang = Cabang::find($user->cabang_id);
-        if (! $cabang) {
+// 3. Ambil cabang & shift
+        $cabang = null;
+        if ($user->cabang_ids && is_array($user->cabang_ids) && count($user->cabang_ids) > 0) {
+            $cabang = Campus::find($user->cabang_ids[0]);
+        }
+        
+        if (!$cabang) {
+            $cabang = Campus::find($user->cabang_id);
+        }
+        
+        if (!$cabang) {
             return response()->json(['message' => 'Cabang tidak ditemukan'], 422);
         }
 
-        $shift = Shift::find($user->shift_id);
-        if (! $shift) {
+        $shiftJadwal = ShiftJadwal::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->first();
+        
+        $shift = $shiftJadwal ? $shiftJadwal->shift : Shift::find($user->shift_id);
+        
+        if (!$shift) {
             return response()->json(['message' => 'Jadwal shift tidak ditemukan'], 422);
         }
 

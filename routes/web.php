@@ -17,6 +17,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RekapController;
 use App\Http\Controllers\SenseiController;
 use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\ShiftJadwalController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -86,6 +87,12 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
 
     // Shift Management
     Route::resource('shift', ShiftController::class);
+
+    // Shift Jadwal (per tanggal per karyawan)
+    Route::get('/shift-jadwal/{userId}', [ShiftJadwalController::class, 'getJadwalKaryawan'])->name('shift-jadwal.get');
+    Route::post('/shift-jadwal', [ShiftJadwalController::class, 'store'])->name('shift-jadwal.store');
+    Route::post('/shift-jadwal/multiple', [ShiftJadwalController::class, 'createMultiple'])->name('shift-jadwal.multiple');
+    Route::delete('/shift-jadwal/{id}', [ShiftJadwalController::class, 'destroy'])->name('shift-jadwal.destroy');
 
     // Cabang Management
     Route::get('/cabang', [CabangController::class, 'index'])->name('cabang.index');

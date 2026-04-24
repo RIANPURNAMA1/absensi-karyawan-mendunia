@@ -34,6 +34,16 @@
            transition: all 0.3s ease;">
                         <i class="ph ph-plus-circle"></i> Tambah Karyawan
                     </button>
+
+                    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalAturShift"
+                        style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); 
+           border: none; 
+           padding: 8px 16px; 
+           font-weight: 500; 
+           box-shadow: 0 2px 6px rgba(56, 239, 125, 0.3);
+           transition: all 0.3s ease;">
+                        <i class="ph ph-calendar-plus"></i> Atur Shift
+                    </button>
                 </div>
             </div>
         </div>
@@ -166,7 +176,7 @@
                                                     <i class="ph ph-eye fs-5"></i>
                                                 </a>
                                                 <a href="javascript:void(0)" class="p-1 text-warning" title="Edit"
-                                                    onclick="editKaryawan('{{ $k->id }}','{{ $k->nik }}','{{ $k->nip }}','{{ $k->name }}','{{ $k->jabatan }}','{{ $k->pendidikan_terakhir }}','{{ $k->divisi_id }}','{{ $k->cabang_id }}','{{ $k->shift_id }}','{{ $k->status_kerja }}','{{ $k->no_hp }}','{{ $k->email }}','{{ $k->tanggal_masuk }}','{{ $k->tempat_lahir }}','{{ $k->tanggal_lahir }}','{{ $k->jenis_kelamin }}','{{ $k->agama }}','{{ $k->status_pernikahan }}','{{ $k->alamat }}')">
+                                                    onclick="editKaryawan('{{ $k->id }}','{{ $k->nik }}','{{ $k->nip }}','{{ $k->name }}','{{ $k->jabatan }}','{{ $k->pendidikan_terakhir }}','{{ $k->divisi_id }}','{{ json_encode($k->cabang_ids) }}','{{ json_encode($k->shift_ids) }}','{{ $k->status_kerja }}','{{ $k->no_hp }}','{{ $k->email }}','{{ $k->tanggal_masuk }}','{{ $k->tempat_lahir }}','{{ $k->tanggal_lahir }}','{{ $k->jenis_kelamin }}','{{ $k->agama }}','{{ $k->status_pernikahan }}','{{ $k->alamat }}')">
                                                     <i class="ph ph-note-pencil fs-5"></i>
                                                 </a>
                                                 <a href="javascript:void(0)" class="p-1 text-danger" title="Hapus"
@@ -204,6 +214,7 @@
 
     {{-- modal tambah data --}}
     @include('karyawan.modal')
+    @include('karyawan.shift-jadwal-modal')
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -225,7 +236,7 @@
     <script>
         // Pastikan urutan parameter sama dengan tombol di Blade
         function editKaryawan(
-            id, nik, nip, name, jabatan, pendidikan_terakhir, divisi_id, cabang_id, shift_id, status_kerja,
+            id, nik, nip, name, jabatan, pendidikan_terakhir, divisi_id, cabang_ids, shift_ids, status_kerja,
             no_hp, email, tanggal_masuk,
             tempat_lahir, tanggal_lahir, jenis_kelamin, agama, status_pernikahan,
             alamat
@@ -240,8 +251,18 @@
 
             // Dropdown Relasi
             $('#edit_divisi').val(divisi_id);
-            $('#edit_cabang').val(cabang_id);
-            $('#edit_shift_id').val(shift_id);
+            
+            // Parse JSON untuk cabang
+            const cabangArr = typeof cabang_ids === 'string' ? JSON.parse(cabang_ids) : cabang_ids;
+            $('#edit_cabang').val(cabangArr).trigger('change');
+            
+            // Set checkbox untuk shifts
+            $('.edit-shift-checkbox').prop('checked', false);
+            if (shiftArr && Array.isArray(shiftArr)) {
+                shiftArr.forEach(function(shiftId) {
+                    $('.edit-shift-checkbox[value="' + shiftId + '"]').prop('checked', true);
+                });
+            }
 
             // Data Kepegawaian & Kontak
             $('#edit_status_kerja').val(status_kerja);
