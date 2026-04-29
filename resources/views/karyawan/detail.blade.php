@@ -29,7 +29,13 @@
                         <hr>
                         <div class="text-start ps-3">
                             <small class="text-muted d-block">Shift Kerja:</small>
-                            <strong>{{ $karyawan->shift->nama_shift ?? '-' }}</strong>
+                            @if(isset($shifts) && $shifts->count() > 0)
+                                @foreach($shifts as $shift)
+                                    <span class="badge bg-primary">{{ $shift->nama_shift }}</span>
+                                @endforeach
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
                         </div>
                     </div>
 

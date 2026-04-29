@@ -12,6 +12,7 @@ use App\Models\KelasSensei;
 use App\Models\Shift;
 use App\Models\ShiftJadwal;
 use App\Models\User;
+use App\Services\WhatsAppService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -93,6 +94,24 @@ class AbsensiController extends Controller
             ->where('jam_pulang', '>=', $currentTime)
             ->first();
 
+        // 5b. Ambil semua shift user (multiple support)
+        $userShifts = collect();
+        if ($user->shift_ids && is_array($user->shift_ids) && count($user->shift_ids) > 0) {
+            $userShifts = \App\Models\Shift::whereIn('id', $user->shift_ids)->get();
+        } elseif ($user->shift) {
+            $userShifts = collect([$user->shift]);
+        }
+
+        // Gunakan currentShift dari userShifts jika ada yang aktif sekarang
+        if (!$currentShift && $userShifts->count() > 0) {
+            foreach ($userShifts as $shift) {
+                if ($shift->jam_masuk <= $currentTime && $shift->jam_pulang >= $currentTime) {
+                    $currentShift = $shift;
+                    break;
+                }
+            }
+        }
+
         // 6. Ambil kelas sensei aktif untuk user
         $today = now()->toDateString();
         $kelasSenseiAktif = KelasSensei::where('user_id', $user->id)
@@ -117,6 +136,7 @@ class AbsensiController extends Controller
             'riwayat' => $riwayat,
             'riwayatSensei' => $riwayatSensei,
             'shifts' => $allShifts,
+            'userShifts' => $userShifts ?? collect(),
             'currentShift' => $currentShift,
             'kelasSenseiAktif' => $kelasSenseiAktif,
             'isLibur' => $isLibur,
@@ -256,6 +276,12 @@ class AbsensiController extends Controller
             'long_masuk' => $request->longitude,
             'status' => $status,
         ]);
+
+        // 7. Kirim notifikasi WhatsApp
+        if ($user->no_hp) {
+            $whatsapp = new WhatsAppService();
+            $whatsapp->sendAbsensiNotification($user, $status, $absensi);
+        }
 
         return response()->json([
             'message' => 'Absen masuk berhasil. Status: '.$status,
@@ -407,6 +433,12 @@ class AbsensiController extends Controller
             'long_pulang' => $request->longitude,
             'status' => $statusBaru,
         ]);
+
+        // 7️⃣ Kirim notifikasi WhatsApp jika status PULANG LEBIH AWAL
+        if ($user->no_hp && in_array($statusBaru, ['PULANG LEBIH AWAL'])) {
+            $whatsapp = new WhatsAppService();
+            $whatsapp->sendAbsensiNotification($user, $statusBaru, $absensi);
+        }
 
         return response()->json([
             'message' => 'Absen pulang berhasil',
@@ -799,6 +831,12 @@ class AbsensiController extends Controller
                 ]);
             }
 
+            // Kirim notifikasi WhatsApp masuk
+            if ($user->no_hp) {
+                $whatsapp = new WhatsAppService();
+                $whatsapp->sendAbsensiNotification($user, $status, $absensi);
+            }
+
             return response()->json([
                 'message' => 'Absen masuk berhasil di '.$cabang->nama_cabang.'. Status: '.$status,
                 'status' => $status,
@@ -856,6 +894,12 @@ class AbsensiController extends Controller
             'foto_pulang' => $fotoPath,
             'status' => $statusBaru,
         ]);
+
+        // Kirim notifikasi WhatsApp jika PULANG LEBIH AWAL
+        if ($user->no_hp && in_array($statusBaru, ['PULANG LEBIH AWAL'])) {
+            $whatsapp = new WhatsAppService();
+            $whatsapp->sendAbsensiNotification($user, $statusBaru, $absensi);
+        }
 
         return response()->json([
             'message' => 'Absen pulang berhasil di '.$cabang->nama_cabang.'. Status: '.$statusBaru,

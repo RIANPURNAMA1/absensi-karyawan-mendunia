@@ -13,6 +13,7 @@ use App\Http\Controllers\KehadiranController;
 use App\Http\Controllers\KehadiranSenseiController;
 use App\Http\Controllers\LemburController;
 use App\Http\Controllers\MonitoringController;
+use App\Http\Controllers\PengaturanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RekapController;
 use App\Http\Controllers\SenseiController;
@@ -130,10 +131,9 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
         Route::delete('/delete/{id}', [UserController::class, 'destroy'])->name('user.karyawan.delete');
     });
 
-    // Pengaturan
-    Route::get('/pengaturan', [UserController::class, 'index']);
-    Route::post('/pengaturan', [UserController::class, 'store'])->name('users.store');
-    Route::put('/pengaturan/{id}', [UserController::class, 'update'])->name('pengaturan.update');
+    // Pengaturan Notifikasi WA
+    Route::get('/pengaturan', [PengaturanController::class, 'index'])->name('pengaturan.index');
+    Route::post('/pengaturan', [PengaturanController::class, 'update'])->name('pengaturan.update');
 
     // lembur
     Route::get('/approval-lembur', [LemburController::class, 'approvalIndex'])->name('lembur.approval');
@@ -267,3 +267,24 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tasks/upload-image', [TaskController::class, 'uploadImage'])->name('tasks.upload-image');
 
 });
+
+
+
+
+Route::get('/test-wa/{status}', function($status) {
+    $user = \App\Models\User::whereNotNull('no_hp')->first();
+    $wa = new \App\Services\WhatsAppService();
+    $absensi = new \App\Models\Absensi();
+    $absensi->jam_masuk = now()->format('H:i:s');
+    $absensi->shift = $user->shift;
+    
+    $result = $wa->sendAbsensiNotification($user, strtoupper($status), $absensi);
+    
+    return response()->json([
+        'success' => $result,
+        'message' => $result ? 'WA terkirim' : 'Gagal kirim WA',
+        'user' => $user->name,
+        'phone' => $user->no_hp,
+        'status' => $status
+    ]);
+})->middleware('auth');

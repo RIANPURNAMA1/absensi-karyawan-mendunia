@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'starsender' => [
+        'api_key' => env('STARSAPI_KEY'),
+        'api_url' => env('STARSAPI_URL', 'https://api.starsender.online/api/send'),
+    ],
+
 ];

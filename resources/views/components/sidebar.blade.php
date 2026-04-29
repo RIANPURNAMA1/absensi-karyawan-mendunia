@@ -114,14 +114,25 @@
                             <span class="pc-mtext">Kelas Sensei</span>
                         </a>
                     </li>
-                   <li class="pc-item">
-                       <a href="/data-agenda" class="pc-link">
-                           <span class="pc-micon"><i class="ph ph-calendar"></i></span>
-                           <span class="pc-mtext">Data Agenda</span>
-                       </a>
-                   </li>
-               </ul>
-           </li>
+                    <li class="pc-item">
+                        <a href="/data-agenda" class="pc-link">
+                            <span class="pc-micon"><i class="ph ph-calendar"></i></span>
+                            <span class="pc-mtext">Data Agenda</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+          <!-- PENGATURAN -->
+          <li class="pc-item pc-caption">
+              <label>Pengaturan Notifikasi Wa</label>
+          </li>
+          <li class="pc-item">
+              <a href="/pengaturan" class="pc-link">
+                  <span class="pc-micon"><i class="ph ph-gear"></i></span>
+                  <span class="pc-mtext">Notifikasi WA</span>
+              </a>
+          </li>
 
 
          @php

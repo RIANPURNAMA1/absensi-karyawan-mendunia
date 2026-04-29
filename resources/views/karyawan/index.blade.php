@@ -256,6 +256,9 @@
             const cabangArr = typeof cabang_ids === 'string' ? JSON.parse(cabang_ids) : cabang_ids;
             $('#edit_cabang').val(cabangArr).trigger('change');
             
+            // Parse JSON untuk shifts
+            const shiftArr = typeof shift_ids === 'string' ? JSON.parse(shift_ids) : shift_ids;
+            
             // Set checkbox untuk shifts
             $('.edit-shift-checkbox').prop('checked', false);
             if (shiftArr && Array.isArray(shiftArr)) {

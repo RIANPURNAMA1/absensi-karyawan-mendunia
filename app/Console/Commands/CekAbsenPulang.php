@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Absensi;
+use App\Services\WhatsAppService;
 use Carbon\Carbon;
 
 class CekAbsenPulang extends Command
@@ -13,9 +14,10 @@ class CekAbsenPulang extends Command
 
     public function handle()
     {
-        $now = Carbon::now();
+        $now = Carbon::now('Asia/Jakarta');
+        $whatsapp = new WhatsAppService();
 
-        $absensis = Absensi::with('shift')
+        $absensis = Absensi::with(['shift', 'user'])
             ->whereNull('jam_keluar')
             ->whereIn('status', ['HADIR', 'TERLAMBAT'])
             ->get();
@@ -31,9 +33,7 @@ class CekAbsenPulang extends Command
                 $jamPulangShift->addDay();
             }
 
-        $batasAkhir = $jamPulangShift->copy()->addHours(5);
-
-
+            $batasAkhir = $jamPulangShift->copy()->addHours(5);
 
             if ($now->greaterThan($batasAkhir)) {
 
@@ -41,6 +41,11 @@ class CekAbsenPulang extends Command
                     'status' => 'TIDAK ABSEN PULANG',
                     'keterangan' => 'Otomatis sistem: tidak absen pulang'
                 ]);
+
+                // Kirim notifikasi WhatsApp
+                if ($absen->user && $absen->user->no_hp) {
+                    $whatsapp->sendAbsensiNotification($absen->user, 'TIDAK ABSEN PULANG', $absen);
+                }
 
                 $this->info("User {$absen->user_id} → TIDAK ABSEN PULANG");
             }

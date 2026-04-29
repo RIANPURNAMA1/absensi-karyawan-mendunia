@@ -494,8 +494,17 @@ class KaryawanController extends Controller
 
     public function show($id)
     {
-        $karyawan = User::with('divisi')->findOrFail($id);
-        return view('karyawan.detail', compact('karyawan'));
+        $karyawan = User::with(['divisi', 'shift'])->findOrFail($id);
+        
+        // Ambil multiple shifts jika ada
+        $shifts = collect();
+        if ($karyawan->shift_ids && is_array($karyawan->shift_ids) && count($karyawan->shift_ids) > 0) {
+            $shifts = \App\Models\Shift::whereIn('id', $karyawan->shift_ids)->get();
+        } elseif ($karyawan->shift) {
+            $shifts = collect([$karyawan->shift]);
+        }
+        
+        return view('karyawan.detail', compact('karyawan', 'shifts'));
     }
 
     public function destroy($id)

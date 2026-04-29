@@ -133,7 +133,12 @@
             <button class="text-blue-600 text-sm font-semibold">See All</button>
         </div>
 
-        @if (Auth::user()->shift)
+        @php
+            $userShifts = isset($userShifts) ? $userShifts : collect();
+            $firstShift = $userShifts->first();
+        @endphp
+
+        @if ($userShifts && $userShifts->count() > 0)
             <div class="bg-gradient-to-br from-[#00c0ff] to-blue-700 rounded-2xl p-5 text-white shadow-lg">
                 <div class="flex items-start justify-between mb-4">
                     <div class="flex items-center gap-3">
@@ -141,8 +146,11 @@
                             <i data-lucide="clock" class="w-6 h-6"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-base">{{ Auth::user()->shift->nama_shift }}</h3>
-                            <p class="text-blue-100 text-sm">Status: {{ Auth::user()->shift->status }}</p>
+                            <h3 class="font-bold text-base">{{ $firstShift->nama_shift }}</h3>
+                            <p class="text-blue-100 text-sm">Status: {{ $firstShift->status }}</p>
+                            @if ($userShifts->count() > 1)
+                                <p class="text-blue-200 text-xs mt-1">+ {{ $userShifts->count() - 1 }} shift lainnya</p>
+                            @endif
                         </div>
                     </div>
                     <button onclick="mulaiAbsenFoto()"
@@ -159,8 +167,8 @@
                     <div class="flex items-center gap-2">
                         <i data-lucide="clock" class="w-4 h-4 text-blue-200"></i>
                         <span class="text-sm">
-                            {{ \Carbon\Carbon::parse(Auth::user()->shift->jam_masuk)->format('H:i') }} -
-                            {{ \Carbon\Carbon::parse(Auth::user()->shift->jam_pulang)->format('H:i') }}
+                            {{ \Carbon\Carbon::parse($firstShift->jam_masuk)->format('H:i') }} -
+                            {{ \Carbon\Carbon::parse($firstShift->jam_pulang)->format('H:i') }}
                         </span>
                     </div>
                 </div>
@@ -408,7 +416,11 @@
                 </div>
 
                 <div class="w-full space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                    @forelse($shifts as $shift)
+                    @php
+                        $userShifts = $userShifts ?? collect();
+                    @endphp
+                    
+                    @forelse($userShifts as $shift)
                         @php
                             // Cek apakah ini shift yang sedang berjalan (currentShift dari controller)
                             $isCurrent = isset($currentShift) && $currentShift->id == $shift->id;
@@ -442,13 +454,25 @@
                                     class="text-[9px] font-black text-indigo-600 bg-white border border-indigo-100 px-2 py-1 rounded-lg uppercase tracking-wider">Aktif</span>
                             @else
                                 <span
-                                    class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{{ $shift->total_jam }}
-                                    Jam</span>
+                                    class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                                    @php
+                                        $jamMasuk = $shift->jam_masuk ? \Carbon\Carbon::parse($shift->jam_masuk) : null;
+                                        $jamPulang = $shift->jam_pulang ? \Carbon\Carbon::parse($shift->jam_pulang) : null;
+                                        if ($jamMasuk && $jamPulang) {
+                                            $diffMinutes = $jamMasuk->diffInMinutes($jamPulang);
+                                            $hours = floor($diffMinutes / 60);
+                                            $minutes = $diffMinutes % 60;
+                                            echo $hours . ' Jam' . ($minutes > 0 ? ' ' . $minutes . ' Menit' : '');
+                                        } else {
+                                            echo '-';
+                                        }
+                                    @endphp
+                                    </span>
                             @endif
                         </div>
                     @empty
                         <div class="text-center py-10">
-                            <p class="text-gray-400 text-xs">Belum ada data shift yang tersedia.</p>
+                            <p class="text-gray-400 text-xs">Belum ada jadwal shift yang ditentukan.</p>
                         </div>
                     @endforelse
                 </div>
