@@ -150,25 +150,34 @@ class ShiftJadwalController extends Controller
 
     public function getJadwalKaryawan(Request $request, $userId)
     {
-        $bulan = $request->get('bulan', Carbon::now()->month);
-        $tahun = $request->get('tahun', Carbon::now()->year);
+        try {
+            $bulan = $request->get('bulan', Carbon::now()->month);
+            $tahun = $request->get('tahun', Carbon::now()->year);
 
-        $jadwals = ShiftJadwal::where('user_id', $userId)
-            ->whereMonth('tanggal', $bulan)
-            ->whereYear('tanggal', $tahun)
-            ->with('shift')
-            ->get()
-            ->keyBy(function ($item) {
-                return $item->tanggal->toDateString();
-            });
+            $jadwals = ShiftJadwal::where('user_id', $userId)
+                ->whereMonth('tanggal', $bulan)
+                ->whereYear('tanggal', $tahun)
+                ->with('shift')
+                ->get()
+                ->mapWithKeys(function ($item) {
+                    return [$item->tanggal->toDateString() => $item];
+                });
 
-        $user = User::findOrFail($userId);
-        $defaultShift = $user->shift;
+            $user = User::findOrFail($userId);
+            $defaultShift = $user->shift;
 
-        return response()->json([
-            'success' => true,
-            'jadwals' => $jadwals,
-            'default_shift' => $defaultShift
-        ]);
+            return response()->json([
+                'success' => true,
+                'jadwals' => $jadwals,
+                'default_shift' => $defaultShift
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
+        }
     }
 }

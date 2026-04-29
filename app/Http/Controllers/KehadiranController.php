@@ -76,9 +76,17 @@ class KehadiranController extends Controller
 
         $absen = Absensi::findOrFail($request->id);
 
-        $absen->update([
-            'status' => $request->status,
-        ]);
+        $updateData = ['status' => $request->status];
+
+        if ($request->status === 'HADIR') {
+            $shift = $absen->shift;
+            if ($shift) {
+                $updateData['jam_masuk'] = $shift->jam_masuk;
+                $updateData['jam_keluar'] = $shift->jam_pulang;
+            }
+        }
+
+        $absen->update($updateData);
 
         return back()->with('success', 'Status absensi berhasil diperbarui');
     }
