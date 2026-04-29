@@ -116,65 +116,6 @@
             </div>
         </div>
 
-        @if ($kelas->count() > 0)
-            <div class="card border rounded-3 shadow-sm">
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="text-center" style="width: 50px;">No</th>
-                                    <th>Nama Kelas</th>
-                                    <th>Level</th>
-                                    <th>Nama Sensei</th>
-                                    <th>Tanggal Mulai</th>
-                                    <th>Tanggal Selesai</th>
-                                    <th class="text-center">Total Pertemuan</th>
-                                    <th class="text-center">Absen Terisi</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php $no = 1; @endphp
-                                @foreach ($kelas as $kelasItem)
-                                    <tr>
-                                        <td class="text-center">{{ $no++ }}</td>
-                                        <td class="fw-bold text-primary">{{ $kelasItem->nama_kelas }}</td>
-                                        <td><span class="badge bg-secondary">{{ $kelasItem->level }}</span></td>
-                                        <td>{{ $kelasItem->user->name ?? '-' }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($kelasItem->tanggal_mulai)->format('d M Y') }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($kelasItem->tanggal_selesai)->format('d M Y') }}</td>
-                                        <td class="text-center">{{ $kelasItem->total_pertemuan }}</td>
-                                        <td class="text-center">{{ $kelasItem->jumlah_absen }}</td>
-                                        <td>
-                                            @php
-                                                $badgeClass = [
-                                                    'aktif' => 'success',
-                                                    'selesai' => 'primary',
-                                                    'dibatalkan' => 'danger',
-                                                ];
-                                            @endphp
-                                            <span class="badge bg-{{ $badgeClass[$kelasItem->status] ?? 'secondary' }}">
-                                                {{ ucfirst($kelasItem->status) }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        @else
-            <div class="card border rounded-3">
-                <div class="card-body text-center py-5 text-muted">
-                    <i class="ph ph-books fs-1 opacity-50"></i>
-                    <p class="mb-0 mt-2">Belum ada data kelas sensei</p>
-                </div>
-            </div>
-
-        @endif
-
          </div>
 @endif
     </div>

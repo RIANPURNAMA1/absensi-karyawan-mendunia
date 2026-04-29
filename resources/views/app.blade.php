@@ -147,41 +147,42 @@
                 .then(data => console.log('Session refreshed'));
         }, 15 * 60 * 1000); // Setiap 15 menit
 
-        const ctxMonthly = document.getElementById('attendanceMonthlyChart').getContext('2d');
-
-        new Chart(ctxMonthly, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
-                datasets: [{
-                    label: 'Jumlah Kehadiran',
-                    data: [420, 398, 450, 470, 490, 510], // DATA DUMMY
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,0.15)',
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#3b82f6'
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: true
-                    }
+        const ctxMonthly = document.getElementById('attendanceMonthlyChart');
+        if (ctxMonthly) {
+            new Chart(ctxMonthly.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+                    datasets: [{
+                        label: 'Jumlah Kehadiran',
+                        data: [420, 398, 450, 470, 490, 510], // DATA DUMMY
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59,130,246,0.15)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#3b82f6'
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Jumlah Kehadiran'
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Jumlah Kehadiran'
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     </script>
 
 
