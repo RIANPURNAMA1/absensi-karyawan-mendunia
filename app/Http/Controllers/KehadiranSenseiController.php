@@ -377,4 +377,12 @@ class KehadiranSenseiController extends Controller
             'status_selected' => $status,
         ]);
     }
+
+    public function destroy($id)
+    {
+        $kelas = KelasSensei::findOrFail($id);
+        $kelas->delete();
+
+        return redirect()->back()->with('success', 'Kelas berhasil dihapus');
+    }
 }

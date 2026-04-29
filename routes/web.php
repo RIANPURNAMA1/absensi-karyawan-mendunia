@@ -113,6 +113,7 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
 
     // Kelas Sensei (menu terpisah)
     Route::get('/kelas-sensei', [KehadiranSenseiController::class, 'kelasIndex']);
+    Route::delete('/kelas-sensei/{id}', [KehadiranSenseiController::class, 'destroy'])->name('kelas-sensei.destroy');
 
     // Agenda
     Route::get('/data-agenda', [App\Http\Controllers\Admin\AgendaController::class, 'index'])->name('admin.agenda.index');
