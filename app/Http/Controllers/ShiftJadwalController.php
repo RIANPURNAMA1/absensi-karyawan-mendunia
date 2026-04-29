@@ -89,8 +89,8 @@ class ShiftJadwalController extends Controller
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
             'shift_id' => 'required|exists:shifts,id',
-            'tanggal_mulai' => 'required|date',
-            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'tanggal_list' => 'required|array',
+            'tanggal_list.*' => 'required|date',
             'keterangan' => 'nullable|string'
         ]);
 
@@ -103,22 +103,18 @@ class ShiftJadwalController extends Controller
         }
 
         try {
-            $start = Carbon::parse($request->tanggal_mulai);
-            $end = Carbon::parse($request->tanggal_selesai);
             $count = 0;
-
-            while ($start->lte($end)) {
+            foreach ($request->tanggal_list as $tanggal) {
                 ShiftJadwal::updateOrCreate(
                     [
                         'user_id' => $request->user_id,
-                        'tanggal' => $start->toDateString()
+                        'tanggal' => $tanggal
                     ],
                     [
                         'shift_id' => $request->shift_id,
                         'keterangan' => $request->keterangan
                     ]
                 );
-                $start->addDay();
                 $count++;
             }
 

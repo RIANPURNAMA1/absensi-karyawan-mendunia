@@ -53,6 +53,17 @@
                         </button>
                     </div>
 
+                    <div class="mb-3 p-3 bg-light rounded">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="fw-bold text-muted">PILIH TANGGAL:</small>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="pilihSemuaTanggal()">Pilih Semua</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSemuaTanggal()">Clear</button>
+                            </div>
+                        </div>
+                        <div id="selectedDatesBadge" class="d-flex flex-wrap gap-1"></div>
+                    </div>
+
                     <div class="calendar-grid mb-3">
                         <div class="row row-cols-7 g-1 text-center fw-bold mb-2">
                             <div class="col py-1 text-danger">Min</div>
@@ -66,7 +77,30 @@
                         <div class="calendar-days" id="calendarDays"></div>
                     </div>
 
-                    <div class="legend-box p-3 bg-light rounded mb-3">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">PILIH SHIFT:</label>
+                        <select id="pilihShiftBatch" class="form-select">
+                            <option value="">-- Pilih Shift --</option>
+                            @foreach($shifts as $s)
+                                <option value="{{ $s->id }}">{{ $s->nama_shift }} ({{ \Carbon\Carbon::parse($s->jam_masuk)->format('H:i') }} - {{ \Carbon\Carbon::parse($s->jam_pulang)->format('H:i') }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" id="keteranganShiftBatch" class="form-control" placeholder="Keterangan (opsional)">
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-danger flex-grow-1" onclick="hapusJadwalBatch()" disabled id="btnHapusBatch">
+                            <i class="ph ph-trash me-1"></i> Hapus Jadwal
+                        </button>
+                        <button type="button" class="btn btn-primary flex-grow-1" onclick="simpanJadwalBatch()" id="btnSimpanBatch">
+                            <i class="ph ph-floppy-disk me-1"></i> Simpan Jadwal
+                        </button>
+                    </div>
+
+                    <div class="legend-box p-3 bg-light rounded mt-3">
                         <small class="fw-bold">Legenda Shift:</small>
                         <div class="d-flex flex-wrap gap-2 mt-2" id="shiftLegend"></div>
                     </div>
@@ -85,41 +119,11 @@
     </div>
 </div>
 
-<!-- MODAL PILIH SHIFT -->
-<div class="modal fade" id="modalPilihShift" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-0 bg-primary text-white">
-                <h6 class="modal-title fw-bold">Pilih Shift</h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-3">
-                <p class="mb-2"><strong>Tanggal:</strong> <span id="tanggalDipilih"></span></p>
-                <select id="pilihShiftModal" class="form-select mb-3">
-                    <option value="">-- Pilih Shift --</option>
-                    @foreach($shifts as $s)
-                        <option value="{{ $s->id }}">{{ $s->nama_shift }} ({{ \Carbon\Carbon::parse($s->jam_masuk)->format('H:i') }} - {{ \Carbon\Carbon::parse($s->jam_pulang)->format('H:i') }})</option>
-                    @endforeach
-                </select>
-                <input type="text" id="keteranganShiftModal" class="form-control" placeholder="Keterangan (opsional)">
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-danger" onclick="hapusJadwalTanggal()">
-                    <i class="ph ph-trash me-1"></i> Hapus
-                </button>
-                <button type="button" class="btn btn-primary" onclick="simpanJadwalTanggal()">
-                    <i class="ph ph-floppy-disk me-1"></i> Simpan
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
 let jadwalShiftData = {};
 let currentMonth = parseInt('{{ now()->month }}');
 let currentYear = parseInt('{{ now()->year }}');
-let selectedTanggal = null;
+let selectedTanggalList = [];
 let allShifts = @json($shifts);
 
 const shiftColors = {
@@ -156,8 +160,10 @@ function loadJadwalShift() {
         success: function(res) {
             if (res.success) {
                 jadwalShiftData = res.jadwals;
+                selectedTanggalList = [];
                 renderCalendar();
                 renderLegend();
+                updateSelectedDatesDisplay();
                 $('#calendarContainer').removeClass('d-none');
                 $('#jadwalKosong').addClass('d-none');
             }
@@ -191,6 +197,7 @@ function renderCalendar() {
         const jadwal = jadwalShiftData[dateStr];
         const shift = jadwal?.shift;
         const shiftId = shift?.id;
+        const isSelected = selectedTanggalList.includes(dateStr);
 
         let bgClass = 'bg-light';
         let textClass = 'text-dark';
@@ -200,7 +207,11 @@ function renderCalendar() {
             borderClass = 'border border-2 border-primary';
         }
 
-        if (shiftId && shiftColors[shiftId]) {
+        if (isSelected) {
+            borderClass = 'border border-3 border-primary';
+            bgClass = 'bg-primary';
+            textClass = 'text-white';
+        } else if (shiftId && shiftColors[shiftId]) {
             bgClass = shiftColors[shiftId];
             textClass = 'text-white';
         }
@@ -208,10 +219,11 @@ function renderCalendar() {
         const cell = `
             <div class="col py-1">
                 <div class="calendar-day ${bgClass} ${textClass} ${borderClass} rounded p-1 text-center h-100 cursor-pointer"
-                     onclick="pilihTanggal('${dateStr}')"
+                     onclick="toggleTanggal('${dateStr}')"
                      style="min-height: 40px; cursor: pointer; font-size: 0.75rem;">
                     <div class="fw-bold">${day}</div>
-                    ${shift ? `<div>${shift.nama_shift}</div>` : ''}
+                    ${shift && !isSelected ? `<div>${shift.nama_shift}</div>` : ''}
+                    ${isSelected ? '<div><i class="ph ph-check"></i></div>' : ''}
                 </div>
             </div>
         `;
@@ -241,6 +253,50 @@ function renderLegend() {
     });
 }
 
+function toggleTanggal(tanggal) {
+    const index = selectedTanggalList.indexOf(tanggal);
+    if (index > -1) {
+        selectedTanggalList.splice(index, 1);
+    } else {
+        selectedTanggalList.push(tanggal);
+    }
+    renderCalendar();
+    updateSelectedDatesDisplay();
+}
+
+function pilihSemuaTanggal() {
+    selectedTanggalList = [];
+    for (let day = 1; day <= new Date(currentYear, currentMonth, 0).getDate(); day++) {
+        const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        selectedTanggalList.push(dateStr);
+    }
+    renderCalendar();
+    updateSelectedDatesDisplay();
+}
+
+function clearSemuaTanggal() {
+    selectedTanggalList = [];
+    renderCalendar();
+    updateSelectedDatesDisplay();
+}
+
+function updateSelectedDatesDisplay() {
+    const container = $('#selectedDatesBadge');
+    container.empty();
+    
+    if (selectedTanggalList.length === 0) {
+        container.append('<small class="text-muted">Belum ada tanggal dipilih</small>');
+        $('#btnSimpanBatch').prop('disabled', true);
+        $('#btnHapusBatch').prop('disabled', true);
+    } else {
+        selectedTanggalList.forEach(function(tgl) {
+            container.append(`<span class="badge bg-primary">${tgl}</span>`);
+        });
+        $('#btnSimpanBatch').prop('disabled', false);
+        $('#btnHapusBatch').prop('disabled', false);
+    }
+}
+
 function changeMonth(delta) {
     currentMonth += delta;
     if (currentMonth > 12) {
@@ -252,43 +308,40 @@ function changeMonth(delta) {
     }
     $('#bulanShift').val(currentMonth);
     $('#tahunShift').val(currentYear);
+    selectedTanggalList = [];
     loadJadwalShift();
 }
 
-function pilihTanggal(tanggal) {
-    selectedTanggal = tanggal;
-    const jadwal = jadwalShiftData[tanggal];
-    
-    $('#tanggalDipilih').text(tanggal);
-    $('#pilihShiftModal').val(jadwal?.shift?.id || '');
-    $('#keteranganShiftModal').val(jadwal?.keterangan || '');
-    
-    new bootstrap.Modal(document.getElementById('modalPilihShift')).show();
-}
-
-function simpanJadwalTanggal() {
+function simpanJadwalBatch() {
     const userId = $('#selectKaryawanShift').val();
-    const shiftId = $('#pilihShiftModal').val();
-    const keterangan = $('#keteranganShiftModal').val();
+    const shiftId = $('#pilihShiftBatch').val();
+    const keterangan = $('#keteranganShiftBatch').val();
 
     if (!userId || !shiftId) {
         Swal.fire({ icon: 'warning', title: 'Pilih Shift', text: 'Silakan pilih shift terlebih dahulu' });
         return;
     }
 
+    if (selectedTanggalList.length === 0) {
+        Swal.fire({ icon: 'warning', title: 'Pilih Tanggal', text: 'Silakan pilih minimal 1 tanggal' });
+        return;
+    }
+
     $.ajax({
-        url: '{{ route("shift-jadwal.store") }}',
+        url: '{{ route("shift-jadwal.multiple") }}',
         type: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
             user_id: userId,
             shift_id: shiftId,
-            tanggal: selectedTanggal,
+            tanggal_list: selectedTanggalList,
             keterangan: keterangan
         },
         success: function(res) {
-            bootstrap.Modal.getInstance(document.getElementById('modalPilihShift')).hide();
             Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message });
+            selectedTanggalList = [];
+            $('#pilihShiftBatch').val('');
+            $('#keteranganShiftBatch').val('');
             loadJadwalShift();
         },
         error: function(xhr) {
@@ -297,23 +350,48 @@ function simpanJadwalTanggal() {
     });
 }
 
-function hapusJadwalTanggal() {
+function hapusJadwalBatch() {
     const userId = $('#selectKaryawanShift').val();
-    
-    const jadwal = jadwalShiftData[selectedTanggal];
-    if (!jadwal?.id) {
-        Swal.fire({ icon: 'warning', title: 'Tidak Ada Jadwal', text: 'Tidak ada jadwal shift di tanggal ini' });
+
+    if (selectedTanggalList.length === 0) {
+        Swal.fire({ icon: 'warning', title: 'Pilih Tanggal', text: 'Silakan pilih minimal 1 tanggal' });
         return;
     }
 
-    $.ajax({
-        url: `/shift-jadwal/${jadwal.id}`,
-        type: 'DELETE',
-        data: { _token: '{{ csrf_token() }}' },
-        success: function(res) {
-            bootstrap.Modal.getInstance(document.getElementById('modalPilihShift')).hide();
-            Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message });
-            loadJadwalShift();
+    const datesToDelete = selectedTanggalList.filter(tgl => jadwalShiftData[tgl]?.id);
+    if (datesToDelete.length === 0) {
+        Swal.fire({ icon: 'warning', title: 'Tidak Ada Jadwal', text: 'Tidak ada jadwal shift di tanggal yang dipilih' });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Hapus Jadwal?',
+        text: ` Akan menghapus ${datesToDelete.length} jadwal shift`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            let deleted = 0;
+            datesToDelete.forEach(function(tgl) {
+                const jadwal = jadwalShiftData[tgl];
+                $.ajax({
+                    url: `/shift-jadwal/${jadwal.id}`,
+                    type: 'DELETE',
+                    data: { _token: '{{ csrf_token() }}' },
+                    async: false,
+                    success: function() {
+                        deleted++;
+                    }
+                });
+            });
+
+            setTimeout(function() {
+                Swal.fire({ icon: 'success', title: 'Berhasil', text: `${deleted} jadwal dihapus` });
+                selectedTanggalList = [];
+                loadJadwalShift();
+            }, 100);
         }
     });
 }
