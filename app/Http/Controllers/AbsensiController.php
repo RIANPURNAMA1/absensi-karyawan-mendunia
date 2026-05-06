@@ -123,7 +123,17 @@ class AbsensiController extends Controller
             }])
             ->get();
 
-        // 7. Cek apakah hari ini libur (untuk sensei)
+        // 7. Cek apakah user memiliki kelas sensei aktif yang belum diabsen masuk hari ini
+        $hasUnabsensedSensei = false;
+        foreach ($kelasSenseiAktif as $kelas) {
+            $absensiHariIni = $kelas->absensi->first();
+            if (!$absensiHariIni || !$absensiHariIni->jam_masuk) {
+                $hasUnabsensedSensei = true;
+                break;
+            }
+        }
+
+        // 8. Cek apakah hari ini libur (untuk sensei)
         $isLibur = HariLibur::apakahLibur($today);
 
         // 8. Ambil agenda hari ini
@@ -139,6 +149,7 @@ class AbsensiController extends Controller
             'userShifts' => $userShifts ?? collect(),
             'currentShift' => $currentShift,
             'kelasSenseiAktif' => $kelasSenseiAktif,
+            'hasUnabsensedSensei' => $hasUnabsensedSensei,
             'isLibur' => $isLibur,
             'agendaHariIni' => $agendaHariIni,
 
@@ -718,6 +729,27 @@ class AbsensiController extends Controller
             return response()->json([
                 'message' => 'Anda sudah melakukan absen masuk dan pulang. Tidak dapat melakukan absensi lagi hari ini.',
             ], 422);
+        }
+
+        // =====================================================
+        // 0b. VALIDASI JIKA USER MEMILIKI KELAS SENSEI AKTIF YANG BELUM DIABSEN
+        // =====================================================
+        $kelasSenseiAktif = KelasSensei::where('user_id', $user->id)
+            ->where('status', 'aktif')
+            ->whereDate('tanggal_mulai', '<=', $today)
+            ->whereDate('tanggal_selesai', '>=', $today)
+            ->with(['absensi' => function ($q) use ($today) {
+                $q->where('tanggal', $today);
+            }])
+            ->get();
+
+        foreach ($kelasSenseiAktif as $kelas) {
+            $absensiHariIni = $kelas->absensi->first();
+            if (!$absensiHariIni || !$absensiHariIni->jam_masuk) {
+                return response()->json([
+                    'message' => 'Maaf, absen reguler tidak bisa dilakukan. Anda dapat melakukan absen Sensei saja hari ini.',
+                ], 403);
+            }
         }
 
         // ===============================

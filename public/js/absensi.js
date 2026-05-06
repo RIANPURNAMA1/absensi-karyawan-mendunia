@@ -923,6 +923,17 @@ let mediaStreamAbsen = null;
  * Mulai kamera untuk absensi
  */
 async function mulaiAbsenFoto() {
+    if (window.HAS_UNABSENSED_SENSEI) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Absen Sensei Diperlukan',
+            html: 'Maaf, absen reguler tidak bisa dilakukan.<br>Anda dapat melakukan absen Sensei saja hari ini.',
+            confirmButtonText: 'Mengerti',
+            confirmButtonColor: '#7c3aed',
+        });
+        return;
+    }
+
     const elModal = document.getElementById("modalKameraAbsen");
     const elVideo = document.getElementById("videoPreviewAbsen");
 

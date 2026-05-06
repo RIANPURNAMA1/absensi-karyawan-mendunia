@@ -842,6 +842,8 @@
             radius: {{ $radiusMeter }}
         };
 
+        // 🔥 DATA VALIDASI SENSEI
+        window.HAS_UNABSENSED_SENSEI = @json($hasUnabsensedSensei ?? false);
 
         window.routes = {
             updateFace: "{{ route('user.update-face') }}",
