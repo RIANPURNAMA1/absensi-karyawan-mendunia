@@ -36,7 +36,13 @@ class KehadiranSenseiController extends Controller
                     $tglMulai = \Carbon\Carbon::parse($kelas->tanggal_mulai);
                     $tglSelesai = \Carbon\Carbon::parse($kelas->tanggal_selesai);
                     $kelas->total_pertemuan = $tglMulai->copy()->diffInDaysFiltered(function ($date) {
-                        return $date->dayOfWeek !== 0 && $date->dayOfWeek !== 6;
+                        if ($date->dayOfWeek === 0 || $date->dayOfWeek === 6) {
+                            return false;
+                        }
+                        if (\App\Models\HariLibur::apakahLibur($date->toDateString())) {
+                            return false;
+                        }
+                        return true;
                     }, $tglSelesai->addDay()) + 1;
                     $kelas->jumlah_absen = \App\Models\AbsensiSensei::where('kelas_sensei_id', $kelas->id)->count();
                 }
@@ -99,20 +105,26 @@ class KehadiranSenseiController extends Controller
             $tanggalMulai = \Carbon\Carbon::parse($kelas->tanggal_mulai);
             $tanggalSelesai = \Carbon\Carbon::parse($kelas->tanggal_selesai);
 
-            // Hitung total pertemuan (hanya hari Senin-Jumat)
-            $totalPertemuan = $tanggalMulai->diffInDaysFiltered(function ($date) {
-                return $date->dayOfWeek !== 0 && $date->dayOfWeek !== 6;
+            // Hitung total pertemuan (hanya hari Senin-Jumat, exclude hari libur)
+            $totalPertemuan = $tanggalMulai->copy()->diffInDaysFiltered(function ($date) {
+                if ($date->dayOfWeek === 0 || $date->dayOfWeek === 6) {
+                    return false;
+                }
+                if (\App\Models\HariLibur::apakahLibur($date->toDateString())) {
+                    return false;
+                }
+                return true;
             }, $tanggalSelesai->addDay()) + 1;
 
             // Hitung pertemuan ke- untuk setiap absensi
             $items = $items->map(function ($absen) use ($tanggalMulai) {
                 $tanggalAbsen = \Carbon\Carbon::parse($absen->tanggal);
 
-                // Hitung pertemuan ke dengan skip weekend
+                // Hitung pertemuan ke dengan skip weekend dan hari libur
                 $pertemuanKe = 1;
                 $checkDate = $tanggalMulai->copy();
                 while ($checkDate->lt($tanggalAbsen)) {
-                    if ($checkDate->dayOfWeek !== 0 && $checkDate->dayOfWeek !== 5) {
+                    if ($checkDate->dayOfWeek !== 0 && $checkDate->dayOfWeek !== 6 && !\App\Models\HariLibur::apakahLibur($checkDate->toDateString())) {
                         $pertemuanKe++;
                     }
                     $checkDate->addDay();
@@ -225,8 +237,8 @@ class KehadiranSenseiController extends Controller
                     continue;
                 }
 
-                // Skip hari Sabtu (5) dan Minggu (0)
-                if ($current->dayOfWeek === 0 || $current->dayOfWeek === 5) {
+                // Skip hari Sabtu (6) dan Minggu (0)
+                if ($current->dayOfWeek === 0 || $current->dayOfWeek === 6) {
                     $current->addDay();
 
                     continue;
@@ -288,9 +300,15 @@ class KehadiranSenseiController extends Controller
         $tanggalMulai = \Carbon\Carbon::parse($kelas->tanggal_mulai);
         $tanggalSelesai = \Carbon\Carbon::parse($kelas->tanggal_selesai);
 
-        // Hitung total pertemuan (hanya hari Senin-Jumat)
+        // Hitung total pertemuan (hanya hari Senin-Jumat, exclude hari libur)
         $totalPertemuan = $tanggalMulai->copy()->diffInDaysFiltered(function ($date) {
-            return $date->dayOfWeek !== 0 && $date->dayOfWeek !== 6;
+            if ($date->dayOfWeek === 0 || $date->dayOfWeek === 6) {
+                return false;
+            }
+            if (\App\Models\HariLibur::apakahLibur($date->toDateString())) {
+                return false;
+            }
+            return true;
         }, $tanggalSelesai->addDay()) + 1;
 
         $absensis = AbsensiSensei::where('user_id', $userId)
@@ -300,11 +318,11 @@ class KehadiranSenseiController extends Controller
             ->map(function ($absen) use ($tanggalMulai) {
                 $tanggalAbsen = \Carbon\Carbon::parse($absen->tanggal);
 
-                // Hitung pertemuan ke dengan skip weekend
+                // Hitung pertemuan ke dengan skip weekend dan hari libur
                 $pertemuanKe = 1;
                 $checkDate = $tanggalMulai->copy();
                 while ($checkDate->lt($tanggalAbsen)) {
-                    if ($checkDate->dayOfWeek !== 0 && $checkDate->dayOfWeek !== 5) {
+                    if ($checkDate->dayOfWeek !== 0 && $checkDate->dayOfWeek !== 6 && !\App\Models\HariLibur::apakahLibur($checkDate->toDateString())) {
                         $pertemuanKe++;
                     }
                     $checkDate->addDay();
@@ -358,7 +376,13 @@ class KehadiranSenseiController extends Controller
             $tglMulai = \Carbon\Carbon::parse($kelasItem->tanggal_mulai);
             $tglSelesai = \Carbon\Carbon::parse($kelasItem->tanggal_selesai);
             $kelasItem->total_pertemuan = $tglMulai->copy()->diffInDaysFiltered(function ($date) {
-                return $date->dayOfWeek !== 0 && $date->dayOfWeek !== 6;
+                if ($date->dayOfWeek === 0 || $date->dayOfWeek === 6) {
+                    return false;
+                }
+                if (\App\Models\HariLibur::apakahLibur($date->toDateString())) {
+                    return false;
+                }
+                return true;
             }, $tglSelesai->addDay()) + 1;
             $kelasItem->jumlah_absen = \App\Models\AbsensiSensei::where('kelas_sensei_id', $kelasItem->id)->count();
 

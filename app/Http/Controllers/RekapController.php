@@ -31,15 +31,16 @@ class RekapController extends Controller
             ])
             ->get()
             ->map(function ($user) {
-                $hadir = $user->absensi->where('status', 'HADIR')->count();
-                $terlambat = $user->absensi->where('status', 'TERLAMBAT')->count();
-                $izin = $user->absensi->where('status', 'IZIN')->count();
-                $alpa = $user->absensi->where('status', 'ALPA')->count();
-                $pulangAwal = $user->absensi->where('status', 'PULANG LEBIH AWAL')->count();
+                $absensiFiltered = $user->absensi->filter(fn ($a) => !\App\Models\HariLibur::apakahLibur($a->tanggal));
+                $hadir = $absensiFiltered->where('status', 'HADIR')->count();
+                $terlambat = $absensiFiltered->where('status', 'TERLAMBAT')->count();
+                $izin = $absensiFiltered->where('status', 'IZIN')->count();
+                $alpa = $absensiFiltered->whereIn('status', ['ALPA', 'TIDAK ABSEN PULANG'])->count();
+                $pulangAwal = $absensiFiltered->where('status', 'PULANG LEBIH AWAL')->count();
                 $libur = $user->absensi->where('status', 'LIBUR')->count();
 
                 $totalDetikKerja = 0;
-                foreach ($user->absensi as $absen) {
+                foreach ($absensiFiltered as $absen) {
                     if (! empty($absen->jam_masuk) && ! empty($absen->jam_keluar)) {
                         $totalDetikKerja += Carbon::parse($absen->jam_masuk)
                             ->diffInSeconds(Carbon::parse($absen->jam_keluar));
@@ -57,8 +58,8 @@ class RekapController extends Controller
 
                 
 
-                $senseiKehadiran = $user->absensiSensei->count();
-                $totalAgenda = $user->agenda->count();
+                $senseiKehadiran = $user->absensiSensei->filter(fn ($a) => !\App\Models\HariLibur::apakahLibur($a->tanggal))->count();
+                $totalAgenda = $user->agenda->filter(fn ($a) => !\App\Models\HariLibur::apakahLibur($a->tanggal))->count();
                 $totalKehadiran = $hadir + $terlambat + $pulangAwal + $jumlahLembur + $senseiKehadiran + $totalAgenda;
 
                 $grandTotalDetik = $totalDetikKerja + $totalDetikLembur;
