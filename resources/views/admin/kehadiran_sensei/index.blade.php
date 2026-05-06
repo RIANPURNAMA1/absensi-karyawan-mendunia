@@ -121,7 +121,8 @@
                         <div>
                             <div class="d-flex align-items-center gap-3 mb-2">
                                 <h5 class="mb-0 text-dark fw-bold">{{ $group['kelas']->nama_kelas ?? '-' }}</h5>
-                                <span class="badge bg-primary">{{ $group['total'] ?? 0 }} Pertemuan</span>
+                                <span class="badge bg-primary">{{ $group['absensis']->count() }} Absen</span>
+                                <span class="badge bg-info">{{ $group['total'] ?? 0 }} Total Pertemuan</span>
                             </div>
                             <div class="d-flex gap-3 text-muted small">
                                 <span><i class="ph ph-graduation-cap me-1"></i> Level {{ $group['kelas']->level ?? '-' }}</span>
@@ -151,15 +152,15 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @php
-                                $totalPertemuan = $group['absensis']->count();
-                            @endphp
-                            @foreach($group['absensis'] as $index => $absen)
-                                <tr>
-                                    <td class="text-center">
-                                        <div class="fw-bold text-primary">{{ $loop->iteration }}</div>
-                                        <div class="small text-muted">dari {{ $totalPertemuan }}</div>
-                                    </td>
+                                @php
+                                    $totalPertemuan = $group['total'] ?? 0;
+                                @endphp
+                                @foreach($group['absensis'] as $index => $absen)
+                                    <tr>
+                                        <td class="text-center">
+                                            <div class="fw-bold text-primary">{{ $absen->pertemuan_ke ?? $loop->iteration }}</div>
+                                            <div class="small text-muted">dari {{ $totalPertemuan }}</div>
+                                        </td>
                                     <td class="text-dark">{{ \Carbon\Carbon::parse($absen->tanggal)->format('d M Y') }}</td>
                                     <td class="text-dark">{{ $absen->jam_masuk ?? '-' }}</td>
                                     <td class="text-dark">{{ $absen->jam_keluar ?? '-' }}</td>

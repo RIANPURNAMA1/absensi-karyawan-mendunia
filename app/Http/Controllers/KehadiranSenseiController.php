@@ -43,7 +43,7 @@ class KehadiranSenseiController extends Controller
                             return false;
                         }
                         return true;
-                    }, $tglSelesai->addDay()) + 1;
+                    }, $tglSelesai->copy()->addSecond());
                     $kelas->jumlah_absen = \App\Models\AbsensiSensei::where('kelas_sensei_id', $kelas->id)->count();
                 }
 
@@ -114,10 +114,13 @@ class KehadiranSenseiController extends Controller
                     return false;
                 }
                 return true;
-            }, $tanggalSelesai->addDay()) + 1;
+            }, $tanggalSelesai->copy()->addSecond());
+
+            // Filter items to exclude holidays
+            $itemsFiltered = $items->filter(fn ($a) => !\App\Models\HariLibur::apakahLibur($a->tanggal));
 
             // Hitung pertemuan ke- untuk setiap absensi
-            $items = $items->map(function ($absen) use ($tanggalMulai) {
+            $itemsFiltered = $itemsFiltered->map(function ($absen) use ($tanggalMulai) {
                 $tanggalAbsen = \Carbon\Carbon::parse($absen->tanggal);
 
                 // Hitung pertemuan ke dengan skip weekend dan hari libur
@@ -136,19 +139,19 @@ class KehadiranSenseiController extends Controller
 
             return [
                 'kelas' => $kelas,
-                'absensis' => $items,
+                'absensis' => $itemsFiltered,
                 'total' => $totalPertemuan,
-                'total_absen' => $items->count(),
-                'hadir' => $items->where('status', 'HADIR')->count(),
-                'terlambat' => $items->where('status', 'TERLAMBAT')->count(),
-                'pulang_cepat' => $items->where('status', 'PULANG LEBIH AWAL')->count(),
-                'tidak_pulang' => $items->where('status', 'TIDAK ABSEN PULANG')->count(),
-                'alpa' => $items->where('status', 'ALPA')->count(),
+                'total_absen' => $itemsFiltered->count(),
+                'hadir' => $itemsFiltered->where('status', 'HADIR')->count(),
+                'terlambat' => $itemsFiltered->where('status', 'TERLAMBAT')->count(),
+                'pulang_cepat' => $itemsFiltered->where('status', 'PULANG LEBIH AWAL')->count(),
+                'tidak_pulang' => $itemsFiltered->where('status', 'TIDAK ABSEN PULANG')->count(),
+                'alpa' => $itemsFiltered->whereIn('status', ['ALPA', 'TIDAK ABSEN PULANG'])->count(),
                 'libur' => $items->where('status', 'LIBUR')->count(),
             ];
         });
 
-        $rekap = $this->generateRekap($absensis);
+        $rekap = $this->generateRekap($absensis->filter(fn ($a) => !\App\Models\HariLibur::apakahLibur($a->tanggal)));
 
         return view('admin.kehadiran_sensei.index', [
             'groupedAbsensis' => $groupedAbsensis,
@@ -309,7 +312,7 @@ class KehadiranSenseiController extends Controller
                 return false;
             }
             return true;
-        }, $tanggalSelesai->addDay()) + 1;
+        }, $tanggalSelesai->copy()->addSecond());
 
         $absensis = AbsensiSensei::where('user_id', $userId)
             ->where('kelas_sensei_id', $kelasId)
@@ -359,6 +362,8 @@ class KehadiranSenseiController extends Controller
     {
         $user_id = $request->user_id;
         $status = $request->status;
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
 
         $query = KelasSensei::with('user');
 
@@ -368,6 +373,14 @@ class KehadiranSenseiController extends Controller
 
         if ($status) {
             $query->where('status', $status);
+        }
+
+        if ($start_date) {
+            $query->whereDate('tanggal_selesai', '>=', $start_date);
+        }
+
+        if ($end_date) {
+            $query->whereDate('tanggal_mulai', '<=', $end_date);
         }
 
         $kelas = $query->orderBy('tanggal_mulai', 'desc')->get();
@@ -383,7 +396,7 @@ class KehadiranSenseiController extends Controller
                     return false;
                 }
                 return true;
-            }, $tglSelesai->addDay()) + 1;
+            }, $tglSelesai->copy()->addSecond());
             $kelasItem->jumlah_absen = \App\Models\AbsensiSensei::where('kelas_sensei_id', $kelasItem->id)->count();
 
             return $kelasItem;
@@ -399,6 +412,8 @@ class KehadiranSenseiController extends Controller
             'list_sensei' => $list_sensei,
             'user_id_selected' => $user_id,
             'status_selected' => $status,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
         ]);
     }
 

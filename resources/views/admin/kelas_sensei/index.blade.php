@@ -19,7 +19,17 @@
                         <form method="GET" action="">
                             <div class="row g-2 justify-content-md-end">
 
-                                <div class="col-12 col-sm-6 col-md-4">
+                                <div class="col-6 col-sm-3 col-md-2">
+                                    <input type="date" name="start_date" class="form-control shadow-sm"
+                                           value="{{ $start_date ?? '' }}" placeholder="Tgl Mulai">
+                                </div>
+
+                                <div class="col-6 col-sm-3 col-md-2">
+                                    <input type="date" name="end_date" class="form-control shadow-sm"
+                                           value="{{ $end_date ?? '' }}" placeholder="Tgl Selesai">
+                                </div>
+
+                                <div class="col-12 col-sm-6 col-md-3">
                                     <select name="user_id" class="form-select shadow-sm">
                                         <option value="">Semua Sensei</option>
                                         @foreach ($list_sensei as $sensei)
@@ -31,7 +41,7 @@
                                     </select>
                                 </div>
 
-                                <div class="col-12 col-sm-4 col-md-3">
+                                <div class="col-12 col-sm-4 col-md-2">
                                     <select name="status" class="form-select shadow-sm">
                                         <option value="">Semua Status</option>
                                         <option value="aktif" {{ $status_selected == 'aktif' ? 'selected' : '' }}>
