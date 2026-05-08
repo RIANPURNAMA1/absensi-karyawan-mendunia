@@ -2,7 +2,7 @@
 
 @section('content')
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 
     <style>
         .label-monitor {
@@ -18,63 +18,39 @@
         .label-monitor::before { display: none; }
     </style>
 
-    <div class="container-fluid">
-
-        {{-- Header --}}
-        <div class="page-header mb-3">
-            <div class="page-block">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h4 class="m-b-10">
-                            <i class="ph ph-map-pin me-1 text-blue-600"></i>
-                            Monitoring Lokasi Absensi
-                        </h4>
-                    </div>
-                    <div class="col-md-6 d-flex justify-content-md-end">
-                        <ul class="breadcrumb mb-0">
-                            <li class="breadcrumb-item">
-                                <a href="{{ route('dashboard') }}"><i class="ph ph-house"></i> Dashboard</a>
-                            </li>
-                            <li class="breadcrumb-item active">Monitoring</li>
-                        </ul>
-                    </div>
-                </div>
+    <div class="container-fluid px-4 py-4">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h5 class="mb-0" style="font-weight: 700; font-size: 16px;">Monitoring Lokasi Absensi</h5>
+                <small class="text-muted">Pantau sebaran lokasi absensi karyawan</small>
             </div>
         </div>
 
-        {{-- Filter --}}
-        <div class="card shadow-sm mb-4">
-            <div class="card-body py-3">
-                <form method="GET" class="row g-3 align-items-end">
+        <div class="rounded-3 mb-4">
+            <div class="p-3 border-bottom" style="border-bottom-color: #f0f0f0 !important;">
+                <form method="GET" class="row g-2 align-items-end">
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold text-sm mb-1">Dari Tanggal</label>
-                        <input type="date" name="tgl_mulai"
-                               value="{{ $tglMulai }}"
-                               class="form-control">
+                        <label class="form-label fw-semibold mb-1" style="font-size: 12px;">Dari Tanggal</label>
+                        <input type="date" name="tgl_mulai" value="{{ $tglMulai }}" class="form-control form-control-sm">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold text-sm mb-1">Sampai Tanggal</label>
-                        <input type="date" name="tgl_selesai"
-                               value="{{ $tglSelesai }}"
-                               class="form-control">
+                        <label class="form-label fw-semibold mb-1" style="font-size: 12px;">Sampai Tanggal</label>
+                        <input type="date" name="tgl_selesai" value="{{ $tglSelesai }}" class="form-control form-control-sm">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold text-sm mb-1">Cabang</label>
-                        <select name="cabang_id" class="form-select">
+                        <label class="form-label fw-semibold mb-1" style="font-size: 12px;">Cabang</label>
+                        <select name="cabang_id" class="form-select form-select-sm">
                             <option value="">Semua Cabang</option>
                             @foreach ($cabangs as $cab)
-                                <option value="{{ $cab->id }}"
-                                    {{ $cabangId == $cab->id ? 'selected' : '' }}>
-                                    {{ $cab->nama_cabang }}
-                                </option>
+                                <option value="{{ $cab->id }}" {{ $cabangId == $cab->id ? 'selected' : '' }}>{{ $cab->nama_cabang }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary w-100">
+                    <div class="col-md-3 d-flex gap-1">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
                             <i class="ph ph-magnifying-glass me-1"></i> Filter
                         </button>
-                        <a href="{{ url()->current() }}" class="btn btn-light w-100">
+                        <a href="{{ url()->current() }}" class="btn btn-outline-secondary btn-sm w-100">
                             <i class="ph ph-arrow-counter-clockwise me-1"></i> Reset
                         </a>
                     </div>
@@ -82,7 +58,6 @@
             </div>
         </div>
 
-        {{-- Summary badge --}}
         <div class="d-flex align-items-center gap-3 mb-3">
             <span class="badge bg-success px-3 py-2" style="font-size:12px">
                 <i class="ph ph-circle me-1"></i> Masuk
@@ -97,124 +72,108 @@
             </span>
         </div>
 
-        {{-- MAP --}}
-        <div class="card shadow-sm mb-4 overflow-hidden">
-            <div class="card-header d-flex align-items-center justify-content-between py-3">
-                <h5 class="mb-0 fw-bold">
-                    <i class="ph ph-map-trifold me-1 text-blue-600"></i>
-                    Sebaran Lokasi Absensi
-                </h5>
-                <span class="flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 d-inline-block me-1"
-                          style="animation:pulse 1.8s infinite"></span>
-                    Live
-                </span>
+        <div class="rounded-3 mb-4 overflow-hidden border">
+            <div class="p-3 border-bottom d-flex align-items-center justify-content-between" style="border-bottom-color: #f0f0f0 !important;">
+                <span class="fw-semibold" style="font-size: 13px;">Sebaran Lokasi Absensi</span>
             </div>
-            <div id="map" style="height:520px;"></div>
+            <div id="map" style="height:480px;"></div>
         </div>
 
-        {{-- TABEL --}}
-        <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center py-3">
-                <h5 class="mb-0 fw-bold">Detail Absensi</h5>
-                <span class="badge bg-blue-700 text-white px-3 py-2">
-                    {{ $absensis->count() }} data
-                </span>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive p-4">
-                    <table class="table align-middle mb-0" id="monitorTable">
-                        <thead>
-                            <tr class="bg-blue-700 text-white">
-                                <th class="px-4 py-3 text-white">Karyawan</th>
-                                <th class="px-4 py-3 text-white">Tanggal</th>
-                                <th class="px-4 py-3 text-white text-center">Jam Masuk</th>
-                                <th class="px-4 py-3 text-white text-center">Jam Pulang</th>
-                                <th class="px-4 py-3 text-white">Cabang</th>
-                                <th class="px-4 py-3 text-white text-center">Status</th>
-                                <th class="px-4 py-3 text-white text-center">Lokasi</th>
-                                <th class="px-4 py-3 text-white text-center">Foto</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($absensis as $a)
-                                <tr>
-                                    <td class="px-4 py-3">
-                                        <div class="fw-bold">{{ $a->user->name }}</div>
-                                        <small class="text-muted">{{ $a->user->nip ?? '' }}</small>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="fw-semibold">
-                                            {{ \Carbon\Carbon::parse($a->tanggal)->format('d M Y') }}
-                                        </div>
-                                        <small class="text-muted">
-                                            {{ \Carbon\Carbon::parse($a->tanggal)->isoFormat('dddd') }}
-                                        </small>
-                                    </td>
-                                    <td class="px-4 py-3 text-center font-monospace">
-                                        {{ $a->jam_masuk ? \Carbon\Carbon::parse($a->jam_masuk)->format('H:i') : '--:--' }}
-                                    </td>
-                                    <td class="px-4 py-3 text-center font-monospace">
-                                        {{ $a->jam_keluar ? \Carbon\Carbon::parse($a->jam_keluar)->format('H:i') : '--:--' }}
-                                    </td>
-                                    <td class="px-4 py-3">{{ $a->cabang->nama_cabang ?? '-' }}</td>
-                                    <td class="px-4 py-3 text-center">
-                                        @php
-                                            $sc = [
-                                                'HADIR'     => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                                                'TERLAMBAT' => 'bg-amber-50 text-amber-700 border-amber-200',
-                                                'IZIN'      => 'bg-blue-50 text-blue-700 border-blue-200',
-                                                'ALPA'      => 'bg-rose-50 text-rose-700 border-rose-200',
-                                                'LIBUR'     => 'bg-slate-50 text-slate-600 border-slate-200',
-                                            ];
-                                            $cls = $sc[$a->status] ?? 'bg-slate-50 text-slate-600 border-slate-200';
-                                        @endphp
-                                        <span class="px-2 py-1 rounded text-xs font-bold border {{ $cls }}">
-                                            {{ $a->status }}
-                                        </span>
-                                    </td>
-                                    <td class="px-4 py-3 text-center">
-                                        @if($a->lat_masuk)
-                                            <span class="badge bg-success mb-1 d-block">
-                                                <i class="ph ph-map-pin me-1"></i>Masuk
-                                            </span>
-                                        @endif
-                                        @if($a->lat_pulang)
-                                            <span class="badge bg-primary d-block">
-                                                <i class="ph ph-map-pin me-1"></i>Pulang
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-3 text-center">
-                                        <div class="d-flex gap-1 justify-content-center">
-                                            @if($a->foto_masuk)
-                                                <img src="{{ asset('storage/'.$a->foto_masuk) }}"
-                                                     class="rounded shadow-sm"
-                                                     style="width:40px;height:40px;object-fit:cover;cursor:pointer"
-                                                     onclick="viewImg('{{ asset('storage/'.$a->foto_masuk) }}', 'Masuk')">
-                                            @endif
-                                            @if($a->foto_pulang)
-                                                <img src="{{ asset('storage/'.$a->foto_pulang) }}"
-                                                     class="rounded shadow-sm"
-                                                     style="width:40px;height:40px;object-fit:cover;cursor:pointer"
-                                                     onclick="viewImg('{{ asset('storage/'.$a->foto_pulang) }}', 'Pulang')">
-                                            @endif
-                                            @if(!$a->foto_masuk && !$a->foto_pulang)
-                                                <span class="text-muted text-xs">-</span>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                           
-                            @endforeach
-                        </tbody>
-                    </table>
+        <div class="rounded-3">
+            <div class="p-3 border-bottom" style="border-bottom-color: #f0f0f0 !important;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="fw-semibold" style="font-size: 13px;">Detail Absensi</span>
+                    <span class="text-muted" style="font-size: 11px;">{{ $absensis->count() }} data</span>
                 </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover text-nowrap mb-0" id="monitorTable">
+                    <thead>
+                        <tr>
+                            <th scope="col">Karyawan</th>
+                            <th scope="col">Tanggal</th>
+                            <th scope="col" class="text-center">Jam Masuk</th>
+                            <th scope="col" class="text-center">Jam Pulang</th>
+                            <th scope="col">Cabang</th>
+                            <th scope="col" class="text-center">Status</th>
+                            <th scope="col" class="text-center">Lokasi</th>
+                            <th scope="col" class="text-center">Foto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($absensis as $a)
+                            <tr>
+                                <td>
+                                    <span class="fw-medium" style="font-size: 13px;">{{ $a->user->name }}</span>
+                                    <small class="d-block text-muted">{{ $a->user->nip ?? '' }}</small>
+                                </td>
+                                <td>
+                                    <div style="font-size: 12px;">
+                                        <div class="fw-medium">{{ \Carbon\Carbon::parse($a->tanggal)->format('d M Y') }}</div>
+                                        <div class="text-muted" style="font-size: 11px;">{{ \Carbon\Carbon::parse($a->tanggal)->isoFormat('dddd') }}</div>
+                                    </div>
+                                </td>
+                                <td class="text-center font-monospace">
+                                    {{ $a->jam_masuk ? \Carbon\Carbon::parse($a->jam_masuk)->format('H:i') : '--:--' }}
+                                </td>
+                                <td class="text-center font-monospace">
+                                    {{ $a->jam_keluar ? \Carbon\Carbon::parse($a->jam_keluar)->format('H:i') : '--:--' }}
+                                </td>
+                                <td>{{ $a->cabang->nama_cabang ?? '-' }}</td>
+                                <td class="text-center">
+                                    @php
+                                        $statusClass = match($a->status) {
+                                            'HADIR' => 'bg-success-subtle text-success',
+                                            'TERLAMBAT' => 'bg-warning-subtle text-warning',
+                                            'IZIN' => 'bg-info-subtle text-info',
+                                            'ALPA' => 'bg-danger-subtle text-danger',
+                                            'LIBUR' => 'bg-secondary-subtle text-secondary',
+                                            default => 'bg-light text-muted',
+                                        };
+                                    @endphp
+                                    <span class="badge {{ $statusClass }} rounded-pill fw-normal px-2 py-1">
+                                        {{ $a->status }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    @if($a->lat_masuk)
+                                        <span class="badge bg-success-subtle text-success rounded-pill fw-normal px-2 py-1 mb-1 d-block">
+                                            <i class="ph ph-map-pin me-1"></i>Masuk
+                                        </span>
+                                    @endif
+                                    @if($a->lat_pulang)
+                                        <span class="badge bg-primary-subtle text-primary rounded-pill fw-normal px-2 py-1 d-block">
+                                            <i class="ph ph-map-pin me-1"></i>Pulang
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex gap-1 justify-content-center">
+                                        @if($a->foto_masuk)
+                                            <img src="{{ asset('storage/'.$a->foto_masuk) }}"
+                                                 class="rounded shadow-sm"
+                                                 style="width:30px;height:30px;object-fit:cover;cursor:pointer"
+                                                 onclick="viewImg('{{ asset('storage/'.$a->foto_masuk) }}', 'Masuk')">
+                                        @endif
+                                        @if($a->foto_pulang)
+                                            <img src="{{ asset('storage/'.$a->foto_pulang) }}"
+                                                 class="rounded shadow-sm"
+                                                 style="width:30px;height:30px;object-fit:cover;cursor:pointer"
+                                                 onclick="viewImg('{{ asset('storage/'.$a->foto_pulang) }}', 'Pulang')">
+                                        @endif
+                                        @if(!$a->foto_masuk && !$a->foto_pulang)
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    {{-- Modal Preview Foto --}}
     <div class="modal fade" id="modalFoto" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0">
@@ -235,14 +194,12 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
     <script>
-        // ── Preview foto ───────────────────────────────────────────────
         function viewImg(url, tipe) {
             $('#imgPreview').attr('src', url);
             $('#modalFotoLabel').text('Foto Absensi ' + tipe);
             $('#modalFoto').modal('show');
         }
 
-        // ── DataTable ──────────────────────────────────────────────────
         $(function () {
             $('#monitorTable').DataTable({
                 responsive: true,
@@ -251,7 +208,7 @@
                 lengthMenu: [10, 25, 50, 100],
                 order: [[1, 'desc']],
                 language: {
-                    search: "🔍 Cari:",
+                    search: "Cari:",
                     lengthMenu: "Tampilkan _MENU_ data",
                     info: "Menampilkan _START_–_END_ dari _TOTAL_ data",
                     zeroRecords: "Data tidak ditemukan",
@@ -260,7 +217,6 @@
             });
         });
 
-        // ── Leaflet Map ────────────────────────────────────────────────
         var bounds = [];
 
         var masukIcon = L.icon({
@@ -326,7 +282,6 @@
             @endif
         @endforeach
 
-        // Auto-fit bounds
         if (bounds.length > 0) {
             map.fitBounds(bounds, { padding:[60,60], maxZoom:16 });
         } else {

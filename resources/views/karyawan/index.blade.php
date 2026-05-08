@@ -1,394 +1,226 @@
 @extends('app')
 
 @section('content')
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+<div class="container-fluid px-4 py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h5 class="mb-0" style="font-weight: 700; font-size: 16px;">Data Karyawan</h5>
+            <small class="text-muted">Master data seluruh karyawan</small>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahKaryawan">
+                <i class="ph ph-plus-circle me-1"></i> Tambah
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalAturShift">
+                <i class="ph ph-calendar-plus me-1"></i> Atur Shift
+            </button>
+        </div>
+    </div>
 
-    <div class="page-header mb-3">
-        <div class="page-block">
-            <div class="row align-items-center">
-
-                <div class="col-md-6">
-                    <div class="page-header-title">
-                    </div>
-                </div>
-
-                <div class="col-md-6 d-flex justify-content-md-end align-items-center gap-2">
-
-                    <ul class="breadcrumb mb-0 me-2">
-                        <li class="breadcrumb-item">
-                            <a href="{{ route('dashboard') }}">
-                                <i class="ph ph-house"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="breadcrumb-item">Master Data</li>
-                        <li class="breadcrumb-item active">Data Karyawan</li>
-                    </ul>
-
-                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahKaryawan"
-                        style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%); 
-           border: none; 
-           padding: 8px 16px; 
-           font-weight: 500; 
-           box-shadow: 0 2px 6px rgba(30, 60, 114, 0.3);
-           transition: all 0.3s ease;">
-                        <i class="ph ph-plus-circle"></i> Tambah Karyawan
-                    </button>
-
-                    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalAturShift"
-                        style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); 
-           border: none; 
-           padding: 8px 16px; 
-           font-weight: 500; 
-           box-shadow: 0 2px 6px rgba(56, 239, 125, 0.3);
-           transition: all 0.3s ease;">
-                        <i class="ph ph-calendar-plus"></i> Atur Shift
-                    </button>
-                </div>
+    <form action="{{ route('karyawan.index') }}" method="GET" class="mb-4">
+        <div class="row g-2">
+            <div class="col-auto">
+                <select name="cabang_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Semua Cabang</option>
+                    @foreach ($cabang as $c)
+                        <option value="{{ $c->id }}" {{ request('cabang_id') == $c->id ? 'selected' : '' }}>{{ $c->nama_cabang }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-auto">
+                <select name="divisi_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Semua Divisi</option>
+                    @foreach ($divisi as $d)
+                        <option value="{{ $d->id }}" {{ request('divisi_id') == $d->id ? 'selected' : '' }}>{{ $d->nama_divisi }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-dark btn-sm"><i class="ph ph-funnel me-1"></i>Filter</button>
+            </div>
+            <div class="col-auto">
+                <a href="{{ route('karyawan.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-arrow-counter-clockwise me-1"></i>Reset</a>
             </div>
         </div>
-    </div>
+    </form>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <form action="{{ route('karyawan.index') }}" method="GET" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">Cabang</label>
-                    <select name="cabang_id" class="form-select select2" onchange="this.form.submit()">
-                        <option value="">-- Semua Cabang --</option>
-                        @foreach ($cabang as $c)
-                            <option value="{{ $c->id }}" {{ request('cabang_id') == $c->id ? 'selected' : '' }}>
-                                {{ $c->nama_cabang }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">Divisi</label>
-                    <select name="divisi_id" class="form-select select2" onchange="this.form.submit()">
-                        <option value="">-- Semua Divisi --</option>
-                        @foreach ($divisi as $d)
-                            <option value="{{ $d->id }}" {{ request('divisi_id') == $d->id ? 'selected' : '' }}>
-                                {{ $d->nama_divisi }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-md-4 d-flex align-items-end gap-2">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="ph ph-funnel me-1"></i> Filter
-                    </button>
-                    <a href="{{ route('karyawan.index') }}" class="btn btn-light border w-100">
-                        <i class="ph ph-arrow-counter-clockwise me-1"></i> Reset
-                    </a>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="card table-card">
-        <div class="card-header">
-            <h5>Daftar Karyawan</h5>
-        </div>
-
-        <div class="card-body p-0">
-            <div class="table-responsive p-5">
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table align-middle mb-0" id="karyawanTable" style="font-size: 0.875rem;">
-                            <thead class="bg-blue-700">
-                                <tr>
-                                    <th class="text-center text-white py-3" width="50">NO</th>
-                                    <th class="text-white py-3">FOTO</th>
-                                    <th class="text-white py-3">KARYAWAN</th>
-                                    <th class="text-white py-3">CABANG</th>
-                                    <th class="text-white py-3">DEPARTEMEN</th>
-                                    <th class="text-white py-3">JABATAN</th>
-                                    <th class="text-center text-white py-3">L/P</th>
-                                    <th class="text-center text-white py-3">STATUS</th>
-                                    <th class="text-center text-white py-3" width="120">AKSI</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($karyawan as $index => $k)
-                                    <tr class="border-bottom">
-                                        <td class="text-center text-muted">{{ $index + 1 }}</td>
-
-                                        {{-- Foto Profil --}}
-                                        <td>
-                                            <img src="{{ $k->foto_profil && file_exists(public_path('uploads/foto_profil/' . $k->foto_profil))
-                                                ? asset('uploads/foto_profil/' . $k->foto_profil)
-                                                : 'https://ui-avatars.com/api/?name=' . urlencode($k->name) . '&background=random&color=fff' }}"
-                                                class="rounded-circle border" width="40" height="40"
-                                                style="object-fit: cover" alt="Foto {{ $k->name }}">
-                                        </td>
-
-                                        {{-- Nama & NIP --}}
-                                        <td>
-                                            <div class="fw-bold text-dark">{{ $k->name }}</div>
-                                            <small class="text-muted"
-                                                style="font-size: 0.75rem;">{{ $k->nip }}</small>
-                                        </td>
-
-                                        {{-- Cabang (Teks Biasa) --}}
-                                        <td>
-                                            @if ($k->cabang && $k->cabang->count() > 0)
-                                                @foreach ($k->cabang as $c)
-                                                    <div class="text-secondary small">{{ $c->nama_cabang }}</div>
-                                                @endforeach
-                                            @else
-                                                <span class="text-muted small">-</span>
-                                            @endif
-                                        </td>
-
-                                        {{-- Departemen --}}
-                                        <td class="text-secondary small">{{ $k->divisi?->nama_divisi ?? '-' }}</td>
-
-                                        {{-- Jabatan --}}
-                                        <td class="text-secondary small">{{ $k->jabatan }}</td>
-
-                                        {{-- Jenis Kelamin (Hanya Teks Berwarna) --}}
-                                        <td class="text-center">
-                                            <span
-                                                class="{{ $k->jenis_kelamin == 'L' ? 'text-primary' : 'text-danger' }} fw-bold">
-                                                {{ $k->jenis_kelamin }}
-                                            </span>
-                                        </td>
-
-                                        {{-- Status Kerja (Hanya Teks Berwarna) --}}
-                                        <td class="text-center fw-bold small">
-                                            @if ($k->status_kerja === 'TETAP')
-                                                <span class="text-success">Tetap</span>
-                                            @elseif ($k->status_kerja === 'KONTRAK')
-                                                <span class="text-warning">Kontrak</span>
-                                            @else
-                                                <span class="text-info">Magang</span>
-                                            @endif
-                                        </td>
-
-                                        {{-- Aksi (Ikon Tanpa Background) --}}
-                                        <td class="text-center">
-                                            <div class="d-flex gap-2 justify-content-center">
-                                                <a href="{{ route('karyawan.show', $k->id) }}" class="p-1 text-info"
-                                                    title="Detail">
-                                                    <i class="ph ph-eye fs-5"></i>
-                                                </a>
-                                                <a href="javascript:void(0)" class="p-1 text-warning" title="Edit"
-                                                    onclick="editKaryawan('{{ $k->id }}','{{ $k->nik }}','{{ $k->nip }}','{{ $k->name }}','{{ $k->jabatan }}','{{ $k->pendidikan_terakhir }}','{{ $k->divisi_id }}','{{ json_encode($k->cabang_ids) }}','{{ json_encode($k->shift_ids) }}','{{ $k->status_kerja }}','{{ $k->no_hp }}','{{ $k->email }}','{{ $k->tanggal_masuk }}','{{ $k->tempat_lahir }}','{{ $k->tanggal_lahir }}','{{ $k->jenis_kelamin }}','{{ $k->agama }}','{{ $k->status_pernikahan }}','{{ $k->alamat }}')">
-                                                    <i class="ph ph-note-pencil fs-5"></i>
-                                                </a>
-                                                <a href="javascript:void(0)" class="p-1 text-danger" title="Hapus"
-                                                    onclick="deleteKaryawan({{ $k->id }})">
-                                                    <i class="ph ph-trash fs-5"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <style>
-                   
-                    #karyawanTable tbody tr:hover {
-                        background-color: #f9fafb;
-                    }
-
-                    a {
-                        text-decoration: none;
-                        transition: opacity 0.2s;
-                    }
-
-                    a:hover {
-                        opacity: 0.7;
-                    }
-                </style>
-
+    <div class=" rounded-3">
+        <div class="p-3 border-bottom" style="border-bottom-color: #f0f0f0 !important;">
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="fw-semibold" style="font-size: 13px;"></span>
+                <span class="text-muted" style="font-size: 11px;">{{ $karyawan->count() }} data</span>
             </div>
         </div>
+        <div class="table-responsive">
+            <table id="karyawanTable" class="table table-hover text-nowrap mb-0">
+                <thead class="">
+                    <tr>
+                        <th scope="col">Karyawan</th>
+                        <th scope="col">Cabang</th>
+                        <th scope="col">Departemen</th>
+                        <th scope="col">Jabatan</th>
+                        <th scope="col" class="text-center">L/P</th>
+                        <th scope="col" class="text-center">Status</th>
+                        <th scope="col" class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($karyawan as $k)
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="{{ $k->foto_profil && file_exists(public_path('uploads/foto_profil/' . $k->foto_profil))
+                                        ? asset('uploads/foto_profil/' . $k->foto_profil)
+                                        : 'https://ui-avatars.com/api/?name=' . urlencode($k->name) . '&background=e5e7eb&color=6b7280&size=32' }}"
+                                        class="rounded-circle" style="width: 28px; height: 28px; object-fit: cover;">
+                                    <div>
+                                        <span class="fw-medium" style="font-size: 13px;">{{ $k->name }}</span>
+                                        <small class="d-block text-muted">{{ $k->nip }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-muted">
+                                @if ($k->cabang && $k->cabang->count() > 0)
+                                    @foreach ($k->cabang as $c)
+                                        <div>{{ $c->nama_cabang }}</div>
+                                    @endforeach
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td class="text-muted">{{ $k->divisi?->nama_divisi ?? '-' }}</td>
+                            <td class="text-muted">{{ $k->jabatan }}</td>
+                            <td class="text-center">
+                                <span class="{{ $k->jenis_kelamin == 'L' ? 'text-primary' : 'text-danger' }} fw-semibold">{{ $k->jenis_kelamin }}</span>
+                            </td>
+                            <td class="text-center">
+                                @php
+                                    $badge = match($k->status_kerja) {
+                                        'TETAP' => 'bg-success-subtle text-success',
+                                        'KONTRAK' => 'bg-warning-subtle text-warning',
+                                        default => 'bg-info-subtle text-info',
+                                    };
+                                    $label = match($k->status_kerja) {
+                                        'TETAP' => 'Tetap',
+                                        'KONTRAK' => 'Kontrak',
+                                        default => 'Magang',
+                                    };
+                                @endphp
+                                <span class="badge {{ $badge }} rounded-pill fw-normal px-2 py-1">{{ $label }}</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="{{ route('karyawan.show', $k->id) }}" class="btn btn-sm btn-outline-secondary border-0" title="Detail">
+                                        <i class="ph ph-eye"></i>
+                                    </a>
+                                    <a href="javascript:void(0)" class="btn btn-sm btn-outline-secondary border-0" title="Edit"
+                                        onclick="editKaryawan('{{ $k->id }}','{{ $k->nik }}','{{ $k->nip }}','{{ $k->name }}','{{ $k->jabatan }}','{{ $k->pendidikan_terakhir }}','{{ $k->divisi_id }}','{{ json_encode($k->cabang_ids) }}','{{ json_encode($k->shift_ids) }}','{{ $k->status_kerja }}','{{ $k->no_hp }}','{{ $k->email }}','{{ $k->tanggal_masuk }}','{{ $k->tempat_lahir }}','{{ $k->tanggal_lahir }}','{{ $k->jenis_kelamin }}','{{ $k->agama }}','{{ $k->status_pernikahan }}','{{ $k->alamat }}')">
+                                        <i class="ph ph-note-pencil"></i>
+                                    </a>
+                                    <a href="javascript:void(0)" class="btn btn-sm btn-outline-secondary border-0" title="Hapus"
+                                        onclick="deleteKaryawan({{ $k->id }})">
+                                        <i class="ph ph-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
+</div>
 
-    {{-- modal tambah data --}}
-    @include('karyawan.modal')
-    @include('karyawan.shift-jadwal-modal')
+@include('karyawan.modal')
+@include('karyawan.shift-jadwal-modal')
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
-
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-
-    <script>
-        // Pastikan urutan parameter sama dengan tombol di Blade
-        function editKaryawan(
-            id, nik, nip, name, jabatan, pendidikan_terakhir, divisi_id, cabang_ids, shift_ids, status_kerja,
-            no_hp, email, tanggal_masuk,
-            tempat_lahir, tanggal_lahir, jenis_kelamin, agama, status_pernikahan,
-            alamat
-        ) {
-            // Masukkan data ke input modal
-            $('#edit_id').val(id);
-            $('#edit_nik').val(nik);
-            $('#edit_nip').val(nip);
-            $('#edit_name').val(name);
-            $('#edit_jabatan').val(jabatan);
-            $('#edit_pendidikan_terakhir').val(pendidikan_terakhir);
-
-            // Dropdown Relasi
-            $('#edit_divisi').val(divisi_id);
-            
-            // Parse JSON untuk cabang
-            const cabangArr = typeof cabang_ids === 'string' ? JSON.parse(cabang_ids) : cabang_ids;
-            $('#edit_cabang').val(cabangArr).trigger('change');
-            
-            // Parse JSON untuk shifts
-            const shiftArr = typeof shift_ids === 'string' ? JSON.parse(shift_ids) : shift_ids;
-            
-            // Set checkbox untuk shifts
-            $('.edit-shift-checkbox').prop('checked', false);
-            if (shiftArr && Array.isArray(shiftArr)) {
-                shiftArr.forEach(function(shiftId) {
-                    $('.edit-shift-checkbox[value="' + shiftId + '"]').prop('checked', true);
-                });
-            }
-
-            // Data Kepegawaian & Kontak
-            $('#edit_status_kerja').val(status_kerja);
-            $('#edit_no_hp').val(no_hp);
-            $('#edit_email').val(email);
-            $('#edit_tanggal_masuk').val(tanggal_masuk);
-
-            // Field tambahan (Personal)
-            $('#edit_tempat_lahir').val(tempat_lahir);
-            $('#edit_tanggal_lahir').val(tanggal_lahir);
-            $('#edit_jenis_kelamin').val(jenis_kelamin);
-            $('#edit_agama').val(agama);
-            $('#edit_status_pernikahan').val(status_pernikahan);
-
-            $('#edit_alamat').val(alamat);
-
-            // Ubah Action Form Update
-            $('#formEditKaryawan').attr('action', '/karyawan/' + id);
-
-            // Tampilkan modal
-            $('#modalEditKaryawan').modal('show');
+<script>
+$(function () {
+    $('#karyawanTable').DataTable({
+        responsive: true,
+        autoWidth: false,
+        pageLength: 10,
+        lengthMenu: [10, 25, 50, 100],
+        order: [[0, 'asc']],
+        language: {
+            search: "Cari:",
+            lengthMenu: "Tampilkan _MENU_ data",
+            info: "Menampilkan _START_–_END_ dari _TOTAL_ data",
+            zeroRecords: "Data tidak ditemukan",
+            paginate: { first: "Awal", last: "Akhir", next: "›", previous: "‹" }
         }
+    });
+});
 
-        $(document).ready(function() {
-            $('#karyawanTable').DataTable({
-                responsive: true,
-                autoWidth: false,
-                pageLength: 10,
-                lengthMenu: [
-                    [5, 10, 25, 50, -1],
-                    [5, 10, 25, 50, "Semua"]
-                ],
-                dom: "<'row mb-3'<'col-md-4'l><'col-md-4 text-center'B><'col-md-4'f>>" +
-                    "<'row'<'col-sm-12'tr>>" +
-                    "<'row mt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-                buttons: [{
-                        extend: 'excelHtml5',
-                        text: '<i class="ph ph-file-xls me-1"></i> Excel',
-                        className: 'btn btn-success btn-sm',
-                        exportOptions: {
-                            columns: [0, 2, 3, 4, 5, 6, 7]
-                        }
-                    },
-                    {
-                        extend: 'pdfHtml5',
-                        text: '<i class="ph ph-file-pdf me-1"></i> PDF',
-                        className: 'btn btn-danger btn-sm',
-                        exportOptions: {
-                            columns: [0, 2, 3, 4, 5, 6, 7]
-                        }
-                    },
-                    {
-                        extend: 'print',
-                        text: '<i class="ph ph-printer me-1"></i> Print',
-                        className: 'btn btn-secondary btn-sm',
-                        exportOptions: {
-                            columns: [0, 2, 3, 4, 5, 6, 7]
-                        }
-                    }
-                ],
-                order: [
-                    [1, 'asc']
-                ],
-                columnDefs: [{
-                    orderable: false,
-                    targets: [0, 1, 8]
-                }],
-                language: {
-                    search: "🔍 Cari:",
-                    lengthMenu: "Tampilkan _MENU_ data",
-                    zeroRecords: "Data tidak ditemukan",
-                    info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-                    infoEmpty: "Data tidak tersedia",
-                    paginate: {
-                        first: "Awal",
-                        last: "Akhir",
-                        next: "›",
-                        previous: "‹"
-                    }
-                }
-            });
+function editKaryawan(
+    id, nik, nip, name, jabatan, pendidikan_terakhir, divisi_id, cabang_ids, shift_ids, status_kerja,
+    no_hp, email, tanggal_masuk,
+    tempat_lahir, tanggal_lahir, jenis_kelamin, agama, status_pernikahan, alamat
+) {
+    $('#edit_id').val(id);
+    $('#edit_nik').val(nik);
+    $('#edit_nip').val(nip);
+    $('#edit_name').val(name);
+    $('#edit_jabatan').val(jabatan);
+    $('#edit_pendidikan_terakhir').val(pendidikan_terakhir);
+    $('#edit_divisi').val(divisi_id);
+
+    const cabangArr = typeof cabang_ids === 'string' ? JSON.parse(cabang_ids) : cabang_ids;
+    $('#edit_cabang').val(cabangArr).trigger('change');
+
+    const shiftArr = typeof shift_ids === 'string' ? JSON.parse(shift_ids) : shift_ids;
+    $('.edit-shift-checkbox').prop('checked', false);
+    if (shiftArr && Array.isArray(shiftArr)) {
+        shiftArr.forEach(function(shiftId) {
+            $('.edit-shift-checkbox[value="' + shiftId + '"]').prop('checked', true);
         });
+    }
 
-        // delete function
-        function deleteKaryawan(id) {
-            Swal.fire({
-                title: 'Hapus karyawan?',
-                text: 'Data yang dihapus tidak bisa dikembalikan',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Ya, Hapus',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: `/karyawan/${id}`,
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            _method: 'DELETE'
-                        },
-                        success: function(res) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Berhasil',
-                                text: res.message,
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
-                            setTimeout(() => {
-                                location.reload();
-                            }, 1500);
-                        },
-                        error: function() {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal',
-                                text: 'Terjadi kesalahan saat menghapus data'
-                            });
-                        }
-                    });
+    $('#edit_status_kerja').val(status_kerja);
+    $('#edit_no_hp').val(no_hp);
+    $('#edit_email').val(email);
+    $('#edit_tanggal_masuk').val(tanggal_masuk);
+    $('#edit_tempat_lahir').val(tempat_lahir);
+    $('#edit_tanggal_lahir').val(tanggal_lahir);
+    $('#edit_jenis_kelamin').val(jenis_kelamin);
+    $('#edit_agama').val(agama);
+    $('#edit_status_pernikahan').val(status_pernikahan);
+    $('#edit_alamat').val(alamat);
+
+    $('#formEditKaryawan').attr('action', '/karyawan/' + id);
+    $('#modalEditKaryawan').modal('show');
+}
+
+function deleteKaryawan(id) {
+    Swal.fire({
+        title: 'Hapus karyawan?',
+        text: 'Data yang dihapus tidak bisa dikembalikan',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: `/karyawan/${id}`,
+                type: 'POST',
+                data: { _token: '{{ csrf_token() }}', _method: 'DELETE' },
+                success: function(res) {
+                    Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message, timer: 1500, showConfirmButton: false });
+                    setTimeout(() => location.reload(), 1500);
+                },
+                error: function() {
+                    Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan saat menghapus data' });
                 }
             });
         }
-    </script>
+    });
+}
+</script>
 @endsection

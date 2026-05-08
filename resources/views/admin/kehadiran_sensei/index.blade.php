@@ -116,7 +116,7 @@
         {{-- TABLE BY KELAS --}}
         @forelse($groupedAbsensis as $group)
             <div class="card border rounded-3 mb-4 shadow-sm">
-                <div class="card-header border-bottom bg-white py-3">
+                <div class="card-header border-bottom  py-3">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <div class="d-flex align-items-center gap-3 mb-2">
@@ -140,8 +140,8 @@
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
+                    <table class="table table-hover text-nowrap mb-0">
+                        <thead>
                             <tr>
                                 <th class="text-center" style="width: 100px;">Pertemuan</th>
                                 <th>Tanggal</th>
@@ -152,18 +152,18 @@
                             </tr>
                         </thead>
                         <tbody>
-                                @php
-                                    $totalPertemuan = $group['total'] ?? 0;
-                                @endphp
-                                @foreach($group['absensis'] as $index => $absen)
-                                    <tr>
-                                        <td class="text-center">
-                                            <div class="fw-bold text-primary">{{ $absen->pertemuan_ke ?? $loop->iteration }}</div>
-                                            <div class="small text-muted">dari {{ $totalPertemuan }}</div>
-                                        </td>
-                                    <td class="text-dark">{{ \Carbon\Carbon::parse($absen->tanggal)->format('d M Y') }}</td>
-                                    <td class="text-dark">{{ $absen->jam_masuk ?? '-' }}</td>
-                                    <td class="text-dark">{{ $absen->jam_keluar ?? '-' }}</td>
+                            @php $totalPertemuan = $group['total'] ?? 0; @endphp
+                            @foreach($group['absensis'] as $index => $absen)
+                                <tr>
+                                    <td class="text-center">
+                                        <div class="fw-bold" style="font-size: 13px;">{{ $absen->pertemuan_ke ?? $loop->iteration }}</div>
+                                        <div class="small text-muted">dari {{ $totalPertemuan }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-medium" style="font-size: 13px;">{{ \Carbon\Carbon::parse($absen->tanggal)->format('d M Y') }}</span>
+                                    </td>
+                                    <td>{{ $absen->jam_masuk ?? '-' }}</td>
+                                    <td>{{ $absen->jam_keluar ?? '-' }}</td>
                                     <td>
                                         @php
                                             $statusStyle = [
@@ -174,14 +174,14 @@
                                             ];
                                             $style = $statusStyle[$absen->status] ?? 'bg-light text-muted';
                                         @endphp
-                                        <span class="badge rounded-pill {{ $style }} px-3 py-1">{{ $absen->status }}</span>
+                                        <span class="badge rounded-pill {{ $style }} px-2 py-1">{{ $absen->status }}</span>
                                     </td>
                                     <td class="text-center">
-                                        <div class="btn-group gap-2">
-                                            <button class="btn btn-sm btn-outline-primary rounded-2" onclick="showRiwayat({{ $absen->user_id }}, {{ $absen->kelas_sensei_id }})" title="Riwayat">
+                                        <div class="d-flex gap-1 justify-content-center">
+                                            <button class="btn btn-sm btn-outline-secondary border-0" onclick="showRiwayat({{ $absen->user_id }}, {{ $absen->kelas_sensei_id }})" title="Riwayat">
                                                 <i class="ph ph-clock-counter-clockwise"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-outline-secondary rounded-2" onclick="editStatus({{ $absen->id }}, '{{ $absen->status }}')" title="Edit Status">
+                                            <button class="btn btn-sm btn-outline-secondary border-0" onclick="editStatus({{ $absen->id }}, '{{ $absen->status }}')" title="Edit Status">
                                                 <i class="ph ph-pencil"></i>
                                             </button>
                                         </div>

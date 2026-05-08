@@ -1,78 +1,78 @@
 @extends('app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="page-header mb-3">
-        <div class="page-block">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="page-header-title">
-                        <h4 class="m-b-10">Manajemen Akun Admin</h4>
-                    </div>
-                </div>
-                <div class="col-md-6 d-flex justify-content-md-end align-items-center gap-2">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTambahAdmin">
-                        <i class="ph ph-user-plus me-1"></i> Tambah Akun
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
+<div class="container-fluid px-4 py-4">
     @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show py-2" role="alert">
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
-    <div class="card table-card">
-        <div class="card-header">
-            <h5>Daftar HR & Manager</h5>
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h5 class="mb-0" style="font-weight: 700; font-size: 16px;">Data Akun Admin</h5>
+            <small class="text-muted">Manajemen akun HR & Manager</small>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive p-4">
-                <table class="table align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>No</th>
-                            <th>Nama & Email</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th class="text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($admins as $admin)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>
-                                <span class="fw-bold text-dark">{{ $admin->name }}</span><br>
-                                <small class="text-muted">{{ $admin->email }}</small>
-                            </td>
-                            <td>
-                                <span class="badge {{ $admin->role == 'MANAGER' ? 'bg-primary' : 'bg-info' }}">
-                                    {{ $admin->role }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge {{ $admin->status == 'AKTIF' ? 'bg-success' : 'bg-danger' }}">
-                                    {{ $admin->status }}
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-warning" onclick="editAdmin({{ $admin }})">
-                                    <i class="ph ph-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteAdmin({{ $admin->id }})">
-                                    <i class="ph ph-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+        <div>
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahAdmin">
+                <i class="ph ph-plus-circle me-1"></i> Tambah Akun
+            </button>
+        </div>
+    </div>
+
+    <div class="rounded-3">
+        <div class="p-3 border-bottom" style="border-bottom-color: #f0f0f0 !important;">
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="fw-semibold" style="font-size: 13px;"></span>
+                <span class="text-muted" style="font-size: 11px;">{{ $admins->count() }} data</span>
             </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover text-nowrap mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">No</th>
+                        <th scope="col">Nama & Email</th>
+                        <th scope="col">Role</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($admins as $admin)
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>
+                            <span class="fw-medium" style="font-size: 13px;">{{ $admin->name }}</span><br>
+                            <small class="text-muted">{{ $admin->email }}</small>
+                        </td>
+                        <td>
+                            <span class="badge {{ $admin->role == 'MANAGER' ? 'bg-dark' : 'bg-light-secondary text-dark' }} fw-normal px-2 py-1">
+                                {{ $admin->role }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {{ $admin->status == 'AKTIF' ? 'bg-success' : 'bg-light-secondary text-dark' }} fw-normal px-2 py-1 rounded-pill">
+                                {{ $admin->status }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex gap-1 justify-content-center">
+                                <a href="javascript:void(0)" class="btn btn-sm btn-outline-secondary border-0" title="Edit"
+                                    onclick="editAdmin({{ $admin }})">
+                                    <i class="ph ph-note-pencil"></i>
+                                </a>
+                                <a href="javascript:void(0)" class="btn btn-sm btn-outline-secondary border-0" title="Hapus"
+                                    onclick="deleteAdmin({{ $admin->id }})">
+                                    <i class="ph ph-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -80,45 +80,42 @@
 @include('pengaturan.user.modal')
 @include('pengaturan.user.edit')
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-   function editAdmin(data) {
-    // 1. Isi data ke dalam input modal
+function editAdmin(data) {
     $('#edit_id').val(data.id);
     $('#edit_name').val(data.name);
     $('#edit_email').val(data.email);
     $('#edit_role').val(data.role);
     $('#edit_status').val(data.status);
 
-    // 2. Buat URL route secara dinamis
-    // Kita ambil template URL dari Laravel, lalu ganti placeholder :id dengan ID asli
     let url = "{{ route('pengaturan.update', ':id') }}";
     url = url.replace(':id', data.id);
-
-    // 3. Update atribut action pada form
     $('#formEditAdmin').attr('action', url);
 
-    // 4. Tampilkan modal
     $('#modalEditAdmin').modal('show');
 }
 
-    function deleteAdmin(id) {
-        Swal.fire({
-            title: 'Hapus akun?',
-            text: 'Akses login orang ini akan dicabut sepenuhnya',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'Ya, Hapus'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: '/pengaturan/users/' + id,
-                    type: 'POST',
-                    data: { _token: '{{ csrf_token() }}', _method: 'DELETE' },
-                    success: function() { location.reload(); }
-                });
-            }
-        });
-    }
+function deleteAdmin(id) {
+    Swal.fire({
+        title: 'Hapus akun?',
+        text: 'Akses login orang ini akan dicabut sepenuhnya',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/pengaturan/users/' + id,
+                type: 'POST',
+                data: { _token: '{{ csrf_token() }}', _method: 'DELETE' },
+                success: function() { location.reload(); }
+            });
+        }
+    });
+}
 </script>
 @endsection

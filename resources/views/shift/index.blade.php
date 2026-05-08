@@ -1,132 +1,72 @@
 @extends('app')
 
 @section('content')
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+<div class="container-fluid px-4 py-4">
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show py-2" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
-    <!-- PAGE HEADER + BREADCRUMB -->
-    <div class="page-header mb-3">
-        <div class="page-block">
-            <div class="row align-items-center">
-
-                <!-- TITLE -->
-                <div class="col-md-6">
-                    <div class="page-header-title">
-
-                    </div>
-                </div>
-
-                <!-- BREADCRUMB + BUTTON -->
-                <div class="col-md-6 d-flex justify-content-md-end align-items-center gap-2">
-
-                    <ul class="breadcrumb mb-0 me-2">
-                        <li class="breadcrumb-item">
-                            <a href="{{ route('dashboard') }}">
-                                <i class="ph ph-house"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="breadcrumb-item">Manajemen Karyawan</li>
-                        <li class="breadcrumb-item active">Shift Kerja</li>
-                    </ul>
-
-                    <!-- BUTTON TAMBAH -->
-                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahShift"
-                        style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%); 
-           border: none; 
-           padding: 8px 16px; 
-           font-weight: 500; 
-           box-shadow: 0 2px 6px rgba(30, 60, 114, 0.3);
-           transition: all 0.3s ease;">
-                        <i class="ph ph-plus-circle"></i> Tambah Shift
-                    </button>
-
-                </div>
-
-            </div>
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h5 class="mb-0" style="font-weight: 700; font-size: 16px;">Data Shift</h5>
+            <small class="text-muted">Master data seluruh shift kerja</small>
+        </div>
+        <div>
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahShift">
+                <i class="ph ph-plus-circle me-1"></i> Tambah Shift
+            </button>
         </div>
     </div>
 
-    <!-- CARD TABLE -->
-    <div class="card table-card">
-        <div class="card-header">
-            <h5>Daftar Shift Kerja</h5>
+    <div class="rounded-3">
+        <div class="p-3 border-bottom" style="border-bottom-color: #f0f0f0 !important;">
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="fw-semibold" style="font-size: 13px;"></span>
+                <span class="text-muted" style="font-size: 11px;">{{ $shifts->count() }} data</span>
+            </div>
         </div>
-
-        <div class="card-body p-0">
-            <div class="table-responsive p-5">
-                <table class="table align-middle mb-0" id="shiftTable">
-                    <thead class="bg-blue-700"> 
+        <div class="table-responsive">
+            <table class="table table-hover text-nowrap mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">No</th>
+                        <th scope="col">Nama Shift</th>
+                        <th scope="col">Jam Masuk</th>
+                        <th scope="col">Jam Pulang</th>
+                        <th scope="col">Total Jam</th>
+                        <th scope="col">Toleransi</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($shifts as $index => $shift)
                         <tr>
-                            <th class="text-white">No</th>
-                            <th class="text-white">Nama Shift</th>
-                            <th class="text-white">Jam Masuk</th>
-                            <th class="text-white">Jam Pulang</th>
-                            <th class="text-white">Total Jam</th>
-                            <th class="text-white">Toleransi Keterlambatan</th>
-                            <th class="text-white">Status</th>
-                            <th class="text-center text-white">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-
-                        @foreach ($shifts as $index => $shift)
-                            <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center"
-                                                style="width: 40px; height: 40px; background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">
-                                                <i class="ph ph-timer text-white" style="font-size: 20px;"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-0">{{ $shift->nama_shift }}</h6>
-                                            <small class="text-muted">{{ $shift->kode_shift ?? '-' }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge"
-                                        style="background: linear-gradient(135deg, #71b280 0%, #134e5e 100%); padding: 6px 12px;">
-                                        <i class="ph ph-clock-clockwise"></i>
-                                        {{ \Carbon\Carbon::parse($shift->jam_masuk)->format('H:i') }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge"
-                                        style="background: linear-gradient(135deg, #94716b 0%, #7a5d58 100%); padding: 6px 12px;">
-                                        <i class="ph ph-clock-counter-clockwise"></i>
-                                        {{ \Carbon\Carbon::parse($shift->jam_pulang)->format('H:i') }}
-                                    </span>
-                                </td>
-
-                                <td>
-                                    <strong>{{ $shift->total_jam ?? '8' }} Jam</strong>
-                                </td>
-                                <td>
-                                    <span class="text-muted">
-                                        <i class="ph ph-clock"></i> {{ $shift->toleransi ?? '15' }} Menit
-                                    </span>
-                                </td>
-                                <td>
-                                    @if ($shift->status === 'AKTIF')
-                                        <span class="badge bg-success">
-                                            <i class="ph ph-check-circle"></i> Aktif
-                                        </span>
-                                    @else
-                                        <span class="badge bg-danger">
-                                            <i class="ph ph-x-circle"></i> Nonaktif
-                                        </span>
-                                    @endif
-                                </td>
-
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <button class="btn btn-sm btn-info" onclick="detailShift({{ $shift->id }})">
-                                            <i class="ph ph-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-warning"
-                                            onclick="editShift(
+                            <td>{{ $index + 1 }}</td>
+                            <td>
+                                <span class="fw-medium" style="font-size: 13px;">{{ $shift->nama_shift }}</span>
+                                @if ($shift->kode_shift)
+                                    <small class="d-block text-muted">{{ $shift->kode_shift }}</small>
+                                @endif
+                            </td>
+                            <td><span style="font-size: 13px;">{{ \Carbon\Carbon::parse($shift->jam_masuk)->format('H:i') }}</span></td>
+                            <td><span style="font-size: 13px;">{{ \Carbon\Carbon::parse($shift->jam_pulang)->format('H:i') }}</span></td>
+                            <td><span class="fw-medium">{{ $shift->total_jam ?? '8' }} Jam</span></td>
+                            <td><span class="text-muted" style="font-size: 12px;">{{ $shift->toleransi ?? '15' }} Menit</span></td>
+                            <td>
+                                @if ($shift->status === 'AKTIF')
+                                    <span class="badge bg-success fw-normal px-2 py-1 rounded-pill">Aktif</span>
+                                @else
+                                    <span class="badge bg-light-secondary text-dark fw-normal px-2 py-1 rounded-pill">Nonaktif</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="javascript:void(0)" class="btn btn-sm btn-outline-secondary border-0" title="Edit"
+                                        onclick="editShift(
                                             {{ $shift->id }},
                                             '{{ $shift->nama_shift }}',
                                             '{{ $shift->kode_shift }}',
@@ -137,153 +77,75 @@
                                             '{{ $shift->status }}',
                                             '{{ $shift->keterangan ?? '' }}'
                                         )">
-                                            <i class="ph ph-pencil"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-danger" onclick="deleteShift({{ $shift->id }})">
-                                            <i class="ph ph-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
+                                        <i class="ph ph-note-pencil"></i>
+                                    </a>
+                                    <a href="javascript:void(0)" class="btn btn-sm btn-outline-secondary border-0" title="Hapus"
+                                        onclick="deleteShift({{ $shift->id }})">
+                                        <i class="ph ph-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
 
-                    </tbody>
-                </table>
-            </div>
+                    @if ($shifts->isEmpty())
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="ph ph-timer d-block fs-2 mb-2"></i>
+                                Data shift belum tersedia
+                            </td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
         </div>
     </div>
+</div>
 
-    {{-- modal tambah & edit data --}}
-    @include('shift.modal')
+@include('shift.modal')
 
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+function editShift(id, nama_shift, kode_shift, jam_masuk, jam_pulang, total_jam, toleransi, status, keterangan) {
+    $('#edit_id').val(id);
+    $('#edit_nama_shift').val(nama_shift);
+    $('#edit_kode_shift').val(kode_shift);
+    $('#edit_jam_masuk').val(jam_masuk);
+    $('#edit_jam_pulang').val(jam_pulang);
+    $('#edit_total_jam').val(total_jam);
+    $('#edit_toleransi').val(toleransi);
+    $('#edit_status').val(status);
+    $('#edit_keterangan').val(keterangan);
+    $('#formEditShift').attr('action', '/shift/' + id);
+    $('#modalEditShift').modal('show');
+}
 
-    <!-- SweetAlert -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <script>
-        // Detail Shift Function
-        function detailShift(id) {
-            // Implementasi detail shift
-            Swal.fire({
-                title: 'Detail Shift',
-                html: '<p>Loading detail shift...</p>',
-                icon: 'info'
-            });
-        }
-
-        // Edit Shift Function
-        function editShift(id, nama_shift, kode_shift, jam_masuk, jam_pulang, total_jam, toleransi, status, keterangan) {
-            $('#edit_id').val(id);
-            $('#edit_nama_shift').val(nama_shift);
-            $('#edit_kode_shift').val(kode_shift);
-            $('#edit_jam_masuk').val(jam_masuk);
-            $('#edit_jam_pulang').val(jam_pulang);
-            $('#edit_total_jam').val(total_jam);
-            $('#edit_toleransi').val(toleransi);
-            $('#edit_status').val(status);
-            $('#edit_keterangan').val(keterangan);
-
-            $('#modalEditShift').modal('show');
-        }
-
-        // DataTable Initialization
-        $(document).ready(function() {
-            $('#shiftTable').DataTable({
-                responsive: true,
-                autoWidth: false,
-                pageLength: 10,
-                lengthMenu: [5, 10, 25, 50],
-                order: [
-                    [1, 'asc']
-                ],
-                columnDefs: [{
-                    orderable: false,
-                    targets: [0, 7]
-                }],
-                language: {
-                    search: "🔍 Cari:",
-                    lengthMenu: "Tampilkan _MENU_ data",
-                    zeroRecords: "Data tidak ditemukan",
-                    info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-                    infoEmpty: "Data tidak tersedia",
-                    paginate: {
-                        first: "Awal",
-                        last: "Akhir",
-                        next: "›",
-                        previous: "‹"
-                    }
-                }
-            });
-        });
-
-        // Delete Shift Function
-        function deleteShift(id) {
-            Swal.fire({
-                title: 'Hapus Shift?',
-                text: 'Data shift yang dihapus tidak bisa dikembalikan',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, Hapus',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: `/shift/${id}`,
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            _method: 'DELETE'
-                        },
-                        success: function(res) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Berhasil',
-                                text: res.message,
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
-
-                            setTimeout(() => {
-                                location.reload();
-                            }, 1500);
-                        },
-                        error: function() {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal',
-                                text: 'Terjadi kesalahan saat menghapus data'
-                            });
-                        }
-                    });
+function deleteShift(id) {
+    Swal.fire({
+        title: 'Hapus shift?',
+        text: 'Data shift yang dihapus tidak bisa dikembalikan',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/shift/' + id,
+                type: 'POST',
+                data: { _token: '{{ csrf_token() }}', _method: 'DELETE' },
+                success: function(res) {
+                    Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message || 'Shift berhasil dihapus', timer: 1500, showConfirmButton: false });
+                    setTimeout(() => location.reload(), 1500);
+                },
+                error: function() {
+                    Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan saat menghapus data' });
                 }
             });
         }
-    </script>
-
-    <style>
-        /* Custom Button Styles */
-        .btn-group .btn {
-            margin: 0 2px;
-        }
-
-        /* Table Row Hover */
-        #shiftTable tbody tr:hover {
-            background-color: #f8f9fa;
-            transition: background-color 0.3s ease;
-        }
-
-        /* Badge Custom */
-        .badge {
-            font-weight: 500;
-            letter-spacing: 0.3px;
-        }
-    </style>
+    });
+}
+</script>
 @endsection

@@ -1,8 +1,8 @@
 <div class="modal fade" id="modalTambahCabang" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header  text-white"   style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">
-                <h5 class="modal-title text-white"><i class="ph ph-map-pin-plus me-2"></i>Tambah Cabang Baru</h5>
+            <div class="modal-header border-1 text-white" style="">
+                <h5 class="modal-title  fw-bold"><i class="ph ph-map-pin-plus me-2"></i>Tambah Cabang Baru</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="formTambahCabang" action="{{ route('cabang.store') }}" method="POST">
@@ -39,7 +39,7 @@
                     </div>
 
                     <div class="mt-2 mb-3">
-                        <button type="button" class="btn btn-sm btn-light-primary w-100" onclick="getCurrentLocation('add')">
+                        <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="getCurrentLocation('add')">
                             <i class="ph ph-navigation-arrow me-1"></i> Gunakan Lokasi Saya Saat Ini
                         </button>
                     </div>
@@ -57,9 +57,9 @@
                         <textarea name="alamat" class="form-control" rows="2" placeholder="Jl. Raya Utama No. 123..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary px-4">Simpan Cabang</button>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal"><i class="ph ph-x me-1"></i> Batal</button>
+                    <button type="submit" class="btn btn-dark px-4 shadow"><i class="ph ph-floppy-disk me-1"></i> Simpan Cabang</button>
                 </div>
             </form>
         </div>
@@ -69,8 +69,8 @@
 <div class="modal fade" id="modalEditCabang" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header  text-white"  style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">
-                <h5 class="modal-title text-white"><i class="ph ph-pencil-line me-2"></i>Edit Data Cabang</h5>
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">
+                <h5 class="modal-title text-white fw-bold"><i class="ph ph-pencil-line me-2"></i>Edit Data Cabang</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="formEditCabang" action="" method="POST">
@@ -109,8 +109,8 @@
                     </div>
 
                     <div class="mt-2 mb-3">
-                        <button type="button" class="btn btn-sm btn-light-warning w-100" onclick="getCurrentLocation('edit')">
-                            <i class="ph ph-navigation-arrow me-1"></i> Update ke Lokasi Saya Sekarang
+                        <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="getCurrentLocation('edit')">
+                            <i class="ph ph-navigation-arrow me-1"></i> Gunakan Lokasi Saya Saat Ini
                         </button>
                     </div>
 
@@ -127,9 +127,9 @@
                         <textarea name="alamat" id="edit_alamat" class="form-control" rows="2"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-warning px-4 fw-bold">Update Cabang</button>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal"><i class="ph ph-x me-1"></i> Batal</button>
+                    <button type="submit" class="btn btn-dark px-4 shadow"><i class="ph ph-floppy-disk me-1"></i> Update Cabang</button>
                 </div>
             </form>
         </div>
@@ -137,7 +137,6 @@
 </div>
 
 <script>
-    // FUNGSI AMBIL LOKASI GPS
     function getCurrentLocation(type) {
         if (navigator.geolocation) {
             Swal.fire({
@@ -152,7 +151,7 @@
                     Swal.close();
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
-                    
+
                     if (type === 'add') {
                         $('#add_lat').val(lat);
                         $('#add_lng').val(lng);
@@ -160,7 +159,7 @@
                         $('#edit_latitude').val(lat);
                         $('#edit_longitude').val(lng);
                     }
-                    
+
                     Swal.fire({ icon: 'success', title: 'Lokasi Ditemukan!', timer: 1000, showConfirmButton: false });
                 },
                 (error) => {
@@ -175,7 +174,6 @@
     }
 
     $(document).ready(function() {
-        // FORM TAMBAH
         $('#formTambahCabang').on('submit', function(e) {
             e.preventDefault();
             let form = $(this);
@@ -202,7 +200,6 @@
             });
         });
 
-        // FORM EDIT
         $('#formEditCabang').on('submit', function(e) {
             e.preventDefault();
             let id = $('#edit_id').val();

@@ -1,10 +1,10 @@
 <header class="app-header">
-    <div class="header-inner">
+    <div class="header-inner " style="margin: 0 20px">
         <div class="header-left">
             <a href="/" class="header-logo">
-                <img src="{{ asset('assets/images/logo/logo4.png') }}" alt="logo" />
+                <img src="{{ asset('assets/images/logo/logo5.png') }}" alt="logo" />
             </a>
-            <span class="header-brand-name">Absensi Mendunia Pro</span>
+            <span class="header-brand-name" style="font-style: italic;">Absensi Mendunia</span>
 
             <nav class="header-nav">
                 <a href="/" class="header-link {{ request()->is('/') ? 'active' : '' }}">
@@ -46,10 +46,17 @@
                     </div>
                 </div>
 
-                <a href="/pengaturan" class="header-link {{ request()->is('pengaturan*') ? 'active' : '' }}">
-                    <i class="ph ph-gear"></i>
-                    <span>Notifikasi WA</span>
-                </a>
+                <div class="header-dropdown">
+                    <a href="#" class="header-link dropdown-trigger">
+                        <i class="ph ph-gear"></i>
+                        <span>Pengaturan</span>
+                        <i class="ph ph-caret-down dropdown-arrow"></i>
+                    </a>
+                    <div class="dropdown-menu-custom">
+                        <a href="/pengaturan" class="dropdown-item-custom {{ request()->is('pengaturan') ? 'active' : '' }}"><i class="ph ph-user-gear"></i>Manajemen Akun</a>
+                        <a href="/pengaturan-wa" class="dropdown-item-custom {{ request()->is('pengaturan-wa') ? 'active' : '' }}"><i class="ph ph-whatsapp-logo"></i>Notifikasi WA</a>
+                    </div>
+                </div>
             </nav>
         </div>
 
@@ -169,7 +176,7 @@
             </div>
         </div>
 
-        <a href="/pengaturan" class="mobile-link {{ request()->is('pengaturan*') ? 'active' : '' }}">
+        <a href="/pengaturan-wa" class="mobile-link {{ request()->is('pengaturan-wa*') ? 'active' : '' }}">
             <i class="ph ph-gear"></i>Notifikasi WA
         </a>
 

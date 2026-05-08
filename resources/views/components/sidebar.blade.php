@@ -123,15 +123,15 @@
                 </ul>
             </li>
 
-          <!-- PENGATURAN -->
+          <!-- PENGATURAN NOTIFIKASI -->
           <li class="pc-item pc-caption">
-              <label>Pengaturan Notifikasi Wa</label>
+              <label>Notifikasi</label>
           </li>
           <li class="pc-item">
-              <a href="/pengaturan" class="pc-link">
-                  <span class="pc-micon"><i class="ph ph-gear"></i></span>
-                  <span class="pc-mtext">Notifikasi WA</span>
-              </a>
+               <a href="/pengaturan-wa" class="pc-link">
+                                    <i class="ph ph-whatsapp-logo"></i>
+                                    <span class="pc-mtext">Notifikasi WA</span>
+                                </a>
           </li>
 
 

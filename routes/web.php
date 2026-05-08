@@ -132,8 +132,14 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     });
 
     // Pengaturan Notifikasi WA
-    Route::get('/pengaturan', [PengaturanController::class, 'index'])->name('pengaturan.index');
-    Route::post('/pengaturan', [PengaturanController::class, 'update'])->name('pengaturan.update');
+    Route::get('/pengaturan-wa', [PengaturanController::class, 'index'])->name('pengaturan-wa.index');
+    Route::post('/pengaturan-wa', [PengaturanController::class, 'update'])->name('pengaturan-wa.update');
+
+    // Manajemen Akun Admin (HR / MANAGER)
+    Route::get('/pengaturan', [UserController::class, 'index'])->name('pengaturan.index');
+    Route::post('/pengaturan', [UserController::class, 'store'])->name('users.store');
+    Route::put('/pengaturan/{id}', [UserController::class, 'update'])->name('pengaturan.update');
+    Route::delete('/pengaturan/users/{id}', [UserController::class, 'destroyAdmin']);
 
     // lembur
     Route::get('/approval-lembur', [LemburController::class, 'approvalIndex'])->name('lembur.approval');

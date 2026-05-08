@@ -1,314 +1,197 @@
 @extends('app')
 
 @section('content')
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+<div class="container-fluid px-4 py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h5 class="mb-0" style="font-weight: 700; font-size: 16px;">Data Kehadiran</h5>
+            <small class="text-muted">Pantau absensi harian karyawan</small>
+        </div>
+    </div>
 
-    <div class="container-fluid">
-        {{-- HEADER --}}
-        <div class="page-header mb-4">
-            <div class="row align-items-center">
-                <div class="col-md-3">
-                    <h4 class="m-0 text-dark fw-bold">Data Kehadiran Karyawan</h4>
-                    <p class="text-muted small mb-0">Kelola dan pantau absensi harian seluruh staf</p>
-                </div>
+    <form method="GET" action="" class="mb-4">
+        <div class="row g-2">
+            <div class="col-auto">
+                <select name="cabang_id" class="form-select form-select-sm">
+                    <option value="">Semua Cabang</option>
+                    @foreach ($list_cabang as $c)
+                        <option value="{{ $c->id }}" {{ request('cabang_id') == $c->id ? 'selected' : '' }}>{{ $c->nama_cabang }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-auto">
+                <select name="divisi_id" class="form-select form-select-sm">
+                    <option value="">Semua Divisi</option>
+                    @foreach ($list_divisi as $d)
+                        <option value="{{ $d->id }}" {{ request('divisi_id') == $d->id ? 'selected' : '' }}>{{ $d->nama_divisi }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-auto">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">Semua Status</option>
+                    @php $statuses = ['HADIR','TERLAMBAT','IZIN','ALPA','PULANG LEBIH AWAL','TIDAK ABSEN PULANG','LIBUR']; @endphp
+                    @foreach ($statuses as $s)
+                        <option value="{{ $s }}" {{ request('status') == $s ? 'selected' : '' }}>{{ $s }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-auto">
+                <input type="date" name="start_date" value="{{ $start_date }}" class="form-control form-control-sm" style="width: 140px;">
+            </div>
+            <div class="col-auto">
+                <input type="date" name="end_date" value="{{ $end_date }}" class="form-control form-control-sm" style="width: 140px;">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-dark btn-sm"><i class="ph ph-funnel me-1"></i>Filter</button>
+            </div>
+            <div class="col-auto">
+                <a href="{{ url('data-kehadiran') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-arrow-counter-clockwise me-1"></i>Reset</a>
+            </div>
+        </div>
+    </form>
 
-                <div class="col-md-9">
-                    <form method="GET" action="">
-                        <div class="row g-2 justify-content-md-end">
-                            {{-- Filter Cabang --}}
-                            <div class="col-6 col-md-2">
-                                <select name="cabang_id" class="form-select form-select-sm shadow-sm">
-                                    <option value="">Semua Cabang</option>
-                                    @foreach ($list_cabang as $c)
-                                        <option value="{{ $c->id }}"
-                                            {{ request('cabang_id') == $c->id ? 'selected' : '' }}>
-                                            {{ $c->nama_cabang }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- Filter Divisi --}}
-                            <div class="col-6 col-md-2">
-                                <select name="divisi_id" class="form-select form-select-sm shadow-sm">
-                                    <option value="">Semua Divisi</option>
-                                    @foreach ($list_divisi as $d)
-                                        <option value="{{ $d->id }}"
-                                            {{ request('divisi_id') == $d->id ? 'selected' : '' }}>
-                                            {{ $d->nama_divisi }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- Filter Status (Disesuaikan dengan ENUM Database) --}}
-                            <div class="col-6 col-md-2">
-                                <select name="status" class="form-select form-select-sm shadow-sm">
-                                    <option value="">Semua Status</option>
-                                    @php
-                                        $statuses = [
-                                            'HADIR',
-                                            'TERLAMBAT',
-                                            'IZIN',
-                                            'ALPA',
-                                            'PULANG LEBIH AWAL',
-                                            'TIDAK ABSEN PULANG',
-                                            'LIBUR',
-                                        ];
-                                    @endphp
-                                    @foreach ($statuses as $status)
-                                        <option value="{{ $status }}"
-                                            {{ request('status') == $status ? 'selected' : '' }}>
-                                            {{ $status }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- Filter Tanggal --}}
-                            <div class="col-6 col-md-2">
-                                <input type="date" name="start_date" value="{{ $start_date }}"
-                                    class="form-control form-control-sm shadow-sm" title="Tanggal Mulai">
-                            </div>
-                            <div class="col-6 col-md-2">
-                                <input type="date" name="end_date" value="{{ $end_date }}"
-                                    class="form-control form-control-sm shadow-sm" title="Tanggal Akhir">
-                            </div>
-
-                            {{-- Tombol Submit --}}
-                            <div class="col-12 col-md-1">
-                                <button type="submit" class="btn btn-primary btn-sm w-100 shadow-sm">
-                                    <i class="ph ph-magnifying-glass"></i>
+    <div class=" rounded-3">
+        <div class="p-3 border-bottom" style="border-bottom-color: #f0f0f0 !important;">
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="fw-semibold" style="font-size: 13px;"></span>
+                <small class="text-muted">{{ \Carbon\Carbon::parse($start_date)->translatedFormat('d M') }} — {{ \Carbon\Carbon::parse($end_date)->translatedFormat('d M Y') }} &middot; {{ $absensis->count() }} data</small>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table id="absensiTable" class="table table-hover text-nowrap mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Karyawan</th>
+                        <th scope="col">Shift</th>
+                        <th scope="col" class="text-center">Masuk</th>
+                        <th scope="col" class="text-center">Pulang</th>
+                        <th scope="col">Jam Masuk</th>
+                        <th scope="col">Jam Pulang</th>
+                        <th scope="col">Cabang</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($absensis as $a)
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="{{ $a->user->foto_profil && file_exists(public_path('uploads/foto_profil/' . $a->user->foto_profil))
+                                        ? asset('uploads/foto_profil/' . $a->user->foto_profil)
+                                        : 'https://ui-avatars.com/api/?name=' . urlencode($a->user->name) . '&background=e5e7eb&color=6b7280&size=32' }}"
+                                        class="rounded-circle" style="width: 28px; height: 28px; object-fit: cover;">
+                                    <div>
+                                        <span class="fw-medium" style="font-size: 13px;">{{ $a->user->name }}</span>
+                                        <small class="d-block text-muted">{{ $a->user->nip }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-muted">{{ $a->shift->nama_shift ?? '-' }}</td>
+                            <td class="text-center">
+                                @if ($a->foto_masuk)
+                                    <img src="{{ asset('storage/' . $a->foto_masuk) }}" class="rounded" style="width: 30px; height: 30px; object-fit: cover; cursor: pointer;" onclick="window.open(this.src)">
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @php $fp = $a->foto_pulang ?? $a->foto_keluar; @endphp
+                                @if ($fp)
+                                    <img src="{{ asset('storage/' . $fp) }}" class="rounded" style="width: 30px; height: 30px; object-fit: cover; cursor: pointer;" onclick="window.open(this.src)">
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td>{{ $a->jam_masuk ? date('H:i', strtotime($a->jam_masuk)) : '-' }}</td>
+                            <td>{{ $a->jam_keluar ? date('H:i', strtotime($a->jam_keluar)) : '-' }}</td>
+                            <td class="text-muted">{{ $a->cabang->nama_cabang ?? '-' }}</td>
+                            <td>
+                                @php
+                                    $badge = match($a->status) {
+                                        'HADIR' => 'bg-success-subtle text-success',
+                                        'TERLAMBAT' => 'bg-warning-subtle text-warning',
+                                        'IZIN' => 'bg-info-subtle text-info',
+                                        'ALPA' => 'bg-danger-subtle text-danger',
+                                        'PULANG LEBIH AWAL' => 'bg-warning-subtle text-warning-emphasis',
+                                        'TIDAK ABSEN PULANG' => 'bg-purple-subtle text-purple',
+                                        'LIBUR' => 'bg-secondary-subtle text-secondary',
+                                        default => 'bg-light text-muted',
+                                    };
+                                @endphp
+                                <span class="badge {{ $badge }} rounded-pill fw-normal px-2 py-1">{{ $a->status }}</span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-secondary border-0" onclick="ubahStatus('{{ $a->id }}','{{ $a->status }}')">
+                                    <i class="ph ph-pencil-simple"></i>
                                 </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        {{-- TABLE --}}
-        <div class="card table-card">
-            <div class="card-header">
-                <h5>Rekap Absensi Tanggal {{ \Carbon\Carbon::parse($tanggal)->format('d M Y') }}</h5>
-            </div>
-
-            <div class="card-body p-0">
-                <div class="table-responsive p-4">
-                    <table class="table align-middle mb-0" id="absensiTable">
-                        <thead class="bg-blue-700">
-                            <tr>
-                                <th class="text-white">No</th>
-                                <th class="text-white">Karyawan</th>
-                                <th class="text-white">Shift</th>
-                                <th class="text-center text-white">Foto Masuk</th>
-                                <th class="text-center text-white">Foto Pulang</th>
-                                <th class="text-white">Jam Masuk</th>
-                                <th class="text-white">Jam Pulang</th>
-                                <th class="text-white">Lokasi Cabang</th>
-                                <th class="text-white">Status</th>
-                                <th width="10%" class="text-center text-white">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($absensis as $a)
-                                <tr>
-                                    <td>{{ $loop->iteration }}</td>
-
-                                    {{-- Karyawan --}}
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <img src="{{ $a->user->foto_profil && file_exists(public_path('uploads/foto_profil/' . $a->user->foto_profil))
-                                                ? asset('uploads/foto_profil/' . $a->user->foto_profil)
-                                                : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' }}"
-                                                class="rounded-circle border border-gray-100" alt="{{ $a->user->name }}"
-                                                style="width: 35px; height: 35px; object-fit: cover; flex-shrink: 0;">
-                                            <div>
-                                                <div class="fw-bold mb-0" style="font-size: 0.9rem;">{{ $a->user->name }}
-                                                </div>
-                                                <small class="text-muted">{{ $a->user->nip }}</small>
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    {{-- Shift --}}
-                                    <td>
-                                        <span class="text-dark small">{{ $a->shift->nama_shift ?? '-' }}</span>
-                                    </td>
-
-                                    {{-- Foto Masuk --}}
-                                    <td class="text-center">
-                                        @if ($a->foto_masuk)
-                                            <img src="{{ asset('storage/' . $a->foto_masuk) }}"
-                                                class="rounded border shadow-sm"
-                                                style="width: 45px; height: 45px; object-fit: cover;"
-                                                onclick="window.open(this.src)" role="button">
-                                        @else
-                                            <span class="text-muted small">-</span>
-                                        @endif
-                                    </td>
-
-                                    {{-- Foto Pulang --}}
-                                    <td class="text-center">
-                                        @php $fotoPulang = $a->foto_pulang ?? $a->foto_keluar; @endphp
-                                        @if ($fotoPulang)
-                                            <img src="{{ asset('storage/' . $fotoPulang) }}"
-                                                class="rounded border shadow-sm"
-                                                style="width: 45px; height: 45px; object-fit: cover;"
-                                                onclick="window.open(this.src)" role="button">
-                                        @else
-                                            <span class="text-muted small">-</span>
-                                        @endif
-                                    </td>
-
-                                    {{-- Jam --}}
-                                    <td class="small">{{ $a->jam_masuk ? date('H:i', strtotime($a->jam_masuk)) : '-' }}
-                                    </td>
-                                    <td class="small">{{ $a->jam_keluar ? date('H:i', strtotime($a->jam_keluar)) : '-' }}
-                                    </td>
-
-                                    {{-- Cabang --}}
-                                    <td class="small text-muted">
-                                        {{ $a->cabang->nama_cabang ?? '-' }}
-                                    </td>
-
-                                    {{-- Status (Teks Berwarna Tanpa Badge) --}}
-                                    <td class="fw-bold small">
-                                        @php
-                                            $color = 'text-danger';
-                                            if ($a->status == 'HADIR') {
-                                                $color = 'text-success';
-                                            } elseif ($a->status == 'TERLAMBAT') {
-                                                $color = 'text-warning';
-                                            } elseif ($a->status == 'IZIN') {
-                                                $color = 'text-info';
-                                            } elseif ($a->status == 'LIBUR') {
-                                                $color = 'text-secondary';
-                                            }
-                                        @endphp
-                                        <span class="{{ $color }}">{{ $a->status }}</span>
-                                    </td>
-
-                                    {{-- Aksi --}}
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-warning border-0"
-                                            onclick="ubahStatus('{{ $a->id }}','{{ $a->status }}')">
-                                            <i class="ph ph-pencil-simple fs-5"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
+</div>
 
-    {{-- modal revisi --}}
-    <div class="modal fade" id="modalStatus">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST" action="{{ route('admin.absensi.updateStatus') }}">
-                    @csrf
-                    <input type="hidden" name="id" id="status_id">
-
-                    <div class="modal-header">
-                        <h5 class="modal-title">Ubah Status Absensi</h5>
-                    </div>
-
-                    <div class="modal-body">
-
-                        <label class="fw-semibold mb-2">Status Baru</label>
-                        <select name="status" id="status_value" class="form-control" required>
-                            <option value="HADIR">HADIR</option>
-                            <option value="TERLAMBAT">TERLAMBAT</option>
-                            <option value="IZIN">IZIN</option>
-                            <option value="ALPA">ALPA</option>
-                            <option value="PULANG LEBIH AWAL">PULANG LEBIH AWAL</option>
-                            <option value="TIDAK ABSEN PULANG">TIDAK ABSEN PULANG</option>
-                            <option value="LIBUR">LIBUR</option>
-                        </select>
-
-
-                        <div class="alert alert-warning mt-3 small">
-                            Perubahan status akan tercatat sebagai revisi admin.
-                        </div>
-
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                        <button class="btn btn-success">Simpan</button>
-                    </div>
-                </form>
+<div class="modal fade" id="modalStatus" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">
+                <h5 class="modal-title text-white fw-bold"><i class="ph ph-pencil-simple me-2"></i>Ubah Status</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
+            <form method="POST" action="{{ route('admin.absensi.updateStatus') }}">
+                @csrf
+                <input type="hidden" name="id" id="status_id">
+                <div class="modal-body p-4">
+                    <label class="form-label fw-bold">Status Absensi <span class="text-danger">*</span></label>
+                    <select name="status" id="status_value" class="form-select" required>
+                        <option value="HADIR">HADIR</option>
+                        <option value="TERLAMBAT">TERLAMBAT</option>
+                        <option value="IZIN">IZIN</option>
+                        <option value="ALPA">ALPA</option>
+                        <option value="PULANG LEBIH AWAL">PULANG LEBIH AWAL</option>
+                        <option value="TIDAK ABSEN PULANG">TIDAK ABSEN PULANG</option>
+                        <option value="LIBUR">LIBUR</option>
+                    </select>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">Batal</button>
+                    <button class="btn btn-dark px-3 shadow"><i class="ph ph-floppy-disk me-1"></i> Simpan</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-
-    <script>
-        // revisi
-        function ubahStatus(id, status) {
-            document.getElementById('status_id').value = id;
-            document.getElementById('status_value').value = status;
-
-            var modal = new bootstrap.Modal(document.getElementById('modalStatus'));
-            modal.show();
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(function () {
+    $('#absensiTable').DataTable({
+        responsive: true,
+        autoWidth: false,
+        pageLength: 10,
+        lengthMenu: [10, 25, 50, 100],
+        order: [[0, 'asc']],
+        language: {
+            search: "Cari:",
+            lengthMenu: "Tampilkan _MENU_ data",
+            info: "Menampilkan _START_–_END_ dari _TOTAL_ data",
+            zeroRecords: "Data tidak ditemukan",
+            paginate: { first: "Awal", last: "Akhir", next: "›", previous: "‹" }
         }
-        $(document).ready(function() {
+    });
+});
 
-
-            $('#absensiTable').DataTable({
-                responsive: true,
-                autoWidth: false,
-                pageLength: 10,
-                lengthMenu: [10, 25, 50, 100],
-                order: [
-                    [0, 'asc']
-                ],
-                dom: 'Bfrtip',
-                buttons: [{
-                        extend: 'excel',
-                        text: 'Export Excel',
-                        className: 'btn btn-success btn-sm'
-                    },
-                    {
-                        extend: 'pdf',
-                        text: 'Export PDF',
-                        className: 'btn btn-danger btn-sm'
-                    },
-                    {
-                        extend: 'print',
-                        text: 'Print',
-                        className: 'btn btn-secondary btn-sm'
-                    }
-                ],
-                language: {
-                    search: "Cari:",
-                    lengthMenu: "Tampilkan _MENU_ data",
-                    info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-                    paginate: {
-                        first: "Awal",
-                        last: "Akhir",
-                        next: "→",
-                        previous: "←"
-                    },
-                    zeroRecords: "Data tidak ditemukan"
-                }
-            });
-        });
-    </script>
+function ubahStatus(id, status) {
+    document.getElementById('status_id').value = id;
+    document.getElementById('status_value').value = status;
+    new bootstrap.Modal(document.getElementById('modalStatus')).show();
+}
+</script>
 @endsection

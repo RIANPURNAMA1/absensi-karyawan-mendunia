@@ -2,8 +2,8 @@
 <div class="modal fade" id="modalAturShift" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h5 class="modal-title text-white fw-bold">
+            <div class="modal-header border-0" style="">
+                <h5 class="modal-title fw-bold">
                     <i class="ph ph-calendar-plus me-2"></i>Atur Shift Jadwal
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
