@@ -8,9 +8,9 @@
                 <span class="text-xs font-medium">Home</span>
             </a>
 
-            <button onclick="window.location='/calendar'" class="flex flex-col items-center gap-1 text-gray-400">
-                <i data-lucide="calendar" class="w-6 h-6"></i>
-                <span class="text-xs font-medium">Calendar</span>
+            <button onclick="toggleModalJadwal(true)" class="flex flex-col items-center gap-1 text-gray-400">
+                <i data-lucide="calendar-range" class="w-6 h-6"></i>
+                <span class="text-xs font-medium">Jadwal Shift</span>
             </button>
 
             <button onclick="mulaiAbsenFoto()" class="flex flex-col items-center -mt-8">

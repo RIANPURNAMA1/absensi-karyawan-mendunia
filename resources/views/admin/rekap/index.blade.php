@@ -100,6 +100,8 @@
                         <th class="text-center">Lembur</th>
                         <th class="text-center">Jam Lembur</th>
                         <th class="text-center">Kehadiran Sensei</th>
+                        <th class="text-center">Kehadiran Khusus</th>
+                        <th class="text-center">Jam Khusus</th>
                         <th class="text-center">Total Agenda</th>
                         <th class="text-center">Jam Kerja</th>
                         <th class="text-center">Grand Total</th>
@@ -128,6 +130,8 @@
                             <td class="text-center fw-bold">{{ $r->jumlah_lembur }}<span class="text-xs">x</span></td>
                             <td class="text-center">{{ $r->total_jam_lembur }}</td>
                             <td class="text-center fw-bold">{{ $r->sensei_kehadiran }}<span class="text-xs">x</span></td>
+                            <td class="text-center fw-bold">{{ $r->khusus }}<span class="text-xs">x</span></td>
+                            <td class="text-center">{{ $r->jam_khusus }}</td>
                             <td class="text-center fw-bold">{{ $r->total_agenda }}</td>
                             <td class="text-center fw-bold">{{ $r->total_jam_kerja }}</td>
                             <td class="text-center fw-bold">{{ $r->grand_total_jam }}</td>

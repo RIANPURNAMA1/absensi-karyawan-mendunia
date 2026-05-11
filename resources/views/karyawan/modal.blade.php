@@ -375,8 +375,18 @@
                                </select>
                            </div>
 
-                           <div class="col-md-6">
-                               <label class="form-label fw-semibold">Status Pernikahan</label>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mt-4">
+                                    <input class="form-check-input" type="checkbox" name="can_access_khusus" id="edit_can_access_khusus" value="1">
+                                    <label class="form-check-label fw-bold" for="edit_can_access_khusus">
+                                        <i class="ph ph-timer me-1 text-emerald-600"></i>Akses Absen Khusus
+                                    </label>
+                                    <small class="d-block text-muted" style="font-size: 11px;">Izinkan karyawan menggunakan fitur absen khusus (timer)</small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Status Pernikahan</label>
                                <select name="status_pernikahan" id="edit_status_pernikahan" class="form-select">
                                    <option value="">-- Pilih Status --</option>
                                    <option value="BELUM_MENIKAH">Belum Menikah</option>

@@ -71,6 +71,11 @@
                     <div class="text-xl font-bold">
                         {{ \Carbon\Carbon::parse($absensi->tanggal)->translatedFormat('l, d F Y') }}
                     </div>
+                    @if ($absensi->shift)
+                        <div class="text-sm text-blue-200 mt-1">
+                            Shift: {{ $absensi->shift->nama_shift }}
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -98,6 +103,24 @@
                 <span class="font-semibold text-base">{{ $absensi->status }}</span>
             </div>
         </div>
+
+        @if ($absensi->shift)
+        <div class="bg-white rounded-2xl p-4 shadow-sm mb-5">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="clock" class="w-5 h-5 text-indigo-600"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="text-xs text-gray-500">Shift Kerja</div>
+                    <div class="text-lg font-bold text-gray-900">{{ $absensi->shift->nama_shift }}</div>
+                    <div class="text-xs text-gray-400">
+                        {{ \Carbon\Carbon::parse($absensi->shift->jam_masuk)->format('H:i') }} - 
+                        {{ \Carbon\Carbon::parse($absensi->shift->jam_pulang)->format('H:i') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
 
         <div class="grid grid-cols-2 gap-3 mb-5">
             <div class="bg-white rounded-2xl p-4 shadow-sm">

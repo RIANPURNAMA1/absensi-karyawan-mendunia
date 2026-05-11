@@ -343,6 +343,7 @@
                 card.href = `/absensi/detail/${tanggal}`;
                 card.className = 'block';
 
+                const shiftName = a.shift ? a.shift.nama_shift : 'Shift';
                 card.innerHTML = `
                     <div class="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all border-l-4 border-blue-500">
                         <div class="flex items-center gap-4">
@@ -359,6 +360,7 @@
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="flex items-center gap-2">
                                         <span class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">KARYAWAN</span>
+                                        <span class="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">${shiftName}</span>
                                         <h3 class="font-semibold text-gray-900 text-sm">${date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
                                     </div>
                                 </div>

@@ -40,14 +40,14 @@
                          <span class="pc-mtext">Cabang / Lokasi</span>
                      </a>
                  </li>
-                 <li class="pc-item">
-                     <a href="/shift" class="pc-link">
-                         <span class="pc-micon"><i class="ph ph-timer"></i></span>
-                         <span class="pc-mtext">Shift Kerja</span>
-                     </a>
-                 </li>
-                 <li class="pc-item">
-                     <a href="/daftar-user" class="pc-link">
+                  <li class="pc-item">
+                      <a href="/shift" class="pc-link">
+                          <span class="pc-micon"><i class="ph ph-timer"></i></span>
+                          <span class="pc-mtext">Shift Kerja</span>
+                      </a>
+                  </li>
+                  <li class="pc-item">
+                      <a href="/daftar-user" class="pc-link">
                          <span class="pc-micon"><i class="ph ph-list"></i></span>
                          <span class="pc-mtext">Daftar User Karyawan</span>
                      </a>
@@ -66,12 +66,18 @@
                  <span class="pc-arrow"><i class="ph ph-caret-down"></i></span>
              </a>
              <ul class="pc-submenu">
-                 <li class="pc-item">
-                     <a href="/data-kehadiran" class="pc-link">
-                         <span class="pc-micon"><i class="ph ph-clipboard-text"></i></span>
-                         <span class="pc-mtext">Data Kehadiran</span>
-                     </a>
-                 </li>
+                  <li class="pc-item">
+                      <a href="/data-kehadiran" class="pc-link">
+                          <span class="pc-micon"><i class="ph ph-clipboard-text"></i></span>
+                           <span class="pc-mtext">Kehadiran</span>
+                      </a>
+                  </li>
+                  <li class="pc-item">
+                      <a href="/data-kehadiran-khusus" class="pc-link">
+                          <span class="pc-micon"><i class="ph ph-timer"></i></span>
+                          <span class="pc-mtext">Kehadiran Khusus</span>
+                      </a>
+                  </li>
                  <li class="pc-item">
                      <a href="/izin-cuti" class="pc-link">
                          <span class="pc-micon"><i class="ph ph-file-text"></i></span>

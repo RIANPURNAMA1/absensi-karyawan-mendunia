@@ -62,6 +62,7 @@
                         <th scope="col">Jabatan</th>
                         <th scope="col" class="text-center">L/P</th>
                         <th scope="col" class="text-center">Status</th>
+                        <th scope="col" class="text-center">Absen Khusus</th>
                         <th scope="col" class="text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -110,12 +111,19 @@
                                 <span class="badge {{ $badge }} rounded-pill fw-normal px-2 py-1">{{ $label }}</span>
                             </td>
                             <td class="text-center">
+                                <div class="form-check form-switch d-inline-block m-0">
+                                    <input class="form-check-input toggle-khusus" type="checkbox" role="switch"
+                                        data-id="{{ $k->id }}"
+                                        {{ $k->can_access_khusus ? 'checked' : '' }}>
+                                </div>
+                            </td>
+                            <td class="text-center">
                                 <div class="d-flex gap-1 justify-content-center">
                                     <a href="{{ route('karyawan.show', $k->id) }}" class="btn btn-sm btn-outline-secondary border-0" title="Detail">
                                         <i class="ph ph-eye"></i>
                                     </a>
                                     <a href="javascript:void(0)" class="btn btn-sm btn-outline-secondary border-0" title="Edit"
-                                        onclick="editKaryawan('{{ $k->id }}','{{ $k->nik }}','{{ $k->nip }}','{{ $k->name }}','{{ $k->jabatan }}','{{ $k->pendidikan_terakhir }}','{{ $k->divisi_id }}','{{ json_encode($k->cabang_ids) }}','{{ json_encode($k->shift_ids) }}','{{ $k->status_kerja }}','{{ $k->no_hp }}','{{ $k->email }}','{{ $k->tanggal_masuk }}','{{ $k->tempat_lahir }}','{{ $k->tanggal_lahir }}','{{ $k->jenis_kelamin }}','{{ $k->agama }}','{{ $k->status_pernikahan }}','{{ $k->alamat }}')">
+                                        onclick="editKaryawan('{{ $k->id }}','{{ $k->nik }}','{{ $k->nip }}','{{ $k->name }}','{{ $k->jabatan }}','{{ $k->pendidikan_terakhir }}','{{ $k->divisi_id }}','{{ json_encode($k->cabang_ids) }}','{{ json_encode($k->shift_ids) }}','{{ $k->status_kerja }}','{{ $k->no_hp }}','{{ $k->email }}','{{ $k->tanggal_masuk }}','{{ $k->tempat_lahir }}','{{ $k->tanggal_lahir }}','{{ $k->jenis_kelamin }}','{{ $k->agama }}','{{ $k->status_pernikahan }}','{{ $k->alamat }}','{{ $k->can_access_khusus }}')">
                                         <i class="ph ph-note-pencil"></i>
                                     </a>
                                     <a href="javascript:void(0)" class="btn btn-sm btn-outline-secondary border-0" title="Hapus"
@@ -161,7 +169,8 @@ $(function () {
 function editKaryawan(
     id, nik, nip, name, jabatan, pendidikan_terakhir, divisi_id, cabang_ids, shift_ids, status_kerja,
     no_hp, email, tanggal_masuk,
-    tempat_lahir, tanggal_lahir, jenis_kelamin, agama, status_pernikahan, alamat
+    tempat_lahir, tanggal_lahir, jenis_kelamin, agama, status_pernikahan, alamat,
+    can_access_khusus
 ) {
     $('#edit_id').val(id);
     $('#edit_nik').val(nik);
@@ -193,9 +202,34 @@ function editKaryawan(
     $('#edit_status_pernikahan').val(status_pernikahan);
     $('#edit_alamat').val(alamat);
 
+    $('#edit_can_access_khusus').prop('checked', can_access_khusus === '1' || can_access_khusus === true);
+
     $('#formEditKaryawan').attr('action', '/karyawan/' + id);
     $('#modalEditKaryawan').modal('show');
 }
+
+$(document).on('change', '.toggle-khusus', function() {
+    var id = $(this).data('id');
+    var cb = this;
+    $.ajax({
+        url: '/karyawan/' + id + '/toggle-khusus',
+        type: 'POST',
+        data: { _token: '{{ csrf_token() }}' },
+        success: function(res) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: res.message,
+                timer: 1200,
+                showConfirmButton: false
+            });
+        },
+        error: function() {
+            $(cb).prop('checked', !$(cb).prop('checked'));
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan' });
+        }
+    });
+});
 
 function deleteKaryawan(id) {
     Swal.fire({

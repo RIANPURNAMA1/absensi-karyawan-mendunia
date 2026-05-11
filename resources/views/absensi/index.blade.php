@@ -197,6 +197,16 @@
                 <span class="text-[11px] font-bold text-gray-800">Face Scan</span>
             </button> --}}
 
+            @if(Auth::user()->can_access_khusus)
+            <a href="{{ route('absensi.khusus') }}"
+                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+                <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <i data-lucide="timer" class="w-5 h-5 text-emerald-600"></i>
+                </div>
+                <span class="text-[11px] font-medium text-gray-700">Absen Khusus</span>
+            </a>
+            @endif
+
             <button type="button" onclick="showUnderDevelopment()"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -405,80 +415,65 @@
             <div class="flex flex-col items-center">
                 <div class="w-12 h-1.5 bg-gray-200 rounded-full mb-6"></div>
 
-                <div class="flex justify-between items-center w-full mb-6 text-center">
+                <div class="flex justify-between items-center w-full mb-4 text-center">
                     <div class="text-left">
                         <h2 class="text-lg font-black text-gray-900">Jadwal Shift Kerja</h2>
-                        <p class="text-[10px] text-gray-400">Daftar waktu operasional kantor</p>
+                        <p class="text-[10px] text-gray-400">Kalender shift {{ now()->translatedFormat('F Y') }}</p>
                     </div>
                     <button onclick="toggleModalJadwal(false)" class="p-2 bg-gray-100 rounded-full text-gray-500">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
 
-                <div class="w-full space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                    @php
-                        $userShifts = $userShifts ?? collect();
-                    @endphp
-                    
-                    @forelse($userShifts as $shift)
-                        @php
-                            // Cek apakah ini shift yang sedang berjalan (currentShift dari controller)
-                            $isCurrent = isset($currentShift) && $currentShift->id == $shift->id;
-                        @endphp
-
-                        <div
-                            class="flex items-center gap-4 p-4 {{ $isCurrent ? 'bg-indigo-50 border-indigo-100' : 'bg-gray-50 border-gray-100' }} rounded-2xl border transition-all">
-                            <div
-                                class="w-12 h-12 {{ $isCurrent ? 'bg-indigo-600 text-white' : 'bg-white text-gray-400 border border-gray-200' }} rounded-xl flex flex-col items-center justify-center shadow-sm">
-                                <span
-                                    class="text-[9px] font-bold uppercase">{{ substr($shift->nama_shift, 0, 3) }}</span>
-                                <i data-lucide="clock-4" class="w-5 h-5 mt-0.5"></i>
-                            </div>
-
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2">
-                                    <p class="text-sm font-bold text-gray-800">{{ $shift->nama_shift }}</p>
-                                    @if ($isCurrent)
-                                        <span class="animate-pulse flex h-2 w-2 rounded-full bg-green-500"></span>
-                                    @endif
-                                </div>
-                                <p
-                                    class="text-[11px] {{ $isCurrent ? 'text-indigo-600' : 'text-gray-500' }} font-medium">
-                                    {{ \Carbon\Carbon::parse($shift->jam_masuk)->format('H:i') }} -
-                                    {{ \Carbon\Carbon::parse($shift->jam_pulang)->format('H:i') }}
-                                </p>
-                            </div>
-
-                            @if ($isCurrent)
-                                <span
-                                    class="text-[9px] font-black text-indigo-600 bg-white border border-indigo-100 px-2 py-1 rounded-lg uppercase tracking-wider">Aktif</span>
-                            @else
-                                <span
-                                    class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-                                    @php
-                                        $jamMasuk = $shift->jam_masuk ? \Carbon\Carbon::parse($shift->jam_masuk) : null;
-                                        $jamPulang = $shift->jam_pulang ? \Carbon\Carbon::parse($shift->jam_pulang) : null;
-                                        if ($jamMasuk && $jamPulang) {
-                                            $diffMinutes = $jamMasuk->diffInMinutes($jamPulang);
-                                            $hours = floor($diffMinutes / 60);
-                                            $minutes = $diffMinutes % 60;
-                                            echo $hours . ' Jam' . ($minutes > 0 ? ' ' . $minutes . ' Menit' : '');
-                                        } else {
-                                            echo '-';
+                <div class="w-full max-h-[65vh] overflow-y-auto pr-1">
+                    <table class="w-full text-center text-xs">
+                        <thead>
+                            <tr>
+                                <th class="text-red-500 py-2">Min</th>
+                                <th class="py-2">Sen</th>
+                                <th class="py-2">Sel</th>
+                                <th class="py-2">Rab</th>
+                                <th class="py-2">Kam</th>
+                                <th class="py-2">Jum</th>
+                                <th class="text-blue-500 py-2">Sab</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kalenderShiftBody">
+                            @php
+                                $today = now()->day;
+                                $firstDay = now()->startOfMonth()->dayOfWeek;
+                                $daysInMonth = now()->daysInMonth;
+                                $row = '<tr>';
+                                for ($i = 0; $i < $firstDay; $i++) {
+                                    $row .= '<td></td>';
+                                }
+                                for ($day = 1; $day <= $daysInMonth; $day++) {
+                                    $dateStr = now()->format('Y-m') . '-' . str_pad($day, 2, '0', STR_PAD_LEFT);
+                                    $jadwals = $shiftJadwalKalender[$dateStr] ?? collect();
+                                    $isToday = $day == $today;
+                                    $cellClass = $isToday ? 'ring-2 ring-blue-500 rounded-lg' : '';
+                                    $row .= '<td class="p-1 ' . $cellClass . '">';
+                                    $row .= '<div class="py-1 font-bold text-gray-800">' . $day . '</div>';
+                                    foreach ($jadwals as $j) {
+                                        if ($j->shift) {
+                                            $row .= '<div class="text-[8px] bg-blue-100 text-blue-700 rounded px-1 py-0.5 mb-0.5 font-medium">' . $j->shift->nama_shift . '</div>';
                                         }
-                                    @endphp
-                                    </span>
-                            @endif
-                        </div>
-                    @empty
-                        <div class="text-center py-10">
-                            <p class="text-gray-400 text-xs">Belum ada jadwal shift yang ditentukan.</p>
-                        </div>
-                    @endforelse
+                                    }
+                                    $row .= '</td>';
+                                    $dayOfWeek = now()->startOfMonth()->addDays($day - 1)->dayOfWeek;
+                                    if ($dayOfWeek == 6) {
+                                        $row .= '</tr><tr>';
+                                    }
+                                }
+                                $row .= '</tr>';
+                            @endphp
+                            {!! $row !!}
+                        </tbody>
+                    </table>
                 </div>
 
                 <button onclick="toggleModalJadwal(false)"
-                    class="w-full mt-6 bg-gray-900 text-white py-4 rounded-2xl font-bold text-sm active:scale-95 transition">
+                    class="w-full mt-4 bg-gray-900 text-white py-3 rounded-2xl font-bold text-sm active:scale-95 transition">
                     Tutup
                 </button>
             </div>
@@ -514,6 +509,9 @@
                             <div class="flex-1">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">KARYAWAN</span>
+                                    @if ($a->shift)
+                                        <span class="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">{{ $a->shift->nama_shift }}</span>
+                                    @endif
                                     <h3 class="font-semibold text-gray-900">{{ $a->status }}</h3>
                                 </div>
                                 <div class="flex gap-4 text-xs text-gray-500">
@@ -1002,6 +1000,7 @@
                                     <div class="flex-1">
                                         <div class="flex items-center gap-2 mb-1">
                                             <span class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">KARYAWAN</span>
+                                            ${a.shift ? `<span class="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">${a.shift.nama_shift}</span>` : ''}
                                         </div>
                                         <h3 class="font-semibold text-gray-900 mb-1">${a.status || '-'}</h3>
                                         <div class="flex gap-4 text-xs text-gray-500">
@@ -1136,6 +1135,24 @@
                 Swal.fire('Error', 'Gagal absen pulang', 'error');
             });
         };
+    </script>
+
+    <script>
+        function toggleModalJadwal(show) {
+            const modal = document.getElementById('modalJadwal');
+            const content = document.getElementById('modalContent');
+            if (show) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                setTimeout(() => content.classList.remove('translate-y-full'), 10);
+            } else {
+                content.classList.add('translate-y-full');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                }, 300);
+            }
+        }
     </script>
 
     <script>

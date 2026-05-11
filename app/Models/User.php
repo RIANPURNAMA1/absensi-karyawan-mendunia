@@ -39,6 +39,7 @@ class User extends Authenticatable
         'jenis_kelamin',
         'agama',
         'status_pernikahan',
+        'can_access_khusus',
     ];
 
     protected $hidden = [
@@ -46,9 +47,10 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'cabang_ids' => 'array', // SANGAT PENTING untuk menyimpan multiple ID
-        'shift_ids' => 'array', // Multiple shift
+        'cabang_ids' => 'array',
+        'shift_ids' => 'array',
         'last_login' => 'datetime',
+        'can_access_khusus' => 'boolean',
     ];
 
     // Ganti relasi lama dengan Accessor ini
@@ -141,5 +143,10 @@ class User extends Authenticatable
     public function agenda()
     {
         return $this->hasMany(Agenda::class);
+    }
+
+    public function absensiKhusus()
+    {
+        return $this->hasMany(AbsensiKhusus::class);
     }
 }

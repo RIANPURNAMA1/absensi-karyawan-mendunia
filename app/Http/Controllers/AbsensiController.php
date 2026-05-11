@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Absensi;
+use App\Models\AbsensiKhusus;
 use App\Models\AbsensiSensei;
 use App\Models\Agenda;
 use App\Models\Cabang;
@@ -47,8 +48,10 @@ class AbsensiController extends Controller
         }
 
         // 3. Ambil 10 riwayat terakhir (karyawan)
-        $riwayat = Absensi::where('user_id', $user->id)
+        $riwayat = Absensi::with('shift')
+            ->where('user_id', $user->id)
             ->orderBy('tanggal', 'desc')
+            ->orderBy('shift_id', 'desc')
             ->take(10)
             ->get();
 
@@ -94,7 +97,7 @@ class AbsensiController extends Controller
             ->where('jam_pulang', '>=', $currentTime)
             ->first();
 
-        // 5b. Ambil semua shift user (multiple support)
+        // 5b. Ambil semua shift user dari default profile
         $userShifts = collect();
         if ($user->shift_ids && is_array($user->shift_ids) && count($user->shift_ids) > 0) {
             $userShifts = \App\Models\Shift::whereIn('id', $user->shift_ids)->get();
@@ -102,10 +105,27 @@ class AbsensiController extends Controller
             $userShifts = collect([$user->shift]);
         }
 
-        // Gunakan currentShift dari userShifts jika ada yang aktif sekarang
+        // 5c. Jika tidak punya shift default, coba dari shift_jadwal hari ini
+        if ($userShifts->isEmpty()) {
+            $todayDate = now()->toDateString();
+            $shiftJadwals = ShiftJadwal::where('user_id', $user->id)
+                ->where('tanggal', $todayDate)
+                ->with('shift')
+                ->get();
+            if ($shiftJadwals->isNotEmpty()) {
+                $userShifts = $shiftJadwals->pluck('shift')->filter();
+            }
+        }
+
+        // Gunakan currentShift dari userShifts jika ada yang aktif sekarang (dengan toleransi)
         if (!$currentShift && $userShifts->count() > 0) {
             foreach ($userShifts as $shift) {
-                if ($shift->jam_masuk <= $currentTime && $shift->jam_pulang >= $currentTime) {
+                $toleransi = $shift->toleransi ?? 0;
+                $jamMulaiAbsen = Carbon::parse($shift->jam_masuk)->subMinutes($toleransi)->format('H:i:s');
+                $jamPulang = $shift->jam_pulang instanceof Carbon
+                    ? $shift->jam_pulang->format('H:i:s')
+                    : Carbon::parse($shift->jam_pulang)->format('H:i:s');
+                if ($jamMulaiAbsen <= $currentTime && $jamPulang >= $currentTime) {
                     $currentShift = $shift;
                     break;
                 }
@@ -142,6 +162,18 @@ class AbsensiController extends Controller
             ->orderBy('jam_mulai', 'asc')
             ->get();
 
+        // 9. Ambil shift_jadwal untuk kalender bulan ini
+        $bulanIni = now()->month;
+        $tahunIni = now()->year;
+        $shiftJadwalKalender = ShiftJadwal::where('user_id', $user->id)
+            ->whereMonth('tanggal', $bulanIni)
+            ->whereYear('tanggal', $tahunIni)
+            ->with('shift')
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->tanggal->toDateString();
+            });
+
         return view('absensi.index', [
             'riwayat' => $riwayat,
             'riwayatSensei' => $riwayatSensei,
@@ -152,6 +184,7 @@ class AbsensiController extends Controller
             'hasUnabsensedSensei' => $hasUnabsensedSensei,
             'isLibur' => $isLibur,
             'agendaHariIni' => $agendaHariIni,
+            'shiftJadwalKalender' => $shiftJadwalKalender,
 
             // Data Geofencing (Aman meski $cabangTerpilih null karena menggunakan null coalescing ??)
             'cabangLat' => $cabangTerpilih->latitude ?? 0,
@@ -163,6 +196,203 @@ class AbsensiController extends Controller
             'showNotification' => $showNotification,
             'notifMessage' => $notifMessage,
             'pesanErrorCabang' => $pesanErrorCabang, // Lempar pesan ini ke view
+        ]);
+    }
+
+    // =============================================
+    // ABSENSI KHUSUS (timer with pause/resume)
+    // =============================================
+
+    public function khususIndex()
+    {
+        $user = Auth::user();
+        if (!$user->can_access_khusus) {
+            return redirect()->route('absensi.index')->with('error', 'Anda tidak memiliki akses ke fitur absen khusus');
+        }
+        $riwayat = AbsensiKhusus::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->take(20)
+            ->get();
+
+        return view('absensi.khusus.index', compact('riwayat'));
+    }
+
+    public function absenKhususStatus()
+    {
+        $user = Auth::user();
+        if (!$user->can_access_khusus) {
+            return response()->json(['message' => 'Akses ditolak'], 403);
+        }
+        $today = now()->toDateString();
+
+        $session = AbsensiKhusus::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->whereIn('status', ['BERJALAN', 'DITUNDA'])
+            ->first();
+
+        return response()->json([
+            'success' => true,
+            'data' => $session ? [
+                'id' => $session->id,
+                'status' => $session->status,
+                'total_detik' => $session->total_detik,
+                'jam_masuk' => $session->jam_masuk->format('H:i:s'),
+            ] : null,
+        ]);
+    }
+
+    public function absenKhususMulai(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->can_access_khusus) {
+            return response()->json(['message' => 'Akses ditolak'], 403);
+        }
+        $today = now()->toDateString();
+        $now = now();
+
+        $request->validate([
+            'photo' => 'required',
+            'latitude' => 'required',
+            'longitude' => 'required',
+        ]);
+
+        $existing = AbsensiKhusus::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->whereIn('status', ['BERJALAN', 'DITUNDA'])
+            ->first();
+
+        if ($existing) {
+            return response()->json(['message' => 'Anda masih memiliki sesi absen khusus yang aktif'], 422);
+        }
+
+        $photo = $this->saveBase64Photo($request->photo, 'khusus_masuk');
+
+        $session = AbsensiKhusus::create([
+            'user_id' => $user->id,
+            'tanggal' => $today,
+            'jam_masuk' => $now,
+            'total_detik' => 0,
+            'status' => 'BERJALAN',
+            'foto_masuk' => $photo,
+            'latitude_masuk' => $request->latitude,
+            'longitude_masuk' => $request->longitude,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Absen khusus dimulai',
+            'data' => [
+                'id' => $session->id,
+                'jam_masuk' => $session->jam_masuk->format('H:i:s'),
+            ],
+        ]);
+    }
+
+    public function absenKhususPause(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->can_access_khusus) {
+            return response()->json(['message' => 'Akses ditolak'], 403);
+        }
+        $today = now()->toDateString();
+        $now = now();
+
+        $session = AbsensiKhusus::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->where('status', 'BERJALAN')
+            ->first();
+
+        if (!$session) {
+            return response()->json(['message' => 'Tidak ada sesi berjalan'], 422);
+        }
+
+        if ($session->total_detik > 0) {
+            return response()->json(['message' => 'Anda hanya bisa menjeda satu kali dalam satu sesi'], 422);
+        }
+
+        $elapsed = $session->jam_masuk->diffInSeconds($now);
+        $session->total_detik += $elapsed;
+        $session->status = 'DITUNDA';
+        $session->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Timer dijeda',
+            'total_detik' => $session->total_detik,
+        ]);
+    }
+
+    public function absenKhususLanjut(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->can_access_khusus) {
+            return response()->json(['message' => 'Akses ditolak'], 403);
+        }
+        $today = now()->toDateString();
+        $now = now();
+
+        $session = AbsensiKhusus::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->whereIn('status', ['BERJALAN', 'DITUNDA'])
+            ->first();
+
+        if (!$session) {
+            return response()->json(['message' => 'Tidak ada sesi aktif'], 422);
+        }
+
+        $session->jam_masuk = $now;
+        $session->status = 'BERJALAN';
+        $session->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Timer dilanjutkan',
+            'total_detik' => $session->total_detik,
+            'jam_masuk' => $session->jam_masuk->format('H:i:s'),
+        ]);
+    }
+
+    public function absenKhususSelesai(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->can_access_khusus) {
+            return response()->json(['message' => 'Akses ditolak'], 403);
+        }
+        $today = now()->toDateString();
+        $now = now();
+
+        $request->validate([
+            'photo' => 'required',
+            'latitude' => 'required',
+            'longitude' => 'required',
+        ]);
+
+        $session = AbsensiKhusus::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->where('status', 'BERJALAN')
+            ->first();
+
+        if (!$session) {
+            return response()->json(['message' => 'Tidak ada sesi berjalan'], 422);
+        }
+
+        $elapsed = $session->jam_masuk->diffInSeconds($now);
+        $session->total_detik += $elapsed;
+        $session->jam_keluar = $now;
+        $session->status = 'SELESAI';
+        $session->foto_keluar = $this->saveBase64Photo($request->photo, 'khusus_keluar');
+        $session->latitude_keluar = $request->latitude;
+        $session->longitude_keluar = $request->longitude;
+        $session->save();
+
+        $hours = floor($session->total_detik / 3600);
+        $minutes = floor(($session->total_detik % 3600) / 60);
+        $detik = $session->total_detik % 60;
+
+        return response()->json([
+            'success' => true,
+            'message' => "Absen khusus selesai! Total: {$hours} jam {$minutes} menit {$detik} detik",
+            'total_detik' => $session->total_detik,
         ]);
     }
 
@@ -223,12 +453,6 @@ class AbsensiController extends Controller
             return response()->json(['message' => 'Wajah tidak terdaftar atau tidak dikenali'], 422);
         }
 
-        // 2. Cek apakah sudah absen hari ini
-        $cek = Absensi::where('user_id', $user->id)->where('tanggal', $today)->first();
-        if ($cek) {
-            return response()->json(['message' => 'Anda sudah absen masuk hari ini'], 422);
-        }
-
 // 3. Ambil cabang & shift
         $cabang = null;
         if ($user->cabang_ids && is_array($user->cabang_ids) && count($user->cabang_ids) > 0) {
@@ -243,17 +467,26 @@ class AbsensiController extends Controller
             return response()->json(['message' => 'Cabang tidak ditemukan'], 422);
         }
 
-        $shiftJadwal = ShiftJadwal::where('user_id', $user->id)
-            ->where('tanggal', $today)
-            ->first();
-        
-        $shift = $shiftJadwal ? $shiftJadwal->shift : Shift::find($user->shift_id);
-        
+        $shift = $this->resolveShiftForUser($user, $now, $today);
+
         if (!$shift) {
-            return response()->json(['message' => 'Jadwal shift tidak ditemukan'], 422);
+            return response()->json(['message' => 'Tidak ada shift yang aktif saat ini'], 422);
         }
 
-        // 4. Validasi jarak
+        if ($shift->status === 'NONAKTIF') {
+            return response()->json(['message' => 'Shift Anda saat ini sedang dinonaktifkan. Tidak dapat melakukan absensi.'], 403);
+        }
+
+        // 4. Cek apakah sudah absen masuk untuk shift ini
+        $sudahAbsen = Absensi::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->where('shift_id', $shift->id)
+            ->first();
+        if ($sudahAbsen) {
+            return response()->json(['message' => 'Anda sudah absen masuk untuk shift '.$shift->nama_shift.' hari ini'], 422);
+        }
+
+        // 5. Validasi jarak
         $jarak = $this->calculateDistance(
             $request->latitude,
             $request->longitude,
@@ -371,23 +604,31 @@ class AbsensiController extends Controller
             return response()->json(['message' => 'Wajah tidak dikenali'], 422);
         }
 
-        // 2️⃣ Ambil absensi hari ini
+        // 2️⃣ Cari shift yang aktif sekarang
+        $shift = $this->resolveShiftForUser($user, $now, $today);
+
+        if (!$shift) {
+            return response()->json(['message' => 'Tidak ada shift yang aktif saat ini'], 422);
+        }
+
+        // 3️⃣ Ambil absensi untuk shift ini
         $absensi = Absensi::with('shift')
             ->where('user_id', $user->id)
             ->where('tanggal', $today)
+            ->where('shift_id', $shift->id)
             ->first();
 
         if (! $absensi) {
-            return response()->json(['message' => 'Belum absen masuk'], 422);
+            return response()->json(['message' => 'Belum absen masuk untuk shift '.$shift->nama_shift], 422);
         }
         if ($absensi->jam_keluar) {
-            return response()->json(['message' => 'Sudah absen pulang'], 422);
+            return response()->json(['message' => 'Sudah absen pulang untuk shift '.$shift->nama_shift], 422);
         }
         if (! $absensi->shift) {
             return response()->json(['message' => 'Shift tidak ditemukan'], 422);
         }
 
-        // 3️⃣ Validasi lokasi
+        // 4️⃣ Validasi lokasi
         $cabang = Cabang::find($user->cabang_id);
         if (! $cabang) {
             return response()->json(['message' => 'Cabang tidak ditemukan'], 422);
@@ -406,7 +647,7 @@ class AbsensiController extends Controller
             ], 422);
         }
 
-        // 4️⃣ Jam shift + tanggal
+        // 5️⃣ Jam shift + tanggal
         $jamMasukShift = Carbon::parse($absensi->shift->jam_masuk);
         $jamPulangShift = Carbon::parse($absensi->shift->jam_pulang);
 
@@ -414,7 +655,7 @@ class AbsensiController extends Controller
             $jamPulangShift->addDay(); // shift malam
         }
 
-        // 🔥 Batas akhir (MODE TEST 3 menit)
+        // 🔥 Batas akhir
         $batasAkhir = $jamPulangShift->copy()->addHours(5);
 
         // ⛔ Sudah lewat batas → langsung tandai
@@ -422,7 +663,7 @@ class AbsensiController extends Controller
 
             $absensi->update([
                 'status' => 'TIDAK ABSEN PULANG',
-                'keterangan' => 'Terlambat absen pulang (>3 menit)',
+                'keterangan' => 'Terlambat absen pulang',
             ]);
 
             return response()->json([
@@ -430,14 +671,14 @@ class AbsensiController extends Controller
             ], 422);
         }
 
-        // 5️⃣ Status normal
+        // 6️⃣ Status normal
         $statusBaru = $absensi->status;
 
         if ($now->lt($jamPulangShift) && $absensi->status !== 'TERLAMBAT') {
             $statusBaru = 'PULANG LEBIH AWAL';
         }
 
-        // 6️⃣ Simpan
+        // 7️⃣ Simpan
         $absensi->update([
             'jam_keluar' => $now->toTimeString(),
             'lat_pulang' => $request->latitude,
@@ -445,14 +686,14 @@ class AbsensiController extends Controller
             'status' => $statusBaru,
         ]);
 
-        // 7️⃣ Kirim notifikasi WhatsApp jika status PULANG LEBIH AWAL
+        // 8️⃣ Kirim notifikasi WhatsApp jika status PULANG LEBIH AWAL
         if ($user->no_hp && in_array($statusBaru, ['PULANG LEBIH AWAL'])) {
             $whatsapp = new WhatsAppService();
             $whatsapp->sendAbsensiNotification($user, $statusBaru, $absensi);
         }
 
         return response()->json([
-            'message' => 'Absen pulang berhasil',
+            'message' => 'Absen pulang berhasil untuk shift '.$absensi->shift->nama_shift,
             'status' => $statusBaru,
         ]);
     }
@@ -460,6 +701,7 @@ class AbsensiController extends Controller
     public function statusAbsensi(Request $request)
     {
         $today = Carbon::today()->toDateString();
+        $now = Carbon::now();
 
         if (! $request->has('face_embedding')) {
             return response()->json(['message' => 'Face embedding diperlukan'], 422);
@@ -482,11 +724,28 @@ class AbsensiController extends Controller
             ]);
         }
 
-        $absensi = Absensi::where('user_id', $user->id)->where('tanggal', $today)->first();
+        // --- TENTUKAN SHIFT AKTIF ---
+        $shift = $this->resolveShiftForUser($user, $now, $today);
+
+        if (!$shift) {
+            return response()->json([
+                'status' => 'TIDAK_ADA_SHIFT',
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'message' => 'Tidak ada shift yang aktif saat ini',
+            ]);
+        }
+
+        $absensi = Absensi::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->where('shift_id', $shift->id)
+            ->first();
 
         if (! $absensi) {
             return response()->json([
                 'status' => 'BELUM_MASUK',
+                'shift_id' => $shift->id,
+                'shift_name' => $shift->nama_shift,
                 'user_id' => $user->id,
                 'user_name' => $user->name,
             ]);
@@ -495,6 +754,8 @@ class AbsensiController extends Controller
         if ($absensi->jam_keluar === null) {
             return response()->json([
                 'status' => 'SUDAH_MASUK',
+                'shift_id' => $shift->id,
+                'shift_name' => $shift->nama_shift,
                 'user_id' => $user->id,
                 'user_name' => $user->name,
                 'jam_masuk' => $absensi->jam_masuk,
@@ -503,11 +764,58 @@ class AbsensiController extends Controller
 
         return response()->json([
             'status' => 'SUDAH_PULANG',
+            'shift_id' => $shift->id,
+            'shift_name' => $shift->nama_shift,
             'user_id' => $user->id,
             'user_name' => $user->name,
             'jam_masuk' => $absensi->jam_masuk,
             'jam_keluar' => $absensi->jam_keluar,
         ]);
+    }
+
+    private function resolveShiftForUser($user, $now, $today)
+    {
+        $userShifts = collect();
+
+        if ($user->shift_ids && is_array($user->shift_ids) && count($user->shift_ids) > 0) {
+            $userShifts = \App\Models\Shift::whereIn('id', $user->shift_ids)->get();
+        } elseif ($user->shift) {
+            $userShifts = collect([$user->shift]);
+        }
+
+        if ($userShifts->isEmpty()) {
+            $shiftJadwals = ShiftJadwal::where('user_id', $user->id)
+                ->where('tanggal', $today)
+                ->with('shift')
+                ->get();
+            if ($shiftJadwals->isNotEmpty()) {
+                $userShifts = $shiftJadwals->pluck('shift')->filter();
+            }
+        }
+
+        $currentTime = $now->format('H:i');
+        $shift = null;
+        foreach ($userShifts as $s) {
+            $toleransi = $s->toleransi ?? 0;
+            $jamMasuk = Carbon::parse($s->jam_masuk);
+            $jamMulaiAbsen = $jamMasuk->copy()->subMinutes($toleransi);
+            $jamPulang = Carbon::parse($s->jam_pulang);
+
+            $cekMasuk = $jamMulaiAbsen->format('H:i');
+            $cekPulang = $jamPulang->format('H:i');
+
+            if ($cekMasuk <= $currentTime && $cekPulang >= $currentTime) {
+                $shift = $s;
+                break;
+            }
+        }
+
+        // Fallback: jika tidak ada shift yang cocok dengan waktu, pakai shift pertama yang dijadwalkan hari ini
+        if (!$shift && $userShifts->isNotEmpty()) {
+            $shift = $userShifts->first();
+        }
+
+        return $shift;
     }
 
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
@@ -537,8 +845,10 @@ class AbsensiController extends Controller
     {
         $user = Auth::user();
 
-        $absensi = Absensi::where('user_id', $user->id)
+        $absensi = Absensi::with('shift')
+            ->where('user_id', $user->id)
             ->orderBy('tanggal', 'desc')
+            ->orderBy('shift_id', 'desc')
             ->get();
 
         $absensiSensei = AbsensiSensei::where('user_id', $user->id)
@@ -551,8 +861,10 @@ class AbsensiController extends Controller
 
     public function riwayatJson()
     {
-        $riwayat = Absensi::where('user_id', Auth::id())
+        $riwayat = Absensi::with('shift')
+            ->where('user_id', Auth::id())
             ->orderBy('tanggal', 'desc')
+            ->orderBy('shift_id', 'desc')
             ->limit(10)
             ->get();
 
@@ -572,7 +884,8 @@ class AbsensiController extends Controller
     {
         $user = Auth::user();
 
-        $absensi = Absensi::where('user_id', $user->id)
+        $absensi = Absensi::with('shift')
+            ->where('user_id', $user->id)
             ->where('tanggal', $tanggal)
             ->first();
 
@@ -709,30 +1022,43 @@ class AbsensiController extends Controller
         return $distance;
     }
 
-    // Absen Foto (Multiple Branch Support)
+    // Absen Foto (Multiple Branch & Multiple Shift Support)
     public function absenFoto(Request $request)
     {
         $user = Auth::user();
-        // Pastikan Carbon menggunakan timezone Jakarta secara eksplisit
         $today = Carbon::today('Asia/Jakarta')->toDateString();
         $now = Carbon::now('Asia/Jakarta');
 
         // =====================================================
-        // 0. VALIDASI APAKAH SUDAH SELESAI ABSEN HARI INI
+        // 0. TENTUKAN SHIFT YANG SEDANG AKTIF
         // =====================================================
-        $cekAbsensi = Absensi::where('user_id', $user->id)
+        $shift = $this->resolveShiftForUser($user, $now, $today);
+
+        if (!$shift) {
+            return response()->json(['message' => 'Tidak ada shift yang aktif saat ini'], 422);
+        }
+
+        if ($shift->status === 'NONAKTIF') {
+            return response()->json(['message' => 'Shift '.$shift->nama_shift.' sedang dinonaktifkan.'], 403);
+        }
+
+        // =====================================================
+        // 0b. CEK ABSENSI UNTUK SHIFT INI
+        // =====================================================
+        $absensi = Absensi::where('user_id', $user->id)
             ->where('tanggal', $today)
+            ->where('shift_id', $shift->id)
             ->first();
 
-        // Blokir jika jam_masuk DAN jam_keluar sudah terisi (Absensi sudah selesai sepenuhnya)
-        if ($cekAbsensi && $cekAbsensi->jam_masuk && $cekAbsensi->jam_keluar) {
+        // Jika sudah complete (masuk + pulang) untuk shift ini
+        if ($absensi && $absensi->jam_masuk && $absensi->jam_keluar) {
             return response()->json([
-                'message' => 'Anda sudah melakukan absen masuk dan pulang. Tidak dapat melakukan absensi lagi hari ini.',
+                'message' => 'Anda sudah absen masuk dan pulang untuk shift '.$shift->nama_shift.'.',
             ], 422);
         }
 
         // =====================================================
-        // 0b. VALIDASI JIKA USER MEMILIKI KELAS SENSEI AKTIF YANG BELUM DIABSEN
+        // 0c. VALIDASI JIKA USER MEMILIKI KELAS SENSEI AKTIF YANG BELUM DIABSEN
         // =====================================================
         $kelasSenseiAktif = KelasSensei::where('user_id', $user->id)
             ->where('status', 'aktif')
@@ -815,53 +1141,27 @@ class AbsensiController extends Controller
         // ===============================
         $fotoPath = $this->saveBase64Photo($request->photo, 'absen_manual');
 
-        // ===============================
-        // 5. CEK DATA ABSENSI HARI INI
-        // ===============================
-        $absensi = $cekAbsensi;
-
         // ---------------------------------------------------------------------
-        // MODE MASUK
-        // MODIFIKASI: Berjalan jika data belum ada ATAU data ada tapi jam_masuk masih kosong (ALPA Otomatis)
+        // JIKA BELUM ABSEN MASUK UNTUK SHIFT INI → MODE MASUK
         // ---------------------------------------------------------------------
-        if (! $absensi || ($absensi->status == 'ALPA' && $absensi->jam_masuk == null)) {
-            $shift = $user->shift;
-            if (! $shift) {
-                return response()->json(['message' => 'Jadwal shift Anda belum diatur.'], 422);
-            }
-
+        if (! $absensi) {
             $jamMasukShift = Carbon::parse($shift->jam_masuk, 'Asia/Jakarta');
             $batasToleransi = $jamMasukShift->copy()->addMinutes($shift->toleransi);
 
             // Tentukan status berdasarkan jam sekarang (HADIR atau TERLAMBAT)
             $status = ($now->gt($batasToleransi)) ? 'TERLAMBAT' : 'HADIR';
 
-            if (! $absensi) {
-                // Jika benar-benar belum ada datanya, buat record baru
-                $absensi = Absensi::create([
-                    'user_id' => $user->id,
-                    'cabang_id' => $cabang->id,
-                    'shift_id' => $shift->id,
-                    'tanggal' => $today,
-                    'jam_masuk' => $now->toTimeString(),
-                    'lat_masuk' => $request->latitude,
-                    'long_masuk' => $request->longitude,
-                    'foto_masuk' => $fotoPath,
-                    'status' => $status,
-                ]);
-            } else {
-                // Jika sudah ada record ALPA otomatis, kita UPDATE datanya menjadi Masuk
-                $absensi->update([
-                    'cabang_id' => $cabang->id,
-                    'shift_id' => $shift->id,
-                    'jam_masuk' => $now->toTimeString(),
-                    'lat_masuk' => $request->latitude,
-                    'long_masuk' => $request->longitude,
-                    'foto_masuk' => $fotoPath,
-                    'status' => $status, // Berubah dari ALPA ke HADIR/TERLAMBAT
-                    'keterangan' => null,     // Hapus alasan ALPA otomatis
-                ]);
-            }
+            $absensi = Absensi::create([
+                'user_id' => $user->id,
+                'cabang_id' => $cabang->id,
+                'shift_id' => $shift->id,
+                'tanggal' => $today,
+                'jam_masuk' => $now->toTimeString(),
+                'lat_masuk' => $request->latitude,
+                'long_masuk' => $request->longitude,
+                'foto_masuk' => $fotoPath,
+                'status' => $status,
+            ]);
 
             // Kirim notifikasi WhatsApp masuk
             if ($user->no_hp) {
@@ -870,21 +1170,16 @@ class AbsensiController extends Controller
             }
 
             return response()->json([
-                'message' => 'Absen masuk berhasil di '.$cabang->nama_cabang.'. Status: '.$status,
+                'message' => 'Absen masuk shift '.$shift->nama_shift.' berhasil di '.$cabang->nama_cabang.'. Status: '.$status,
                 'status' => $status,
                 'path' => $fotoPath,
+                'shift_name' => $shift->nama_shift,
             ]);
         }
 
         // -----------------------------------------------------
-        // MODE PULANG (Jika sudah ada jam_masuk)
+        // JIKA SUDAH ADA JAM_MASUK TAPI BELUM JAM_KELUAR → MODE PULANG
         // -----------------------------------------------------
-
-        if ($absensi->jam_keluar) {
-            return response()->json(['message' => 'Anda sudah melakukan absen pulang hari ini.'], 422);
-        }
-
-        // Ambil jam shift dari relasi absensi
         $jamMasukShift = Carbon::parse($absensi->shift->jam_masuk, 'Asia/Jakarta');
         $jamPulangShift = Carbon::parse($absensi->shift->jam_pulang, 'Asia/Jakarta');
 
@@ -902,18 +1197,14 @@ class AbsensiController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Waktu absen pulang telah berakhir. Status Anda: TIDAK ABSEN PULANG.',
+                'message' => 'Waktu absen pulang untuk shift '.$absensi->shift->nama_shift.' telah berakhir. Status Anda: TIDAK ABSEN PULANG.',
             ], 422);
         }
 
         // LOGIKA STATUS PULANG:
-        // Tetapkan status awal (HADIR atau TERLAMBAT dari absen masuk)
         $statusBaru = $absensi->status;
 
-        // Jika sekarang belum jam pulang shift
         if ($now->lt($jamPulangShift)) {
-            // Hanya ubah ke PULANG LEBIH AWAL jika paginya TIDAK TERLAMBAT
-            // Jika paginya TERLAMBAT, status tetap TERLAMBAT (Prioritas pelanggaran terberat)
             if ($statusBaru !== 'TERLAMBAT') {
                 $statusBaru = 'PULANG LEBIH AWAL';
             }
@@ -934,9 +1225,10 @@ class AbsensiController extends Controller
         }
 
         return response()->json([
-            'message' => 'Absen pulang berhasil di '.$cabang->nama_cabang.'. Status: '.$statusBaru,
+            'message' => 'Absen pulang shift '.$absensi->shift->nama_shift.' berhasil di '.$cabang->nama_cabang.'. Status: '.$statusBaru,
             'status' => $statusBaru,
             'path' => $fotoPath,
+            'shift_name' => $absensi->shift->nama_shift,
         ]);
     }
 }

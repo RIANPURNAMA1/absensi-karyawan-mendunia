@@ -22,7 +22,8 @@
                         <a href="/karyawan" class="dropdown-item-custom {{ request()->is('karyawan*') ? 'active' : '' }}"><i class="ph ph-users"></i>Data Karyawan</a>
                         <a href="/divisi" class="dropdown-item-custom {{ request()->is('divisi*') ? 'active' : '' }}"><i class="ph ph-buildings"></i>Divisi</a>
                         <a href="/cabang" class="dropdown-item-custom {{ request()->is('cabang*') ? 'active' : '' }}"><i class="ph ph-map-pin"></i>Cabang / Lokasi</a>
-                        <a href="/shift" class="dropdown-item-custom {{ request()->is('shift*') ? 'active' : '' }}"><i class="ph ph-timer"></i>Shift Kerja</a>
+                        <a href="/shift" class="dropdown-item-custom {{ request()->is('shift') ? 'active' : '' }}"><i class="ph ph-timer"></i>Shift Kerja</a>
+                        <a href="/jadwal-shift" class="dropdown-item-custom {{ request()->is('jadwal-shift*') ? 'active' : '' }}"><i class="ph ph-calendar-plus"></i>Jadwal Shift</a>
                         <a href="/daftar-user" class="dropdown-item-custom {{ request()->is('daftar-user*') ? 'active' : '' }}"><i class="ph ph-list"></i>Daftar User</a>
                     </div>
                 </div>
@@ -34,7 +35,8 @@
                         <i class="ph ph-caret-down dropdown-arrow"></i>
                     </a>
                     <div class="dropdown-menu-custom dropdown-menu-wide">
-                        <a href="/data-kehadiran" class="dropdown-item-custom {{ request()->is('data-kehadiran*') ? 'active' : '' }}"><i class="ph ph-clipboard-text"></i>Data Kehadiran</a>
+                        <a href="/data-kehadiran" class="dropdown-item-custom {{ request()->is('data-kehadiran*') ? 'active' : '' }}"><i class="ph ph-clipboard-text"></i>Kehadiran</a>
+                        <a href="/data-kehadiran-khusus" class="dropdown-item-custom {{ request()->is('data-kehadiran-khusus*') ? 'active' : '' }}"><i class="ph ph-timer"></i>Kehadiran Khusus</a>
                         <a href="/izin-cuti" class="dropdown-item-custom {{ request()->is('izin-cuti*') ? 'active' : '' }}"><i class="ph ph-file-text"></i>Izin & Cuti</a>
                         <a href="/approval-lembur" class="dropdown-item-custom {{ request()->is('approval-lembur*') ? 'active' : '' }}"><i class="ph ph-clock-countdown"></i>Approval Lembur</a>
                         <a href="/hari-libur" class="dropdown-item-custom {{ request()->is('hari-libur*') ? 'active' : '' }}"><i class="ph ph-file-text"></i>Hari Libur</a>
@@ -154,7 +156,8 @@
                 <a href="/karyawan" class="mobile-sub-link {{ request()->is('karyawan*') ? 'active' : '' }}">Data Karyawan</a>
                 <a href="/divisi" class="mobile-sub-link {{ request()->is('divisi*') ? 'active' : '' }}">Divisi</a>
                 <a href="/cabang" class="mobile-sub-link {{ request()->is('cabang*') ? 'active' : '' }}">Cabang / Lokasi</a>
-                <a href="/shift" class="mobile-sub-link {{ request()->is('shift*') ? 'active' : '' }}">Shift Kerja</a>
+                <a href="/shift" class="mobile-sub-link {{ request()->is('shift') ? 'active' : '' }}">Shift Kerja</a>
+                <a href="/jadwal-shift" class="mobile-sub-link {{ request()->is('jadwal-shift*') ? 'active' : '' }}">Jadwal Shift</a>
                 <a href="/daftar-user" class="mobile-sub-link {{ request()->is('daftar-user*') ? 'active' : '' }}">Daftar User</a>
             </div>
         </div>
@@ -164,7 +167,8 @@
                 <i class="ph ph-calendar-check"></i>Absensi <i class="ph ph-caret-down ms-auto"></i>
             </a>
             <div class="mobile-submenu">
-                <a href="/data-kehadiran" class="mobile-sub-link {{ request()->is('data-kehadiran*') ? 'active' : '' }}">Data Kehadiran</a>
+                <a href="/data-kehadiran" class="mobile-sub-link {{ request()->is('data-kehadiran*') ? 'active' : '' }}">Kehadiran</a>
+                <a href="/data-kehadiran-khusus" class="mobile-sub-link {{ request()->is('data-kehadiran-khusus*') ? 'active' : '' }}">Kehadiran Khusus</a>
                 <a href="/izin-cuti" class="mobile-sub-link {{ request()->is('izin-cuti*') ? 'active' : '' }}">Izin & Cuti</a>
                 <a href="/approval-lembur" class="mobile-sub-link {{ request()->is('approval-lembur*') ? 'active' : '' }}">Approval Lembur</a>
                 <a href="/hari-libur" class="mobile-sub-link {{ request()->is('hari-libur*') ? 'active' : '' }}">Hari Libur</a>

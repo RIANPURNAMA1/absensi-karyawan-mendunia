@@ -10,6 +10,7 @@ use App\Http\Controllers\DivisiController;
 use App\Http\Controllers\IzinController;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\KehadiranController;
+use App\Http\Controllers\KehadiranKhususController;
 use App\Http\Controllers\KehadiranSenseiController;
 use App\Http\Controllers\LemburController;
 use App\Http\Controllers\MonitoringController;
@@ -82,6 +83,7 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::get('/karyawan/{id}', [KaryawanController::class, 'show'])->name('karyawan.show');
     Route::put('/karyawan/{id}', [KaryawanController::class, 'update'])->name('karyawan.update');
     Route::delete('/karyawan/{id}', [KaryawanController::class, 'destroy'])->name('karyawan.destroy');
+    Route::post('/karyawan/{id}/toggle-khusus', [KaryawanController::class, 'toggleKhusus']);
 
     // Divisi Management
     Route::resource('divisi', DivisiController::class)->only(['index', 'store', 'update', 'destroy']);
@@ -94,6 +96,7 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::post('/shift-jadwal', [ShiftJadwalController::class, 'store'])->name('shift-jadwal.store');
     Route::post('/shift-jadwal/multiple', [ShiftJadwalController::class, 'createMultiple'])->name('shift-jadwal.multiple');
     Route::delete('/shift-jadwal/{id}', [ShiftJadwalController::class, 'destroy'])->name('shift-jadwal.destroy');
+    Route::get('/jadwal-shift', [ShiftJadwalController::class, 'indexPage'])->name('shift-jadwal.page');
 
     // Cabang Management
     Route::get('/cabang', [CabangController::class, 'index'])->name('cabang.index');
@@ -104,6 +107,8 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     // Kehadiran & Monitoring
     Route::get('/data-kehadiran', [KehadiranController::class, 'index']);
     Route::post('/admin/absensi/update-status', [KehadiranController::class, 'updateStatus'])->name('admin.absensi.updateStatus');
+    Route::get('/data-kehadiran-khusus', [KehadiranKhususController::class, 'index']);
+    Route::post('/admin/kehadiran-khusus/update-status', [KehadiranKhususController::class, 'updateStatus']);
     Route::get('/rekap-absensi', [RekapController::class, 'rekap'])->name('absensi.rekap');
 
     // Kehadiran Sensei
@@ -179,6 +184,14 @@ Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
     Route::post('/absensi/manual', [AbsensiController::class, 'manual']);
     Route::post('/absensi/status', [AbsensiController::class, 'statusAbsensi'])->name('statusAbsensi');
     Route::post('/absensi/deteksi', [AbsensiController::class, 'deteksiWajah'])->name('absensi.deteksi');
+
+    // Absensi Khusus (timer with pause/resume)
+    Route::get('/absensi/khusus', [AbsensiController::class, 'khususIndex'])->name('absensi.khusus');
+    Route::get('/absensi/khusus/status', [AbsensiController::class, 'absenKhususStatus']);
+    Route::post('/absensi/khusus/mulai', [AbsensiController::class, 'absenKhususMulai']);
+    Route::post('/absensi/khusus/pause', [AbsensiController::class, 'absenKhususPause']);
+    Route::post('/absensi/khusus/lanjut', [AbsensiController::class, 'absenKhususLanjut']);
+    Route::post('/absensi/khusus/selesai', [AbsensiController::class, 'absenKhususSelesai']);
 
     // Riwayat Absensi
     Route::get('/absensi/history', [AbsensiController::class, 'history'])->name('absensi.history');

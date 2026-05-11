@@ -467,29 +467,43 @@ class KaryawanController extends Controller
         'divisi_id'         => $request->divisi_id,
         
         // SESUAIKAN: Update kolom cabang_ids (Array otomatis jadi JSON karena casts di Model)
-        'cabang_ids'        => $request->cabang_ids, 
-        
-        // Multiple Shifts
-        'shift_ids'        => $request->shift_ids,
+            'cabang_ids'        => $request->cabang_ids, 
+            
+            // Multiple Shifts
+            'shift_ids'        => $request->shift_ids,
 
-        'shift_id'          => $request->shift_id,
-        'no_hp'             => $request->no_hp,
-        'alamat'            => $request->alamat,
-        'tanggal_masuk'     => $request->tanggal_masuk,
-        'status_kerja'      => $request->status_kerja,
-        'tempat_lahir'      => $request->tempat_lahir,
-        'tanggal_lahir'     => $request->tanggal_lahir,
-        'jenis_kelamin'     => $request->jenis_kelamin,
-        'agama'             => $request->agama,
-        'status_pernikahan' => $request->status_pernikahan,
-    ], $uploadedFiles));
+            'shift_id'          => $request->shift_id,
+            'no_hp'             => $request->no_hp,
+            'alamat'            => $request->alamat,
+            'tanggal_masuk'     => $request->tanggal_masuk,
+            'status_kerja'      => $request->status_kerja,
+            'tempat_lahir'      => $request->tempat_lahir,
+            'tanggal_lahir'     => $request->tanggal_lahir,
+            'jenis_kelamin'     => $request->jenis_kelamin,
+            'agama'             => $request->agama,
+            'status_pernikahan' => $request->status_pernikahan,
+            'can_access_khusus' => $request->boolean('can_access_khusus'),
+        ], $uploadedFiles));
 
-    return response()->json([
-        'status'  => 'success',
-        'message' => 'Data karyawan berhasil diperbarui',
-        'data'    => $user
-    ]);
-}
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Data karyawan berhasil diperbarui',
+            'data'    => $user
+        ]);
+    }
+
+    public function toggleKhusus($id)
+    {
+        $user = User::findOrFail($id);
+        $user->can_access_khusus = !$user->can_access_khusus;
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => $user->can_access_khusus ? 'Akses absen khusus diaktifkan' : 'Akses absen khusus dinonaktifkan',
+            'can_access_khusus' => $user->can_access_khusus,
+        ]);
+    }
 
 
     public function show($id)

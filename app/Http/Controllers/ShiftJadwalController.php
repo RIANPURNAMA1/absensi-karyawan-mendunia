@@ -56,11 +56,11 @@ class ShiftJadwalController extends Controller
         try {
             $existing = ShiftJadwal::where('user_id', $request->user_id)
                 ->where('tanggal', $request->tanggal)
+                ->where('shift_id', $request->shift_id)
                 ->first();
 
             if ($existing) {
                 $existing->update([
-                    'shift_id' => $request->shift_id,
                     'keterangan' => $request->keterangan
                 ]);
 
@@ -105,13 +105,13 @@ class ShiftJadwalController extends Controller
         try {
             $count = 0;
             foreach ($request->tanggal_list as $tanggal) {
-                ShiftJadwal::updateOrCreate(
+                ShiftJadwal::firstOrCreate(
                     [
                         'user_id' => $request->user_id,
-                        'tanggal' => $tanggal
+                        'tanggal' => $tanggal,
+                        'shift_id' => $request->shift_id
                     ],
                     [
-                        'shift_id' => $request->shift_id,
                         'keterangan' => $request->keterangan
                     ]
                 );
@@ -148,6 +148,14 @@ class ShiftJadwalController extends Controller
         }
     }
 
+    public function indexPage()
+    {
+        $karyawan = User::where('role', 'KARYAWAN')->where('status', 'AKTIF')->get();
+        $shifts = Shift::where('status', 'AKTIF')->get();
+
+        return view('shift.jadwal-shift', compact('karyawan', 'shifts'));
+    }
+
     public function getJadwalKaryawan(Request $request, $userId)
     {
         try {
@@ -159,8 +167,8 @@ class ShiftJadwalController extends Controller
                 ->whereYear('tanggal', $tahun)
                 ->with('shift')
                 ->get()
-                ->mapWithKeys(function ($item) {
-                    return [$item->tanggal->toDateString() => $item];
+                ->groupBy(function ($item) {
+                    return $item->tanggal->toDateString();
                 });
 
             $user = User::findOrFail($userId);

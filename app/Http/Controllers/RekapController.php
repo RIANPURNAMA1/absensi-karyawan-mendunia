@@ -28,6 +28,7 @@ class RekapController extends Controller
                     ->whereBetween('created_at', [$start_date.' 00:00:00', $end_date.' 23:59:59']),
                 'absensiSensei' => fn ($q) => $q->whereBetween('tanggal', [$start_date, $end_date]),
                 'agenda' => fn ($q) => $q->whereBetween('tanggal', [$start_date, $end_date]),
+                'absensiKhusus' => fn ($q) => $q->whereBetween('tanggal', [$start_date, $end_date]),
             ])
             ->get()
             ->map(function ($user) {
@@ -60,9 +61,11 @@ class RekapController extends Controller
 
                 $senseiKehadiran = $user->absensiSensei->filter(fn ($a) => !\App\Models\HariLibur::apakahLibur($a->tanggal))->count();
                 $totalAgenda = $user->agenda->filter(fn ($a) => !\App\Models\HariLibur::apakahLibur($a->tanggal))->count();
-                $totalKehadiran = $hadir + $terlambat + $pulangAwal + $jumlahLembur + $senseiKehadiran + $totalAgenda;
+                $khusus = $user->absensiKhusus->filter(fn ($a) => !\App\Models\HariLibur::apakahLibur($a->tanggal))->count();
+                $totalDetikKhusus = $user->absensiKhusus->sum('total_detik');
+                $totalKehadiran = $hadir + $terlambat + $pulangAwal + $jumlahLembur + $senseiKehadiran + $totalAgenda + $khusus;
 
-                $grandTotalDetik = $totalDetikKerja + $totalDetikLembur;
+                $grandTotalDetik = $totalDetikKerja + $totalDetikLembur + $totalDetikKhusus;
 
                 $fmt = fn ($s) => floor($s / 3600).'j '.floor(($s / 60) % 60).'m';
 
@@ -82,6 +85,8 @@ class RekapController extends Controller
                     'total_jam_lembur' => $fmt($totalDetikLembur),
                     'sensei_kehadiran' => $senseiKehadiran,
                     'total_agenda' => $totalAgenda,
+                    'khusus' => $khusus,
+                    'jam_khusus' => $fmt($totalDetikKhusus),
                     'total_hadir' => $hadir + $terlambat + $pulangAwal,
                     'total_kehadiran' => $totalKehadiran,
                     'total_jam_kerja' => $fmt($totalDetikKerja),
