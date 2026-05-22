@@ -41,6 +41,7 @@
                         <a href="/approval-lembur" class="dropdown-item-custom {{ request()->is('approval-lembur*') ? 'active' : '' }}"><i class="ph ph-clock-countdown"></i>Approval Lembur</a>
                         <a href="/hari-libur" class="dropdown-item-custom {{ request()->is('hari-libur*') ? 'active' : '' }}"><i class="ph ph-file-text"></i>Hari Libur</a>
                         <a href="/rekap-absensi" class="dropdown-item-custom {{ request()->is('rekap-absensi*') ? 'active' : '' }}"><i class="ph ph-chart-bar"></i>Rekap Absensi</a>
+                        <a href="/rekap-jadwal-shift" class="dropdown-item-custom {{ request()->is('rekap-jadwal-shift*') ? 'active' : '' }}"><i class="ph ph-calendar-check"></i>Rekap Jadwal Shift</a>
                         <a href="/monitoring-lokasi" class="dropdown-item-custom {{ request()->is('monitoring-lokasi*') ? 'active' : '' }}"><i class="ph ph-map-pin"></i>Monitoring Lokasi</a>
                         <a href="/data-kehadiran-sensei" class="dropdown-item-custom {{ request()->is('data-kehadiran-sensei*') ? 'active' : '' }}"><i class="ph ph-graduation-cap"></i>Kehadiran Sensei</a>
                         <a href="/kelas-sensei" class="dropdown-item-custom {{ request()->is('kelas-sensei*') ? 'active' : '' }}"><i class="ph ph-book-open"></i>Kelas Sensei</a>
@@ -172,7 +173,8 @@
                 <a href="/izin-cuti" class="mobile-sub-link {{ request()->is('izin-cuti*') ? 'active' : '' }}">Izin & Cuti</a>
                 <a href="/approval-lembur" class="mobile-sub-link {{ request()->is('approval-lembur*') ? 'active' : '' }}">Approval Lembur</a>
                 <a href="/hari-libur" class="mobile-sub-link {{ request()->is('hari-libur*') ? 'active' : '' }}">Hari Libur</a>
-                <a href="/rekap-absensi" class="mobile-sub-link {{ request()->is('rekap-absensi*') ? 'active' : '' }}">Rekap Absensi</a>
+                 <a href="/rekap-absensi" class="mobile-sub-link {{ request()->is('rekap-absensi*') ? 'active' : '' }}">Rekap Absensi</a>
+                 <a href="/rekap-jadwal-shift" class="mobile-sub-link {{ request()->is('rekap-jadwal-shift*') ? 'active' : '' }}">Rekap Jadwal Shift</a>
                 <a href="/monitoring-lokasi" class="mobile-sub-link {{ request()->is('monitoring-lokasi*') ? 'active' : '' }}">Monitoring Lokasi</a>
                 <a href="/data-kehadiran-sensei" class="mobile-sub-link {{ request()->is('data-kehadiran-sensei*') ? 'active' : '' }}">Kehadiran Sensei</a>
                 <a href="/kelas-sensei" class="mobile-sub-link {{ request()->is('kelas-sensei*') ? 'active' : '' }}">Kelas Sensei</a>

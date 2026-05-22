@@ -17,6 +17,7 @@ use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\PengaturanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RekapController;
+use App\Http\Controllers\RekapJadwalShiftController;
 use App\Http\Controllers\SenseiController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\ShiftJadwalController;
@@ -110,6 +111,9 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::get('/data-kehadiran-khusus', [KehadiranKhususController::class, 'index']);
     Route::post('/admin/kehadiran-khusus/update-status', [KehadiranKhususController::class, 'updateStatus']);
     Route::get('/rekap-absensi', [RekapController::class, 'rekap'])->name('absensi.rekap');
+    Route::get('/rekap-jadwal-shift', [RekapJadwalShiftController::class, 'index']);
+    Route::get('/rekap-jadwal-shift/{userId}', [RekapJadwalShiftController::class, 'getData']);
+    Route::post('/rekap-jadwal-shift/update-status', [RekapJadwalShiftController::class, 'updateStatus']);
 
     // Kehadiran Sensei
     Route::get('/data-kehadiran-sensei', [KehadiranSenseiController::class, 'index']);

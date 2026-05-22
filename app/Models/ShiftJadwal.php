@@ -15,11 +15,13 @@ class ShiftJadwal extends Model
         'user_id',
         'shift_id',
         'tanggal',
-        'keterangan'
+        'keterangan',
+        'is_libur'
     ];
 
     protected $casts = [
         'tanggal' => 'date:Y-m-d',
+        'is_libur' => 'boolean',
     ];
 
     public function user()

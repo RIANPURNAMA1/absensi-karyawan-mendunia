@@ -49,6 +49,7 @@
                             <label class="form-label fw-bold">PILIH SHIFT:</label>
                             <select id="pilihShiftBatch" class="form-select">
                                 <option value="">-- Pilih Shift --</option>
+                                <option value="LIBUR" class="text-danger fw-bold">LIBUR</option>
                                 @foreach($shifts as $s)
                                     <option value="{{ $s->id }}">{{ $s->nama_shift }} ({{ \Carbon\Carbon::parse($s->jam_masuk)->format('H:i') }} - {{ \Carbon\Carbon::parse($s->jam_pulang)->format('H:i') }})</option>
                                 @endforeach
@@ -99,6 +100,7 @@
                                 <div>
                                     <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="pilihSemuaTanggal()">Pilih Semua</button>
                                     <button type="button" class="btn btn-sm btn-outline-success me-1" onclick="pilihHariKerja()">Pilih Hari Kerja</button>
+                                    <button type="button" class="btn btn-sm btn-outline-info me-1" onclick="pilihHariKerjaSetahun()">Pilih Hari Kerja Setahun</button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSemuaTanggal()">Clear</button>
                                 </div>
                             </div>
@@ -227,8 +229,12 @@ function renderExistingSchedule() {
         const tglFormatted = new Date(tgl + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
         html += `<tr><td class="text-nowrap">${tglFormatted}</td><td>`;
         (Array.isArray(dataArr) ? dataArr : [dataArr]).forEach(j => {
-            const shift = j.shift;
-            html += `<span class="badge ${shiftColors[shift?.id] || 'bg-secondary'} text-white me-1">${shift?.nama_shift || '-'}</span>`;
+            if (j.is_libur) {
+                html += `<span class="badge bg-danger text-white me-1">LIBUR</span>`;
+            } else {
+                const shift = j.shift;
+                html += `<span class="badge ${shiftColors[shift?.id] || 'bg-secondary'} text-white me-1">${shift?.nama_shift || '-'}</span>`;
+            }
         });
         html += '</td></tr>';
     });
@@ -257,10 +263,13 @@ function renderCalendar() {
 
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayOfWeek = new Date(currentYear, currentMonth - 1, day).getDay();
         const jadwalArr = jadwalShiftData[dateStr];
         const shifts = Array.isArray(jadwalArr) ? jadwalArr.map(j => j.shift).filter(Boolean) : [];
         const firstShift = shifts[0];
         const isSelected = selectedTanggalList.includes(dateStr);
+        const isDefaultLibur = dayOfWeek === 0 || dayOfWeek === 6;
+        const hasLibur = (Array.isArray(jadwalArr) && jadwalArr.some(j => j.is_libur)) || isDefaultLibur;
 
         let bgClass = 'bg-light';
         let textClass = 'text-dark';
@@ -277,6 +286,10 @@ function renderCalendar() {
         } else if (shifts.length > 0) {
             bgClass = 'bg-light';
             textClass = 'text-dark';
+        } else if (hasLibur) {
+            textClass = 'text-danger';
+            bgClass = 'bg-light';
+            borderClass = 'border border-1 border-danger';
         }
 
         let shiftHtml = '';
@@ -285,6 +298,9 @@ function renderCalendar() {
                 const color = shiftColors[s.id] || 'bg-secondary';
                 shiftHtml += `<small class="badge ${color} text-white d-block mt-1" style="font-size:0.6rem;">${s.nama_shift}</small>`;
             });
+        }
+        if (!isSelected && shifts.length === 0 && hasLibur) {
+            shiftHtml = '<small class="fw-bold text-danger d-block mt-1" style="font-size:0.6rem;">LIBUR</small>';
         }
 
         const cell = $(`
@@ -300,7 +316,6 @@ function renderCalendar() {
         `);
         row.append(cell);
 
-        const dayOfWeek = new Date(currentYear, currentMonth - 1, day).getDay();
         if (dayOfWeek === 6 || day === daysInMonth) {
             container.append(row);
             if (day !== daysInMonth) {
@@ -359,6 +374,24 @@ function pilihHariKerja() {
     updateSelectedDatesDisplay();
 }
 
+function pilihHariKerjaSetahun() {
+    selectedTanggalList = [];
+    const tahun = parseInt($('#tahunShift').val());
+    for (let bulan = 1; bulan <= 12; bulan++) {
+        const daysInMonth = new Date(tahun, bulan, 0).getDate();
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayOfWeek = new Date(tahun, bulan - 1, day).getDay();
+            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                const dateStr = `${tahun}-${String(bulan).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                selectedTanggalList.push(dateStr);
+            }
+        }
+    }
+    renderCalendar();
+    updateSelectedDatesDisplay();
+    Swal.fire({ icon: 'success', title: 'Terpilih', text: `${selectedTanggalList.length} hari kerja dalam setahun`, timer: 2000, showConfirmButton: false });
+}
+
 function clearSemuaTanggal() {
     selectedTanggalList = [];
     renderCalendar();
@@ -373,6 +406,10 @@ function updateSelectedDatesDisplay() {
         container.append('<small class="text-muted">Belum ada tanggal dipilih</small>');
         $('#btnSimpanBatch').prop('disabled', true);
         $('#btnHapusBatch').prop('disabled', true);
+    } else if (selectedTanggalList.length > 100) {
+        container.append(`<span class="badge bg-primary">${selectedTanggalList.length} tanggal terpilih</span>`);
+        $('#btnSimpanBatch').prop('disabled', false);
+        $('#btnHapusBatch').prop('disabled', false);
     } else {
         const sorted = [...selectedTanggalList].sort();
         sorted.forEach(function(tgl) {
@@ -402,10 +439,11 @@ function changeMonth(delta) {
 
 function simpanJadwalBatch() {
     const userId = $('#selectKaryawanShift').val();
-    const shiftId = $('#pilihShiftBatch').val();
+    const shiftVal = $('#pilihShiftBatch').val();
     const keterangan = $('#keteranganShiftBatch').val();
+    const isLibur = shiftVal === 'LIBUR';
 
-    if (!userId || !shiftId) {
+    if (!userId || !shiftVal) {
         Swal.fire({ icon: 'warning', title: 'Pilih Shift', text: 'Silakan pilih shift terlebih dahulu' });
         return;
     }
@@ -415,16 +453,23 @@ function simpanJadwalBatch() {
         return;
     }
 
+    const reqData = {
+        _token: '{{ csrf_token() }}',
+        user_id: userId,
+        tanggal_list: selectedTanggalList,
+        keterangan: keterangan
+    };
+
+    if (isLibur) {
+        reqData.is_libur = 1;
+    } else {
+        reqData.shift_id = shiftVal;
+    }
+
     $.ajax({
         url: '{{ route("shift-jadwal.multiple") }}',
         type: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            user_id: userId,
-            shift_id: shiftId,
-            tanggal_list: selectedTanggalList,
-            keterangan: keterangan
-        },
+        data: reqData,
         success: function(res) {
             Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message });
             selectedTanggalList = [];

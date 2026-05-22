@@ -96,12 +96,18 @@
                          <span class="pc-mtext">Hari Libur </span>
                      </a>
                  </li>
-                 <li class="pc-item">
-                     <a href="/rekap-absensi" class="pc-link">
-                         <span class="pc-micon"><i class="ph ph-chart-bar"></i></span>
-                         <span class="pc-mtext">Rekap Absensi</span>
-                     </a>
-                 </li>
+                  <li class="pc-item">
+                      <a href="/rekap-absensi" class="pc-link">
+                          <span class="pc-micon"><i class="ph ph-chart-bar"></i></span>
+                          <span class="pc-mtext">Rekap Absensi</span>
+                      </a>
+                  </li>
+                  <li class="pc-item">
+                      <a href="/rekap-jadwal-shift" class="pc-link">
+                          <span class="pc-micon"><i class="ph ph-calendar-check"></i></span>
+                          <span class="pc-mtext">Rekap Jadwal Shift</span>
+                      </a>
+                  </li>
 <li class="pc-item">
                       <a href="/monitoring-lokasi" class="pc-link">
                           <span class="pc-micon"><i class="ph ph-map-pin"></i></span>

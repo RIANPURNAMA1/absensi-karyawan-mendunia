@@ -81,6 +81,7 @@
                         <label class="form-label fw-bold">PILIH SHIFT:</label>
                         <select id="pilihShiftBatch" class="form-select">
                             <option value="">-- Pilih Shift --</option>
+                            <option value="LIBUR" class="text-danger fw-bold">LIBUR</option>
                             @foreach($shifts as $s)
                                 <option value="{{ $s->id }}">{{ $s->nama_shift }} ({{ \Carbon\Carbon::parse($s->jam_masuk)->format('H:i') }} - {{ \Carbon\Carbon::parse($s->jam_pulang)->format('H:i') }})</option>
                             @endforeach
@@ -194,10 +195,14 @@ function renderCalendar() {
 
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const jadwal = jadwalShiftData[dateStr];
+        const dayOfWeek = new Date(currentYear, currentMonth - 1, day).getDay();
+        const jadwalArr = jadwalShiftData[dateStr];
+        const jadwal = Array.isArray(jadwalArr) ? jadwalArr[0] : jadwalArr;
         const shift = jadwal?.shift;
         const shiftId = shift?.id;
         const isSelected = selectedTanggalList.includes(dateStr);
+        const isDefaultLibur = dayOfWeek === 0 || dayOfWeek === 6;
+        const hasLibur = (jadwal?.is_libur || false) || isDefaultLibur;
 
         let bgClass = 'bg-light';
         let textClass = 'text-dark';
@@ -214,6 +219,10 @@ function renderCalendar() {
         } else if (shiftId && shiftColors[shiftId]) {
             bgClass = shiftColors[shiftId];
             textClass = 'text-white';
+        } else if (hasLibur) {
+            textClass = 'text-danger';
+            bgClass = 'bg-light';
+            borderClass = 'border border-1 border-danger';
         }
 
         const cell = `
@@ -224,12 +233,12 @@ function renderCalendar() {
                     <div class="fw-bold">${day}</div>
                     ${shift && !isSelected ? `<div>${shift.nama_shift}</div>` : ''}
                     ${isSelected ? '<div><i class="ph ph-check"></i></div>' : ''}
+                    ${hasLibur && !isSelected && !shift ? '<div class="fw-bold text-danger" style="font-size:0.55rem;">LIBUR</div>' : ''}
                 </div>
             </div>
         `;
         currentWeek.append(cell);
 
-        const dayOfWeek = new Date(currentYear, currentMonth - 1, day).getDay();
         if (dayOfWeek === 6 || day === daysInMonth) {
             container.append(currentWeek);
             if (day !== daysInMonth) {
@@ -314,10 +323,11 @@ function changeMonth(delta) {
 
 function simpanJadwalBatch() {
     const userId = $('#selectKaryawanShift').val();
-    const shiftId = $('#pilihShiftBatch').val();
+    const shiftVal = $('#pilihShiftBatch').val();
     const keterangan = $('#keteranganShiftBatch').val();
+    const isLibur = shiftVal === 'LIBUR';
 
-    if (!userId || !shiftId) {
+    if (!userId || !shiftVal) {
         Swal.fire({ icon: 'warning', title: 'Pilih Shift', text: 'Silakan pilih shift terlebih dahulu' });
         return;
     }
@@ -327,16 +337,23 @@ function simpanJadwalBatch() {
         return;
     }
 
+    const reqData = {
+        _token: '{{ csrf_token() }}',
+        user_id: userId,
+        tanggal_list: selectedTanggalList,
+        keterangan: keterangan
+    };
+
+    if (isLibur) {
+        reqData.is_libur = 1;
+    } else {
+        reqData.shift_id = shiftVal;
+    }
+
     $.ajax({
         url: '{{ route("shift-jadwal.multiple") }}',
         type: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            user_id: userId,
-            shift_id: shiftId,
-            tanggal_list: selectedTanggalList,
-            keterangan: keterangan
-        },
+        data: reqData,
         success: function(res) {
             Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message });
             selectedTanggalList = [];

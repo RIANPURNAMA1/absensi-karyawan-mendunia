@@ -38,12 +38,19 @@ class ShiftJadwalController extends Controller
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $rules = [
             'user_id' => 'required|exists:users,id',
-            'shift_id' => 'required|exists:shifts,id',
             'tanggal' => 'required|date',
             'keterangan' => 'nullable|string'
-        ]);
+        ];
+
+        if ($request->is_libur) {
+            $rules['is_libur'] = 'in:true,false,1,0';
+        } else {
+            $rules['shift_id'] = 'required|exists:shifts,id';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json([
@@ -54,27 +61,36 @@ class ShiftJadwalController extends Controller
         }
 
         try {
-            $existing = ShiftJadwal::where('user_id', $request->user_id)
-                ->where('tanggal', $request->tanggal)
-                ->where('shift_id', $request->shift_id)
-                ->first();
+            if ($request->is_libur) {
+                ShiftJadwal::updateOrCreate(
+                    ['user_id' => $request->user_id, 'tanggal' => $request->tanggal],
+                    ['is_libur' => true, 'shift_id' => null, 'keterangan' => $request->keterangan]
+                );
+            } else {
+                $existing = ShiftJadwal::where('user_id', $request->user_id)
+                    ->where('tanggal', $request->tanggal)
+                    ->where('shift_id', $request->shift_id)
+                    ->first();
 
-            if ($existing) {
-                $existing->update([
-                    'keterangan' => $request->keterangan
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Jadwal shift berhasil diperbarui'
-                ]);
+                if ($existing) {
+                    $existing->update([
+                        'keterangan' => $request->keterangan,
+                        'is_libur' => false
+                    ]);
+                } else {
+                    ShiftJadwal::create([
+                        'user_id' => $request->user_id,
+                        'shift_id' => $request->shift_id,
+                        'tanggal' => $request->tanggal,
+                        'keterangan' => $request->keterangan,
+                        'is_libur' => false
+                    ]);
+                }
             }
-
-            ShiftJadwal::create($request->all());
 
             return response()->json([
                 'success' => true,
-                'message' => 'Jadwal shift berhasil ditambahkan'
+                'message' => 'Jadwal shift berhasil disimpan'
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -86,13 +102,20 @@ class ShiftJadwalController extends Controller
 
     public function createMultiple(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $rules = [
             'user_id' => 'required|exists:users,id',
-            'shift_id' => 'required|exists:shifts,id',
             'tanggal_list' => 'required|array',
             'tanggal_list.*' => 'required|date',
             'keterangan' => 'nullable|string'
-        ]);
+        ];
+
+        if ($request->is_libur) {
+            $rules['is_libur'] = 'in:true,false,1,0';
+        } else {
+            $rules['shift_id'] = 'required|exists:shifts,id';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json([
@@ -105,16 +128,24 @@ class ShiftJadwalController extends Controller
         try {
             $count = 0;
             foreach ($request->tanggal_list as $tanggal) {
-                ShiftJadwal::firstOrCreate(
-                    [
-                        'user_id' => $request->user_id,
-                        'tanggal' => $tanggal,
-                        'shift_id' => $request->shift_id
-                    ],
-                    [
-                        'keterangan' => $request->keterangan
-                    ]
-                );
+                if ($request->is_libur) {
+                    ShiftJadwal::updateOrCreate(
+                        ['user_id' => $request->user_id, 'tanggal' => $tanggal],
+                        ['is_libur' => true, 'shift_id' => null, 'keterangan' => $request->keterangan]
+                    );
+                } else {
+                    ShiftJadwal::firstOrCreate(
+                        [
+                            'user_id' => $request->user_id,
+                            'tanggal' => $tanggal,
+                            'shift_id' => $request->shift_id
+                        ],
+                        [
+                            'keterangan' => $request->keterangan,
+                            'is_libur' => false
+                        ]
+                    );
+                }
                 $count++;
             }
 
