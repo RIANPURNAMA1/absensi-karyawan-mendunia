@@ -5,7 +5,6 @@ Sistem manajemen absensi karyawan berbasis web dengan fitur **face recognition**
 ---
 
 ## Daftar Fitur
-
 | No | Fitur | Deskripsi |
 |----|-------|-----------|
 | 1 | [Absensi Reguler (Foto + GPS)](#1-absensi-reguler-foto--gps) | Absen masuk/pulang dengan selfie, verifikasi wajah, dan geolokasi |

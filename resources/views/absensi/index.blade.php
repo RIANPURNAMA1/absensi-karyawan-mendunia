@@ -261,6 +261,22 @@
                 </div>
                 <span class="text-[11px] font-medium text-gray-700">Agenda</span>
             </button>
+
+            @php
+                $userAbs = auth()->user();
+                $penilaianAktif = \App\Models\PenilaianSetting::where('divisi_id', $userAbs->divisi_id)
+                    ->where('penilaian_aktif', true)->exists();
+            @endphp
+
+            @if($penilaianAktif)
+            <a href="/penilaian-karyawan"
+                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+                <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                    <i data-lucide="graduation-cap" class="w-5 h-5 text-teal-600"></i>
+                </div>
+                <span class="text-[11px] font-medium text-gray-700">Penilaian</span>
+            </a>
+            @endif
         </div>
     </div>
 

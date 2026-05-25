@@ -49,6 +49,28 @@
                     </div>
                 </div>
 
+                @php
+                    $userNav = auth()->user();
+                    $penilaianDivisiIdsNav = \App\Models\PenilaianSetting::where('penilaian_aktif', true)->pluck('divisi_id')->toArray();
+                    $bolehPenilaianNav = in_array($userNav->divisi_id, $penilaianDivisiIdsNav) || $userNav->role !== 'KARYAWAN';
+                @endphp
+
+                @if($bolehPenilaianNav)
+                <div class="header-dropdown">
+                    <a href="#" class="header-link dropdown-trigger">
+                        <i class="ph ph-graduation-cap"></i>
+                        <span>Penilaian</span>
+                        <i class="ph ph-caret-down dropdown-arrow"></i>
+                    </a>
+                    <div class="dropdown-menu-custom">
+                        <a href="{{ $userNav->role !== 'KARYAWAN' ? '/penilaian' : '/penilaian-karyawan' }}" class="dropdown-item-custom {{ request()->is('penilaian*') ? 'active' : '' }}"><i class="ph ph-notebook"></i>Penilaian Siswa</a>
+                        @if($userNav->role !== 'KARYAWAN')
+                        <a href="/pengaturan-penilaian" class="dropdown-item-custom {{ request()->is('pengaturan-penilaian') ? 'active' : '' }}"><i class="ph ph-sliders"></i>Pengaturan Penilaian</a>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
                 <div class="header-dropdown">
                     <a href="#" class="header-link dropdown-trigger">
                         <i class="ph ph-gear"></i>
@@ -181,6 +203,20 @@
                 <a href="/data-agenda" class="mobile-sub-link {{ request()->is('data-agenda*') ? 'active' : '' }}">Data Agenda</a>
             </div>
         </div>
+
+        @if($bolehPenilaianNav)
+        <div class="mobile-dropdown">
+            <a href="#" class="mobile-link mob-dropdown-trigger">
+                <i class="ph ph-graduation-cap"></i>Penilaian <i class="ph ph-caret-down ms-auto"></i>
+            </a>
+            <div class="mobile-submenu">
+                <a href="{{ $userNav->role !== 'KARYAWAN' ? '/penilaian' : '/penilaian-karyawan' }}" class="mobile-sub-link {{ request()->is('penilaian*') ? 'active' : '' }}">Penilaian Siswa</a>
+                @if($userNav->role !== 'KARYAWAN')
+                <a href="/pengaturan-penilaian" class="mobile-sub-link {{ request()->is('pengaturan-penilaian') ? 'active' : '' }}">Pengaturan Penilaian</a>
+                @endif
+            </div>
+        </div>
+        @endif
 
         <a href="/pengaturan-wa" class="mobile-link {{ request()->is('pengaturan-wa*') ? 'active' : '' }}">
             <i class="ph ph-gear"></i>Notifikasi WA

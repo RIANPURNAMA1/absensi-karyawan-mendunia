@@ -15,6 +15,7 @@ use App\Http\Controllers\KehadiranSenseiController;
 use App\Http\Controllers\LemburController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\PengaturanController;
+use App\Http\Controllers\PenilaianController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RekapController;
 use App\Http\Controllers\RekapJadwalShiftController;
@@ -150,9 +151,27 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::put('/pengaturan/{id}', [UserController::class, 'update'])->name('pengaturan.update');
     Route::delete('/pengaturan/users/{id}', [UserController::class, 'destroyAdmin']);
 
+    // Pengaturan Penilaian
+    Route::get('/pengaturan-penilaian', [PenilaianController::class, 'settingsIndex'])->name('penilaian.settings');
+    Route::post('/pengaturan-penilaian', [PenilaianController::class, 'updateSettings'])->name('penilaian.settings.update');
+
     // lembur
     Route::get('/approval-lembur', [LemburController::class, 'approvalIndex'])->name('lembur.approval');
     Route::post('/approval-lembur/{id}/status', [LemburController::class, 'updateStatus'])->name('lembur.status');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Penilaian Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:HR,MANAGER,KARYAWAN'])->group(function () {
+    Route::get('/penilaian', [PenilaianController::class, 'index'])->name('penilaian.index');
+    Route::post('/penilaian', [PenilaianController::class, 'store'])->name('penilaian.store');
+    Route::put('/penilaian/{id}', [PenilaianController::class, 'update'])->name('penilaian.update');
+    Route::delete('/penilaian/{id}', [PenilaianController::class, 'destroy'])->name('penilaian.destroy');
+    Route::get('/penilaian-karyawan', [PenilaianController::class, 'karyawanIndex'])->name('penilaian.karyawan');
 });
 
 /*

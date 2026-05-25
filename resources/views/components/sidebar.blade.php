@@ -217,19 +217,19 @@
                      </li>
                  </ul>
              </li>
-         @endif
+          @endif
 
-         <!-- PENGATURAN -->
-         <li class="pc-item pc-caption">
-             <label>Pengaturan</label>
-         </li>
+          <!-- PENGATURAN -->
+          <li class="pc-item pc-caption">
+              <label>Pengaturan</label>
+          </li>
 
-         <li class="pc-item">
-             <a href="/pengaturan" class="pc-link">
-                 <span class="pc-micon"><i class="ph ph-user-gear"></i></span>
-                 <span class="pc-mtext">Manajemen Akun</span>
-             </a>
-         </li>
+          <li class="pc-item">
+              <a href="/pengaturan" class="pc-link">
+                  <span class="pc-micon"><i class="ph ph-user-gear"></i></span>
+                  <span class="pc-mtext">Manajemen Akun</span>
+              </a>
+          </li>
 
          <!-- LOGOUT -->
          <li class="pc-item pc-caption">
