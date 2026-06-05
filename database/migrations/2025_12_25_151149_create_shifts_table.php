@@ -19,15 +19,7 @@ return new class extends Migration
             $table->time('jam_masuk');
             $table->time('jam_pulang');
 
-            // Menggunakan virtualAs untuk menghitung selisih jam secara otomatis
-            // Logic: Jika jam_pulang < jam_masuk, dianggap melewati tengah malam (+24 jam)
-            $table->integer('total_jam')->virtualAs('
-        HOUR(TIMEDIFF(
-            IF(jam_pulang < jam_masuk, ADDTIME(jam_pulang, "24:00:00"), jam_pulang), 
-            jam_masuk
-        ))
-    ');
-
+            $table->integer('total_jam')->nullable();
             $table->integer('toleransi')->default(15);
             $table->enum('status', ['AKTIF', 'NONAKTIF'])->default('AKTIF');
             $table->text('keterangan')->nullable();

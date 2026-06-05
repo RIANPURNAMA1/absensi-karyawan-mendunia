@@ -19,6 +19,7 @@ use App\Http\Controllers\PenilaianController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RekapController;
 use App\Http\Controllers\RekapJadwalShiftController;
+use App\Http\Controllers\RekapKehadiranSenseiController;
 use App\Http\Controllers\SenseiController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\ShiftJadwalController;
@@ -122,6 +123,11 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::get('/admin/kehadiran-sensei/riwayat/{userId}/{kelasId}', [KehadiranSenseiController::class, 'getRiwayat']);
     Route::get('/admin/kehadiran-sensei/kelas/{userId}', [KehadiranSenseiController::class, 'getKelasByUser']);
     Route::post('/admin/kehadiran-sensei/update-status', [KehadiranSenseiController::class, 'updateStatus']);
+
+    // Rekap Kehadiran Sensei
+    Route::get('/rekap-kehadiran-sensei', [RekapKehadiranSenseiController::class, 'index']);
+    Route::get('/rekap-kehadiran-sensei/{userId}', [RekapKehadiranSenseiController::class, 'getData']);
+    Route::post('/rekap-kehadiran-sensei/update-status', [RekapKehadiranSenseiController::class, 'updateStatus']);
 
     // Kelas Sensei (menu terpisah)
     Route::get('/kelas-sensei', [KehadiranSenseiController::class, 'kelasIndex']);
