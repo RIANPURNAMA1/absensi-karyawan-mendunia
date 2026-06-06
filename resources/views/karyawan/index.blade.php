@@ -61,7 +61,8 @@
                         <th scope="col">Departemen</th>
                         <th scope="col">Jabatan</th>
                         <th scope="col" class="text-center">L/P</th>
-                        <th scope="col" class="text-center">Status</th>
+                        <th scope="col" class="text-center">Status Kerja</th>
+                        <th scope="col" class="text-center">Akun</th>
                         <th scope="col" class="text-center">Absen Khusus</th>
                         <th scope="col" class="text-center">Aksi</th>
                     </tr>
@@ -109,6 +110,15 @@
                                     };
                                 @endphp
                                 <span class="badge {{ $badge }} rounded-pill fw-normal px-2 py-1">{{ $label }}</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-inline-block m-0">
+                                    <input class="form-check-input toggle-status" type="checkbox" role="switch"
+                                        data-id="{{ $k->id }}"
+                                        {{ $k->status === 'AKTIF' ? 'checked' : '' }}>
+                                </div>
+                                <br>
+                                <small class="text-{{ $k->status === 'AKTIF' ? 'success' : 'danger' }} fw-semibold" style="font-size: 10px;">{{ $k->status }}</small>
                             </td>
                             <td class="text-center">
                                 <div class="form-check form-switch d-inline-block m-0">
@@ -207,6 +217,35 @@ function editKaryawan(
     $('#formEditKaryawan').attr('action', '/karyawan/' + id);
     $('#modalEditKaryawan').modal('show');
 }
+
+$(document).on('change', '.toggle-status', function() {
+    var id = $(this).data('id');
+    var cb = this;
+    $.ajax({
+        url: '/karyawan/' + id + '/toggle-status',
+        type: 'POST',
+        data: { _token: '{{ csrf_token() }}' },
+        success: function(res) {
+            var label = $(cb).closest('td').find('small');
+            if (res.user_status === 'AKTIF') {
+                label.text('AKTIF').removeClass('text-danger').addClass('text-success');
+            } else {
+                label.text('NONAKTIF').removeClass('text-success').addClass('text-danger');
+            }
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: res.message,
+                timer: 1200,
+                showConfirmButton: false
+            });
+        },
+        error: function() {
+            $(cb).prop('checked', !$(cb).prop('checked'));
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan' });
+        }
+    });
+});
 
 $(document).on('change', '.toggle-khusus', function() {
     var id = $(this).data('id');

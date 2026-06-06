@@ -21,6 +21,7 @@ class KehadiranKhususController extends Controller
 
         $data = AbsensiKhusus::with('user.divisi')
             ->whereBetween('tanggal', [$start_date, $end_date])
+            ->whereHas('user', fn ($q) => $q->where('status', 'AKTIF'))
             ->when($status, function ($query) use ($status) {
                 return $query->where('status', $status);
             })

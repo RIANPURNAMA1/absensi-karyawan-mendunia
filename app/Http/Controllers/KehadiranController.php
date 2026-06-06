@@ -29,6 +29,12 @@ class KehadiranController extends Controller
             // Filter berdasarkan rentang tanggal
             ->whereBetween('tanggal', [$start_date, $end_date])
 
+            // Hanya tampilkan absensi dari karyawan AKTIF
+            ->whereHas('user', fn ($q) => $q->where('status', 'AKTIF'))
+
+            // Jangan tampilkan karyawan yang mempunyai kelas sensei
+            ->whereDoesntHave('user.kelasSensei')
+
             // Filter berdasarkan Status (HADIR, TERLAMBAT, IZIN, dll)
             ->when($status, function ($query) use ($status) {
                 return $query->where('status', $status);

@@ -86,6 +86,7 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::put('/karyawan/{id}', [KaryawanController::class, 'update'])->name('karyawan.update');
     Route::delete('/karyawan/{id}', [KaryawanController::class, 'destroy'])->name('karyawan.destroy');
     Route::post('/karyawan/{id}/toggle-khusus', [KaryawanController::class, 'toggleKhusus']);
+    Route::post('/karyawan/{id}/toggle-status', [KaryawanController::class, 'toggleStatus']);
 
     // Divisi Management
     Route::resource('divisi', DivisiController::class)->only(['index', 'store', 'update', 'destroy']);

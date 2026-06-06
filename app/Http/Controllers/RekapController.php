@@ -18,7 +18,7 @@ class RekapController extends Controller
         $cabang_id = $request->cabang_id;
         $divisi_id = $request->divisi_id;
 
-        $rekap = User::where('role', 'KARYAWAN')
+        $rekap = User::where('role', 'KARYAWAN')->where('status', 'AKTIF')
             ->when($cabang_id, fn ($q) => $q->whereJsonContains('cabang_ids', (string) $cabang_id))
             ->when($divisi_id, fn ($q) => $q->where('divisi_id', $divisi_id))
             ->with([

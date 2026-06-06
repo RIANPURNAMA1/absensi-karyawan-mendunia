@@ -505,6 +505,19 @@ class KaryawanController extends Controller
         ]);
     }
 
+    public function toggleStatus($id)
+    {
+        $user = User::findOrFail($id);
+        $user->status = $user->status === 'AKTIF' ? 'NONAKTIF' : 'AKTIF';
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Status karyawan berhasil diubah menjadi ' . $user->status,
+            'user_status' => $user->status,
+        ]);
+    }
+
 
     public function show($id)
     {
