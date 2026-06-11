@@ -15,6 +15,7 @@ use App\Http\Controllers\KehadiranSenseiController;
 use App\Http\Controllers\LemburController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\PengaturanController;
+use App\Http\Controllers\PengaturanShiftController;
 use App\Http\Controllers\PenilaianController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RekapController;
@@ -151,6 +152,10 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     // Pengaturan Notifikasi WA
     Route::get('/pengaturan-wa', [PengaturanController::class, 'index'])->name('pengaturan-wa.index');
     Route::post('/pengaturan-wa', [PengaturanController::class, 'update'])->name('pengaturan-wa.update');
+
+    // Pengaturan Shift Mode
+    Route::get('/pengaturan-shift', [PengaturanShiftController::class, 'index'])->name('pengaturan-shift.index');
+    Route::post('/pengaturan-shift', [PengaturanShiftController::class, 'update'])->name('pengaturan-shift.update');
 
     // Manajemen Akun Admin (HR / MANAGER)
     Route::get('/pengaturan', [UserController::class, 'index'])->name('pengaturan.index');

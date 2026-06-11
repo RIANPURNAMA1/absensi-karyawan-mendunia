@@ -397,7 +397,15 @@ class KehadiranSenseiController extends Controller
                 }
                 return true;
             }, $tglSelesai->copy()->addSecond());
-            $kelasItem->jumlah_absen = \App\Models\AbsensiSensei::where('kelas_sensei_id', $kelasItem->id)->count();
+            $kelasItem->jumlah_absen = \App\Models\AbsensiSensei::where('kelas_sensei_id', $kelasItem->id)
+                ->whereDate('tanggal', '>=', $tglMulai)
+                ->whereDate('tanggal', '<=', $tglSelesai)
+                ->whereRaw('DAYOFWEEK(tanggal) NOT IN (1, 7)')
+                ->get()
+                ->reject(function ($absen) {
+                    return \App\Models\HariLibur::apakahLibur($absen->tanggal);
+                })
+                ->count();
 
             return $kelasItem;
         });

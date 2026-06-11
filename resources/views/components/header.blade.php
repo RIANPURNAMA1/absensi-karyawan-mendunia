@@ -80,6 +80,7 @@
                     </a>
                     <div class="dropdown-menu-custom">
                         <a href="/pengaturan" class="dropdown-item-custom {{ request()->is('pengaturan') ? 'active' : '' }}"><i class="ph ph-user-gear"></i>Manajemen Akun</a>
+                        <a href="/pengaturan-shift" class="dropdown-item-custom {{ request()->is('pengaturan-shift*') ? 'active' : '' }}"><i class="ph ph-timer"></i>Pengaturan Shift</a>
                         <a href="/pengaturan-wa" class="dropdown-item-custom {{ request()->is('pengaturan-wa') ? 'active' : '' }}"><i class="ph ph-whatsapp-logo"></i>Notifikasi WA</a>
                     </div>
                 </div>
@@ -220,6 +221,9 @@
         </div>
         @endif
 
+        <a href="/pengaturan-shift" class="mobile-link {{ request()->is('pengaturan-shift*') ? 'active' : '' }}">
+            <i class="ph ph-timer"></i>Pengaturan Shift
+        </a>
         <a href="/pengaturan-wa" class="mobile-link {{ request()->is('pengaturan-wa*') ? 'active' : '' }}">
             <i class="ph ph-gear"></i>Notifikasi WA
         </a>

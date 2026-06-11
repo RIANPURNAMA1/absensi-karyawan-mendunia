@@ -47,6 +47,29 @@ class LemburController extends Controller
             'tipe' => 'required|in:MASUK,KELUAR' // Input hidden dari form
         ]);
 
+        $today = Carbon::now()->toDateString();
+
+        if ($request->tipe === 'MASUK') {
+            $exists = Lembur::where('user_id', Auth::id())
+                ->whereDate('jam_masuk', $today)
+                ->exists();
+
+            if ($exists) {
+                return redirect()->back()->with('error', 'Anda sudah mengajukan lembur hari ini. Hanya satu kali lembur per hari.');
+            }
+        }
+
+        if ($request->tipe === 'KELUAR') {
+            $completed = Lembur::where('user_id', Auth::id())
+                ->whereDate('jam_masuk', $today)
+                ->whereNotNull('jam_keluar')
+                ->exists();
+
+            if ($completed) {
+                return redirect()->back()->with('error', 'Lembur hari ini sudah selesai. Tidak bisa mengajukan lagi.');
+            }
+        }
+
         try {
             $imageData = $request->foto_data;
             $image_parts = explode(";base64,", $imageData);

@@ -110,6 +110,8 @@
             </div>
         </div>
 
+        <div id="kelasInfoContainer"></div>
+
         <div class="card border-0 shadow-sm rounded-3">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
@@ -215,6 +217,7 @@ function loadData() {
                     $('#summaryCards').empty();
                     return;
                 }
+                renderKelasInfo(res.kelas_list);
                 renderGrid(res.data, bulan, tahun);
                 renderSummary(res.data);
                 $('#rekapContainer').removeClass('d-none');
@@ -225,6 +228,44 @@ function loadData() {
             Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan saat memuat data' });
         }
     });
+}
+
+function renderKelasInfo(kelasList) {
+    if (!kelasList || kelasList.length === 0) {
+        $('#kelasInfoContainer').empty();
+        return;
+    }
+
+    let html = '';
+    kelasList.forEach(k => {
+        const tglMulai = new Date(k.tanggal_mulai + 'T00:00:00');
+        const tglSelesai = new Date(k.tanggal_selesai + 'T00:00:00');
+        const fmtMulai = tglMulai.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        const fmtSelesai = tglSelesai.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+
+        html += `
+        <div class="card border-0 shadow-sm rounded-3 mb-3">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                        <div class="d-flex align-items-center gap-3 mb-1">
+                            <h6 class="mb-0 text-dark fw-bold">${k.nama_kelas}</h6>
+                            <span class="badge bg-primary">${k.jumlah_absen} Absen</span>
+                            <span class="badge bg-info">${k.total_pertemuan} Total Pertemuan</span>
+                        </div>
+                        <div class="d-flex gap-3 text-muted small">
+                            <span><i class="ph ph-graduation-cap me-1"></i> Level ${k.level}</span>
+                            <span><i class="ph ph-calendar-range me-1"></i> ${fmtMulai} - ${fmtSelesai}</span>
+                            <span><i class="ph ph-user me-1"></i> ${k.sensei}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+    });
+
+    $('#kelasInfoContainer').html(html);
 }
 
 function renderGrid(data, bulan, tahun) {

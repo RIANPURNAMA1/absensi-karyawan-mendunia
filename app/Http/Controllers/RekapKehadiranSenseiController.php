@@ -27,7 +27,33 @@ class RekapKehadiranSenseiController extends Controller
 
         $daysInMonth = Carbon::create($tahun, $bulan, 1)->daysInMonth;
 
-        User::findOrFail($userId);
+        $user = User::findOrFail($userId);
+
+        $kelasList = KelasSensei::where('user_id', $userId)
+            ->where('status', 'aktif')
+            ->orderBy('nama_kelas', 'asc')
+            ->get()
+            ->map(function ($kelas) {
+                $tglMulai = Carbon::parse($kelas->tanggal_mulai);
+                $tglSelesai = Carbon::parse($kelas->tanggal_selesai);
+                $totalPertemuan = $tglMulai->copy()->diffInDaysFiltered(function ($date) {
+                    if ($date->dayOfWeek === 0 || $date->dayOfWeek === 6) return false;
+                    if (\App\Models\HariLibur::apakahLibur($date->toDateString())) return false;
+                    return true;
+                }, $tglSelesai->copy()->addSecond());
+                $jumlahAbsen = AbsensiSensei::where('kelas_sensei_id', $kelas->id)->count();
+
+                return [
+                    'id' => $kelas->id,
+                    'nama_kelas' => $kelas->nama_kelas,
+                    'level' => $kelas->level,
+                    'tanggal_mulai' => $kelas->tanggal_mulai,
+                    'tanggal_selesai' => $kelas->tanggal_selesai,
+                    'total_pertemuan' => $totalPertemuan,
+                    'jumlah_absen' => $jumlahAbsen,
+                    'sensei' => $kelas->user->name ?? '-',
+                ];
+            });
 
         $absensis = AbsensiSensei::where('user_id', $userId)
             ->whereMonth('tanggal', $bulan)
@@ -88,6 +114,7 @@ class RekapKehadiranSenseiController extends Controller
         return response()->json([
             'success' => true,
             'data' => $data,
+            'kelas_list' => $kelasList,
         ]);
     }
 

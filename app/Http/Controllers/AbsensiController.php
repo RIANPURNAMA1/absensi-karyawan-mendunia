@@ -97,16 +97,17 @@ class AbsensiController extends Controller
             ->where('jam_pulang', '>=', $currentTime)
             ->first();
 
-        // 5b. Ambil semua shift user dari default profile
+        // 5b. Ambil semua shift user berdasarkan mode pengaturan
         $userShifts = collect();
-        if ($user->shift_ids && is_array($user->shift_ids) && count($user->shift_ids) > 0) {
-            $userShifts = \App\Models\Shift::whereIn('id', $user->shift_ids)->get();
-        } elseif ($user->shift) {
-            $userShifts = collect([$user->shift]);
-        }
+        $shiftMode = \App\Models\PengaturanShift::getMode();
 
-        // 5c. Jika tidak punya shift default, coba dari shift_jadwal hari ini
-        if ($userShifts->isEmpty()) {
+        if ($shiftMode === 'fixed') {
+            if ($user->shift_ids && is_array($user->shift_ids) && count($user->shift_ids) > 0) {
+                $userShifts = \App\Models\Shift::whereIn('id', $user->shift_ids)->get();
+            } elseif ($user->shift) {
+                $userShifts = collect([$user->shift]);
+            }
+        } else {
             $todayDate = now()->toDateString();
             $shiftJadwals = ShiftJadwal::where('user_id', $user->id)
                 ->where('tanggal', $todayDate)
@@ -114,6 +115,14 @@ class AbsensiController extends Controller
                 ->get();
             if ($shiftJadwals->isNotEmpty()) {
                 $userShifts = $shiftJadwals->pluck('shift')->filter();
+            }
+
+            if ($userShifts->isEmpty()) {
+                if ($user->shift_ids && is_array($user->shift_ids) && count($user->shift_ids) > 0) {
+                    $userShifts = \App\Models\Shift::whereIn('id', $user->shift_ids)->get();
+                } elseif ($user->shift) {
+                    $userShifts = collect([$user->shift]);
+                }
             }
         }
 
@@ -776,20 +785,29 @@ class AbsensiController extends Controller
     private function resolveShiftForUser($user, $now, $today)
     {
         $userShifts = collect();
+        $mode = \App\Models\PengaturanShift::getMode();
 
-        if ($user->shift_ids && is_array($user->shift_ids) && count($user->shift_ids) > 0) {
-            $userShifts = \App\Models\Shift::whereIn('id', $user->shift_ids)->get();
-        } elseif ($user->shift) {
-            $userShifts = collect([$user->shift]);
-        }
-
-        if ($userShifts->isEmpty()) {
+        if ($mode === 'fixed') {
+            if ($user->shift_ids && is_array($user->shift_ids) && count($user->shift_ids) > 0) {
+                $userShifts = \App\Models\Shift::whereIn('id', $user->shift_ids)->get();
+            } elseif ($user->shift) {
+                $userShifts = collect([$user->shift]);
+            }
+        } else {
             $shiftJadwals = ShiftJadwal::where('user_id', $user->id)
                 ->where('tanggal', $today)
                 ->with('shift')
                 ->get();
             if ($shiftJadwals->isNotEmpty()) {
                 $userShifts = $shiftJadwals->pluck('shift')->filter();
+            }
+
+            if ($userShifts->isEmpty()) {
+                if ($user->shift_ids && is_array($user->shift_ids) && count($user->shift_ids) > 0) {
+                    $userShifts = \App\Models\Shift::whereIn('id', $user->shift_ids)->get();
+                } elseif ($user->shift) {
+                    $userShifts = collect([$user->shift]);
+                }
             }
         }
 

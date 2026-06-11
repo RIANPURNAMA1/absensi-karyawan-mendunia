@@ -75,14 +75,14 @@ public function index(Request $request)
             $query->where('divisi_id', $divisiId);
         }
     };
-    $totalKaryawanQ = User::where('role', 'KARYAWAN');
+    $totalKaryawanQ = User::where('role', 'KARYAWAN')->where('status', 'AKTIF');
     $userFilter($totalKaryawanQ);
     $totalKaryawan = $totalKaryawanQ->count();
 
     $karyawanAktifQ = User::where('role', 'KARYAWAN')->where('status', 'AKTIF');
     $userFilter($karyawanAktifQ);
     $karyawanAktif = $karyawanAktifQ->count();
-    $izinPendingQ = Izin::where('status', 'PENDING');
+    $izinPendingQ = Izin::where('status', 'PENDING')->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
     if ($cabangId) {
         $izinPendingQ->whereHas('user', fn($q) => $q->whereJsonContains('cabang_ids', $cabangId));
     }
@@ -102,6 +102,7 @@ public function index(Request $request)
     $dateFilter($statsQ);
     $cabangFilter($statsQ);
     $divisiFilter($statsQ);
+    $statsQ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
     $stats = $statsQ->first();
 
     $tepatWaktu   = (int) ($stats->tepatWaktu ?? 0);
@@ -116,6 +117,7 @@ public function index(Request $request)
     $hadirQ = Absensi::whereIn('status', ['HADIR', 'TERLAMBAT']);
     $cabangFilter($hadirQ);
     $divisiFilter($hadirQ);
+    $hadirQ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
     if ($startDate && $endDate) {
         $dateFilter($hadirQ);
         $hadirHariIni = $hadirQ->count();
@@ -144,6 +146,7 @@ public function index(Request $request)
 ");
    $cabangFilter($donutQ);
    $divisiFilter($donutQ);
+   $donutQ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
    if ($startDate && $endDate) {
        $dateFilter($donutQ);
    } else {
@@ -175,6 +178,7 @@ $donutData = [
     if ($divisiId) {
         $dataIzinSakitQ->whereHas('user', fn($q) => $q->where('divisi_id', $divisiId));
     }
+    $dataIzinSakitQ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
     $dataIzinSakit = $dataIzinSakitQ->orderBy('created_at', 'desc')
         ->take(10)
         ->get();
@@ -186,6 +190,7 @@ $donutData = [
     $dateFilter($absensisQ);
     $cabangFilter($absensisQ);
     $divisiFilter($absensisQ);
+    $absensisQ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
     $absensis = $absensisQ->orderBy('tanggal', 'desc')
         ->orderBy('created_at', 'desc')
         ->take(100)
@@ -194,7 +199,7 @@ $donutData = [
     // -------------------------------------------------------
     // 5. RASIO KETERLAMBATAN PER DIVISI
     // -------------------------------------------------------
-    $statistikDivisi = Divisi::with('users')->get()->map(function ($divisi) use ($startDate, $endDate, $cabangId) {
+    $statistikDivisi = Divisi::with(['users' => fn($q) => $q->where('status', 'AKTIF')])->get()->map(function ($divisi) use ($startDate, $endDate, $cabangId) {
         $userIds = $divisi->users->pluck('id');
         $hadirQ  = Absensi::whereIn('user_id', $userIds)->where('status', 'HADIR');
         $terlambatQ = Absensi::whereIn('user_id', $userIds)->where('status', 'TERLAMBAT');
@@ -255,6 +260,10 @@ $donutData = [
         $dateFilter($hQ); $dateFilter($tQ); $dateFilter($aQ); $dateFilter($lQ);
         $cabangFilter($hQ); $cabangFilter($tQ); $cabangFilter($aQ); $cabangFilter($lQ);
         $divisiFilter($hQ); $divisiFilter($tQ); $divisiFilter($aQ); $divisiFilter($lQ);
+        $hQ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
+        $tQ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
+        $aQ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
+        $lQ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
         $dataHadirBar[]     = $hQ->count();
         $dataTerlambatBar[] = $tQ->count();
         $dataAlpaBar[]      = $aQ->count();
@@ -272,6 +281,7 @@ $donutData = [
     ");
     $senseiCabangFilter($senseiDonutQ);
     $senseiDivisiFilter($senseiDonutQ);
+    $senseiDonutQ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
     if ($startDate && $endDate) {
         $senseiDonutQ->whereBetween('tanggal', [$startDate, $endDate]);
     } else {
@@ -304,6 +314,9 @@ $donutData = [
         $dateFilter($shQ); $dateFilter($stQ); $dateFilter($saQ);
         $senseiCabangFilter($shQ); $senseiCabangFilter($stQ); $senseiCabangFilter($saQ);
         $senseiDivisiFilter($shQ); $senseiDivisiFilter($stQ); $senseiDivisiFilter($saQ);
+        $shQ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
+        $stQ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
+        $saQ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
         $senseiHadirBar[]     = $shQ->count();
         $senseiTerlambatBar[] = $stQ->count();
         $senseiAlpaBar[]      = $saQ->count();
@@ -312,7 +325,8 @@ $donutData = [
     // -------------------------------------------------------
     // 10. SENSEI — Ringkasan Card
     // -------------------------------------------------------
-    $senseiKelasQ = KelasSensei::where('status', 'aktif');
+    $senseiKelasQ = KelasSensei::where('status', 'aktif')
+        ->whereHas('user', fn($q) => $q->where('status', 'AKTIF'));
     if ($cabangId) {
         $senseiKelasQ->whereHas('user', fn($q) => $q->whereJsonContains('cabang_ids', $cabangId));
     }
@@ -325,7 +339,7 @@ $donutData = [
     // -------------------------------------------------------
     // 11. LOKASI MARKERS MAP
     // -------------------------------------------------------
-    $lokasiMarkers = $absensis->filter(fn($a) => $a->lat_masuk && $a->long_masuk)
+    $lokasiMarkers = $absensis->filter(fn($a) => $a->user && $a->user->status === 'AKTIF' && $a->lat_masuk && $a->long_masuk)
         ->map(fn($a) => [
             'lat'     => $a->lat_masuk,
             'lng'     => $a->long_masuk,
