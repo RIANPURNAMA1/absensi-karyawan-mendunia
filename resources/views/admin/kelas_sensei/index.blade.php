@@ -77,6 +77,8 @@
                             <th scope="col">Tanggal Selesai</th>
                             <th scope="col" class="text-center">Total Pertemuan</th>
                             <th scope="col" class="text-center">Absen Terisi</th>
+                            <th scope="col" class="text-center">Alpa</th>
+                            <th scope="col" class="text-center">Izin</th>
                             <th scope="col">Status</th>
                             <th scope="col" class="text-center" style="width: 80px;">Aksi</th>
                         </tr>
@@ -97,6 +99,8 @@
                                 <td>{{ \Carbon\Carbon::parse($kelasItem->tanggal_selesai)->format('d M Y') }}</td>
                                 <td class="text-center">{{ $kelasItem->total_pertemuan }}</td>
                                 <td class="text-center">{{ $kelasItem->jumlah_absen }}</td>
+                                <td class="text-center">{{ $kelasItem->jumlah_alpa ?? 0 }}</td>
+                                <td class="text-center">{{ $kelasItem->jumlah_izin ?? 0 }}</td>
                                 <td>
                                     @php
                                         $badgeClass = [

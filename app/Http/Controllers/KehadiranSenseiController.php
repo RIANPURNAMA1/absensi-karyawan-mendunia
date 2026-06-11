@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AbsensiSensei;
+use App\Models\Izin;
 use App\Models\KelasSensei;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -44,7 +45,30 @@ class KehadiranSenseiController extends Controller
                         }
                         return true;
                     }, $tglSelesai->copy()->addSecond());
-                    $kelas->jumlah_absen = \App\Models\AbsensiSensei::where('kelas_sensei_id', $kelas->id)->count();
+                    $absenQuery = \App\Models\AbsensiSensei::where('kelas_sensei_id', $kelas->id)
+                        ->whereDate('tanggal', '>=', $tglMulai)
+                        ->whereDate('tanggal', '<=', $tglSelesai)
+                        ->whereRaw('DAYOFWEEK(tanggal) NOT IN (1, 7)')
+                        ->get()
+                        ->reject(function ($absen) {
+                            return \App\Models\HariLibur::apakahLibur($absen->tanggal);
+                        });
+                    $kelas->jumlah_absen = $absenQuery->count();
+                    $kelas->jumlah_alpa = $absenQuery->where('status', 'ALPA')->count();
+                    $izinSensei = \App\Models\Izin::where('user_id', $kelas->user_id)
+                        ->where('status', 'DISETUJUI')
+                        ->whereDate('tgl_mulai', '<=', $tglSelesai)
+                        ->whereDate('tgl_selesai', '>=', $tglMulai)
+                        ->get();
+                    $kelas->jumlah_izin = $izinSensei->sum(function ($izin) use ($tglMulai, $tglSelesai) {
+                        $overlapMulai = $tglMulai->copy()->max(\Carbon\Carbon::parse($izin->tgl_mulai));
+                        $overlapSelesai = $tglSelesai->copy()->min(\Carbon\Carbon::parse($izin->tgl_selesai));
+                        return $overlapMulai->diffInDaysFiltered(function ($date) {
+                            if ($date->dayOfWeek === 0 || $date->dayOfWeek === 6) return false;
+                            if (\App\Models\HariLibur::apakahLibur($date->toDateString())) return false;
+                            return true;
+                        }, $overlapSelesai->copy()->addSecond());
+                    });
                 }
 
                 return $user;
@@ -397,15 +421,33 @@ class KehadiranSenseiController extends Controller
                 }
                 return true;
             }, $tglSelesai->copy()->addSecond());
-            $kelasItem->jumlah_absen = \App\Models\AbsensiSensei::where('kelas_sensei_id', $kelasItem->id)
+            $absenQuery = \App\Models\AbsensiSensei::where('kelas_sensei_id', $kelasItem->id)
                 ->whereDate('tanggal', '>=', $tglMulai)
                 ->whereDate('tanggal', '<=', $tglSelesai)
                 ->whereRaw('DAYOFWEEK(tanggal) NOT IN (1, 7)')
                 ->get()
                 ->reject(function ($absen) {
                     return \App\Models\HariLibur::apakahLibur($absen->tanggal);
-                })
-                ->count();
+                });
+
+            $kelasItem->jumlah_absen = $absenQuery->count();
+            $kelasItem->jumlah_alpa = $absenQuery->where('status', 'ALPA')->count();
+
+            $izinSensei = \App\Models\Izin::where('user_id', $kelasItem->user_id)
+                ->where('status', 'DISETUJUI')
+                ->whereDate('tgl_mulai', '<=', $tglSelesai)
+                ->whereDate('tgl_selesai', '>=', $tglMulai)
+                ->get();
+
+            $kelasItem->jumlah_izin = $izinSensei->sum(function ($izin) use ($tglMulai, $tglSelesai) {
+                $overlapMulai = $tglMulai->copy()->max(\Carbon\Carbon::parse($izin->tgl_mulai));
+                $overlapSelesai = $tglSelesai->copy()->min(\Carbon\Carbon::parse($izin->tgl_selesai));
+                return $overlapMulai->diffInDaysFiltered(function ($date) {
+                    if ($date->dayOfWeek === 0 || $date->dayOfWeek === 6) return false;
+                    if (\App\Models\HariLibur::apakahLibur($date->toDateString())) return false;
+                    return true;
+                }, $overlapSelesai->copy()->addSecond());
+            });
 
             return $kelasItem;
         });
