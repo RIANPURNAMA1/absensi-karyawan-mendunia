@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class DatabaseInfoService
 {
@@ -11,6 +10,10 @@ class DatabaseInfoService
     {
         $schema = $this->getCompactSchema();
         $stats = $this->getDatabaseStats();
+        $shiftData = $this->getShiftData();
+        $divisiData = $this->getDivisiData();
+        $cabangData = $this->getCabangData();
+        $hariLiburData = $this->getHariLiburData();
         $karyawanData = $this->getKaryawanData();
         $kelasSenseiData = $this->getKelasSenseiData();
         $absensiSenseiToday = $this->getAbsensiSenseiTodayData();
@@ -25,6 +28,14 @@ DATABASE SCHEMA:
 
 STATISTIK SAAT INI:
 {$stats}
+
+{$shiftData}
+
+{$divisiData}
+
+{$cabangData}
+
+{$hariLiburData}
 
 {$karyawanData}
 
@@ -58,7 +69,7 @@ PENTING:
 - Jika tidak ada tindakan yang diminta, jangan sertakan blok [ACTION].
 - Lihat DATA PENDING di atas untuk mengetahui ID yang tersedia.
 
-Gunakan data di atas untuk menjawab pertanyaan user. Jika user menanyakan data spesifik yang tidak ada di statistik, jawab dengan informasi yang tersedia. Jika benar-benar tidak tahu, sampaikan dengan jujur.
+Gunakan data di atas untuk menjawab pertanyaan user. Jika user menanyakan data spesifik yang tidak ada, jawab dengan informasi yang tersedia. Jika benar-benar tidak tahu, sampaikan dengan jujur.
 PROMPT;
     }
 
@@ -137,6 +148,12 @@ PROMPT;
         } catch (\Exception $e) {}
 
         try {
+            $totalKelas = DB::table('kelas_sensei')->where('status', 'aktif')->count();
+            $totalKelasAll = DB::table('kelas_sensei')->count();
+            $stats[] = "Total kelas sensei: {$totalKelasAll} (Aktif: {$totalKelas})";
+        } catch (\Exception $e) {}
+
+        try {
             $totalProyek = DB::table('projects')->count();
             $stats[] = "Total proyek: {$totalProyek}";
         } catch (\Exception $e) {}
@@ -147,39 +164,87 @@ PROMPT;
         } catch (\Exception $e) {}
 
         try {
-            $totalKelas = DB::table('kelas_sensei')->count();
-            $stats[] = "Total kelas sensei: {$totalKelas}";
+            $totalAgenda = DB::table('agendas')->count();
+            $stats[] = "Total agenda: {$totalAgenda}";
         } catch (\Exception $e) {}
 
         return implode("\n", $stats);
     }
 
-    protected function getTodayData(): array
+    protected function getShiftData(): string
     {
-        $tanggal = now()->toDateString();
-        $lines = [];
-
         try {
-            $absenHariIni = DB::table('absensis')->where('tanggal', $tanggal)->count();
-            $absenMasuk = DB::table('absensis')->where('tanggal', $tanggal)->whereNotNull('jam_masuk')->count();
-            $absenPulang = DB::table('absensis')->where('tanggal', $tanggal)->whereNotNull('jam_keluar')->count();
-            $lines[] = "Absensi hari ini: {$absenHariIni} total, {$absenMasuk} sudah masuk, {$absenPulang} sudah pulang";
-        } catch (\Exception $e) {}
+            $shifts = DB::table('shifts')->orderBy('jam_masuk')->get();
+            if ($shifts->isEmpty()) return "DATA SHIFT: Tidak ada data";
 
+            $lines = ["DATA SHIFT ({$shifts->count()} shift):"];
+            foreach ($shifts as $s) {
+                $lines[] = "- ID:{$s->id} | {$s->nama_shift} ({$s->kode_shift}) | {$s->jam_masuk} - {$s->jam_pulang} | Toleransi:{$s->toleransi}menit | Status:{$s->status}";
+            }
+            return implode("\n", $lines);
+        } catch (\Exception $e) {
+            return "DATA SHIFT: Error mengambil data";
+        }
+    }
+
+    protected function getDivisiData(): string
+    {
         try {
-            $keterlambatan = DB::table('absensis')->where('tanggal', $tanggal)->where('status', 'TERLAMBAT')->count();
-            if ($keterlambatan > 0) $lines[] = "Karyawan terlambat hari ini: {$keterlambatan} orang";
-        } catch (\Exception $e) {}
+            $divisis = DB::table('divisis')
+                ->leftJoin('users', 'divisis.id', '=', 'users.divisi_id')
+                ->select('divisis.id', 'divisis.nama_divisi', 'divisis.kode_divisi', DB::raw('COUNT(users.id) as jumlah_karyawan'))
+                ->groupBy('divisis.id', 'divisis.nama_divisi', 'divisis.kode_divisi')
+                ->orderBy('divisis.nama_divisi')
+                ->get();
 
+            if ($divisis->isEmpty()) return "DATA DIVISI: Tidak ada data";
+
+            $lines = ["DATA DIVISI ({$divisis->count()} divisi):"];
+            foreach ($divisis as $d) {
+                $lines[] = "- ID:{$d->id} | {$d->nama_divisi} ({$d->kode_divisi}) | {$d->jumlah_karyawan} karyawan";
+            }
+            return implode("\n", $lines);
+        } catch (\Exception $e) {
+            return "DATA DIVISI: Error mengambil data";
+        }
+    }
+
+    protected function getCabangData(): string
+    {
         try {
-            $activeSessions = DB::table('absensi_khusus')->where('status', 'BERJALAN')->count();
-            if ($activeSessions > 0) $lines[] = "Sesi absensi khusus berjalan: {$activeSessions}";
-        } catch (\Exception $e) {}
+            $cabangs = DB::table('cabangs')->orderBy('nama_cabang')->get();
+            if ($cabangs->isEmpty()) return "DATA CABANG: Tidak ada data";
 
-        return [
-            'tanggal' => $tanggal,
-            'data' => $lines ? implode("\n", $lines) : "Tidak ada data khusus hari ini",
-        ];
+            $lines = ["DATA CABANG ({$cabangs->count()} cabang):"];
+            foreach ($cabangs as $c) {
+                $lines[] = "- ID:{$c->id} | {$c->nama_cabang} ({$c->kode_cabang}) | {$c->status_pusat} | Alamat:{$c->alamat}";
+            }
+            return implode("\n", $lines);
+        } catch (\Exception $e) {
+            return "DATA CABANG: Error mengambil data";
+        }
+    }
+
+    protected function getHariLiburData(): string
+    {
+        try {
+            $today = now()->toDateString();
+            $hariLibur = DB::table('hari_liburs')
+                ->where('tanggal', '>=', today()->subMonth())
+                ->orderBy('tanggal')
+                ->get();
+
+            if ($hariLibur->isEmpty()) return "DATA HARI LIBUR: Tidak ada hari libur";
+
+            $lines = ["DATA HARI LIBUR:"];
+            foreach ($hariLibur as $h) {
+                $status = $h->tanggal === $today ? ' (HARI INI)' : '';
+                $lines[] = "- {$h->tanggal}: {$h->keterangan}{$status}";
+            }
+            return implode("\n", $lines);
+        } catch (\Exception $e) {
+            return "DATA HARI LIBUR: Error mengambil data";
+        }
     }
 
     protected function getKaryawanData(): string
@@ -191,7 +256,6 @@ PROMPT;
                     'users.id',
                     'users.name',
                     'users.nip',
-                    'users.nik',
                     'users.jabatan',
                     'users.role',
                     'users.status',
@@ -204,14 +268,12 @@ PROMPT;
                 ->orderBy('users.name')
                 ->get();
 
-            if ($users->isEmpty()) {
-                return "DATA KARYAWAN: Tidak ada data";
-            }
+            if ($users->isEmpty()) return "DATA KARYAWAN: Tidak ada data";
 
             $lines = ["DATA KARYAWAN ({$users->count()} orang):"];
             foreach ($users as $u) {
                 $divisi = $u->nama_divisi ?? '-';
-                $lines[] = "- ID:{$u->id} | {$u->name} | NIP:{$u->nip} | {$u->jabatan} | {$divisi} | {$u->role} | {$u->status} | {$u->no_hp} | Masuk:{$u->tanggal_masuk} | Status Kerja:{$u->status_kerja}";
+                $lines[] = "- ID:{$u->id} | {$u->name} | NIP:{$u->nip} | {$u->jabatan} | {$divisi} | {$u->role} | {$u->status} | HP:{$u->no_hp} | Masuk:{$u->tanggal_masuk} | Status Kerja:{$u->status_kerja}";
             }
             return implode("\n", $lines);
         } catch (\Exception $e) {
@@ -236,13 +298,34 @@ PROMPT;
                 ->orderBy('kelas_sensei.tanggal_mulai', 'desc')
                 ->get();
 
-            if ($kelas->isEmpty()) {
-                return "DATA KELAS SENSEI: Tidak ada data";
-            }
+            if ($kelas->isEmpty()) return "DATA KELAS SENSEI: Tidak ada data";
 
             $lines = ["DATA KELAS SENSEI ({$kelas->count()} kelas):"];
             foreach ($kelas as $k) {
-                $lines[] = "- ID:{$k->id} | {$k->nama_kelas} | Level:{$k->level} | Sensei:{$k->nama_sensei} | {$k->tanggal_mulai} s/d {$k->tanggal_selesai} | Status:{$k->status}";
+                $absenCount = DB::table('absensi_sensei')
+                    ->where('kelas_sensei_id', $k->id)
+                    ->whereBetween('tanggal', [$k->tanggal_mulai, $k->tanggal_selesai])
+                    ->count();
+
+                $alpaCount = DB::table('absensi_sensei')
+                    ->where('kelas_sensei_id', $k->id)
+                    ->whereBetween('tanggal', [$k->tanggal_mulai, $k->tanggal_selesai])
+                    ->where('status', 'ALPA')
+                    ->count();
+
+                $hadirCount = DB::table('absensi_sensei')
+                    ->where('kelas_sensei_id', $k->id)
+                    ->whereBetween('tanggal', [$k->tanggal_mulai, $k->tanggal_selesai])
+                    ->where('status', 'HADIR')
+                    ->count();
+
+                $terlambatCount = DB::table('absensi_sensei')
+                    ->where('kelas_sensei_id', $k->id)
+                    ->whereBetween('tanggal', [$k->tanggal_mulai, $k->tanggal_selesai])
+                    ->where('status', 'TERLAMBAT')
+                    ->count();
+
+                $lines[] = "- ID:{$k->id} | {$k->nama_kelas} | Level:{$k->level} | Sensei:{$k->nama_sensei} | {$k->tanggal_mulai} s/d {$k->tanggal_selesai} | Status:{$k->status} | Absen:{$absenCount} (Hadir:{$hadirCount}, Terlambat:{$terlambatCount}, Alpa:{$alpaCount})";
             }
             return implode("\n", $lines);
         } catch (\Exception $e) {
@@ -277,12 +360,51 @@ PROMPT;
             $terlambat = $absensi->where('status', 'TERLAMBAT')->count();
             $lines = ["ABSENSI SENSEI HARI INI ({$tanggal}): Total {$absensi->count()} (Hadir:{$hadir}, Terlambat:{$terlambat})"];
             foreach ($absensi as $a) {
-                $lines[] = "- ID:{$a->id} | {$a->nama_sensei} | Kelas:{$a->nama_kelas} | Masuk:{$a->jam_masuk} | Keluar:{$a->jam_keluar} | Status:{$a->status}";
+                $keluar = $a->jam_keluar ?? 'belum pulang';
+                $lines[] = "- ID:{$a->id} | {$a->nama_sensei} | Kelas:{$a->nama_kelas} | Masuk:{$a->jam_masuk} | Keluar:{$keluar} | Status:{$a->status}";
             }
             return implode("\n", $lines);
         } catch (\Exception $e) {
             return "ABSENSI SENSEI HARI INI: Error mengambil data";
         }
+    }
+
+    protected function getTodayData(): array
+    {
+        $tanggal = now()->toDateString();
+        $lines = [];
+
+        try {
+            $absenHariIni = DB::table('absensis')->where('tanggal', $tanggal)->count();
+            $absenMasuk = DB::table('absensis')->where('tanggal', $tanggal)->whereNotNull('jam_masuk')->count();
+            $absenPulang = DB::table('absensis')->where('tanggal', $tanggal)->whereNotNull('jam_keluar')->count();
+            $lines[] = "Absensi karyawan hari ini: {$absenHariIni} total, {$absenMasuk} sudah masuk, {$absenPulang} sudah pulang";
+        } catch (\Exception $e) {}
+
+        try {
+            $keterlambatan = DB::table('absensis')
+                ->join('users', 'absensis.user_id', '=', 'users.id')
+                ->where('absensis.tanggal', $tanggal)
+                ->where('absensis.status', 'TERLAMBAT')
+                ->select('users.name', 'absensis.jam_masuk')
+                ->get();
+            if ($keterlambatan->isNotEmpty()) {
+                $lines[] = "Karyawan terlambat hari ini ({$keterlambatan->count()} orang):";
+                foreach ($keterlambatan as $k) {
+                    $lines[] = "  - {$k->name} (masuk: {$k->jam_masuk})";
+                }
+            }
+        } catch (\Exception $e) {}
+
+        try {
+            $activeSessions = DB::table('absensi_khusus')->where('status', 'BERJALAN')->count();
+            if ($activeSessions > 0) $lines[] = "Sesi absensi khusus berjalan: {$activeSessions}";
+        } catch (\Exception $e) {}
+
+        return [
+            'tanggal' => $tanggal,
+            'data' => $lines ? implode("\n", $lines) : "Tidak ada data khusus hari ini",
+        ];
     }
 
     protected function getPendingData(): string
