@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 class GroqService
 {
-    protected string $apiKey;
+    protected ?string $apiKey = null;
     protected string $apiUrl;
     protected string $model;
 

@@ -11,6 +11,7 @@ class DatabaseInfoService
     {
         $schema = $this->getCompactSchema();
         $stats = $this->getDatabaseStats();
+        $karyawanData = $this->getKaryawanData();
         $todayData = $this->getTodayData();
         $pendingData = $this->getPendingData();
 
@@ -22,6 +23,8 @@ DATABASE SCHEMA:
 
 STATISTIK SAAT INI:
 {$stats}
+
+{$karyawanData}
 
 DATA HARI INI ({$todayData['tanggal']}):
 {$todayData['data']}
@@ -171,6 +174,43 @@ PROMPT;
             'tanggal' => $tanggal,
             'data' => $lines ? implode("\n", $lines) : "Tidak ada data khusus hari ini",
         ];
+    }
+
+    protected function getKaryawanData(): string
+    {
+        try {
+            $users = DB::table('users')
+                ->leftJoin('divisis', 'users.divisi_id', '=', 'divisis.id')
+                ->select(
+                    'users.id',
+                    'users.name',
+                    'users.nip',
+                    'users.nik',
+                    'users.jabatan',
+                    'users.role',
+                    'users.status',
+                    'users.no_hp',
+                    'users.tanggal_masuk',
+                    'users.status_kerja',
+                    'users.jenis_kelamin',
+                    'divisis.nama_divisi'
+                )
+                ->orderBy('users.name')
+                ->get();
+
+            if ($users->isEmpty()) {
+                return "DATA KARYAWAN: Tidak ada data";
+            }
+
+            $lines = ["DATA KARYAWAN ({$users->count()} orang):"];
+            foreach ($users as $u) {
+                $divisi = $u->nama_divisi ?? '-';
+                $lines[] = "- ID:{$u->id} | {$u->name} | NIP:{$u->nip} | {$u->jabatan} | {$divisi} | {$u->role} | {$u->status} | {$u->no_hp} | Masuk:{$u->tanggal_masuk} | Status Kerja:{$u->status_kerja}";
+            }
+            return implode("\n", $lines);
+        } catch (\Exception $e) {
+            return "DATA KARYAWAN: Error mengambil data";
+        }
     }
 
     protected function getPendingData(): string
