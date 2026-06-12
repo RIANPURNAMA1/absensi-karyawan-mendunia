@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Izin;
 use App\Models\IzinApproval;
+use App\Models\WaIzinApproval;
 use App\Services\IzinApprovalService as ServicesIzinApprovalService;
+use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use IzinApprovalService;
 
@@ -169,6 +172,37 @@ class IzinController extends Controller
             }
 
             $izin->save();
+
+            try {
+                $managerPhone = '6285773141623';
+                $userName = $izin->user->name;
+                $tglMulai = \Carbon\Carbon::parse($izin->tgl_mulai)->translatedFormat('d F Y');
+                $tglSelesai = \Carbon\Carbon::parse($izin->tgl_selesai)->translatedFormat('d F Y');
+                $periode = $izin->tgl_mulai === $izin->tgl_selesai
+                    ? $tglMulai
+                    : "{$tglMulai} s/d {$tglSelesai}";
+
+                WaIzinApproval::create([
+                    'izin_id' => $izin->id,
+                    'manager_phone' => $managerPhone,
+                    'status' => 'PENDING',
+                ]);
+
+                $waMessage = "📋 *PENGAJUAN IZIN KARYAWAN*\n\n"
+                    . "Ada pengajuan izin baru:\n\n"
+                    . "👤 *Nama:* {$userName}\n"
+                    . "📋 *Jenis:* {$izin->jenis_izin}\n"
+                    . "📅 *Tanggal:* {$periode}\n"
+                    . "📝 *Alasan:* {$izin->alasan}\n\n"
+                    . "Apakah Anda menyetujui izin ini?\n\n"
+                    . "Balas: *IYA* untuk menyetujui ✅\n"
+                    . "Balas: *TIDAK* untuk menolak ❌";
+
+                $wa = app(WhatsAppService::class);
+                $wa->sendMessage($managerPhone, $waMessage);
+            } catch (\Exception $waErr) {
+                Log::error('Gagal kirim WA izin: ' . $waErr->getMessage());
+            }
 
             if ($request->ajax()) {
                 return response()->json([

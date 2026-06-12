@@ -40,4 +40,8 @@ return [
         'api_url' => env('STARSAPI_URL', 'https://api.starsender.online/api/send'),
     ],
 
+    'groq' => [
+        'api_key' => env('GROQ_API_KEY'),
+    ],
+
 ];

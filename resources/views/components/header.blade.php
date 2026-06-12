@@ -72,6 +72,11 @@
                 </div>
                 @endif
 
+                <a href="/ai-chat" class="header-link {{ request()->is('ai-chat') ? 'active' : '' }}">
+                    <i class="ph ph-robot"></i>
+                    <span>AI Chat</span>
+                </a>
+
                 <div class="header-dropdown">
                     <a href="#" class="header-link dropdown-trigger">
                         <i class="ph ph-gear"></i>
@@ -220,6 +225,10 @@
             </div>
         </div>
         @endif
+
+        <a href="/ai-chat" class="mobile-link {{ request()->is('ai-chat*') ? 'active' : '' }}">
+            <i class="ph ph-robot"></i>AI Chat
+        </a>
 
         <a href="/pengaturan-shift" class="mobile-link {{ request()->is('pengaturan-shift*') ? 'active' : '' }}">
             <i class="ph ph-timer"></i>Pengaturan Shift

@@ -293,6 +293,7 @@ Route::middleware('auth')->group(function () {
 // hari libur
 use App\Http\Controllers\HariLiburController;
 use App\Http\Controllers\ProjectListsController;
+use App\Http\Controllers\AiChatController;
 
 Route::get('/hari-libur', [HariLiburController::class, 'index'])->name('hari-libur.index');
 Route::post('/hari-libur', [HariLiburController::class, 'store'])->name('hari-libur.store');
@@ -324,6 +325,11 @@ Route::middleware(['auth'])->group(function () {
 
 
 
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/ai-chat', [AiChatController::class, 'index'])->name('ai.chat');
+    Route::post('/ai-chat/send', [AiChatController::class, 'send'])->name('ai.chat.send');
+});
 
 Route::get('/test-wa/{status}', function($status) {
     $user = \App\Models\User::whereNotNull('no_hp')->first();

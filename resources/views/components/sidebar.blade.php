@@ -220,6 +220,17 @@
              </li>
           @endif
 
+          <!-- AI ASSISTANT -->
+          <li class="pc-item pc-caption">
+              <label>AI</label>
+          </li>
+          <li class="pc-item">
+              <a href="/ai-chat" class="pc-link">
+                  <span class="pc-micon"><i class="ph ph-robot"></i></span>
+                  <span class="pc-mtext">AI Assistant Chat</span>
+              </a>
+          </li>
+
           <!-- PENGATURAN -->
           <li class="pc-item pc-caption">
               <label>Pengaturan</label>
