@@ -160,6 +160,12 @@
                       </a>
                   </li>
                   <li class="pc-item">
+                      <a href="/batches" class="pc-link">
+                          <span class="pc-micon"><i class="ph ph-stack"></i></span>
+                          <span class="pc-mtext">Batch</span>
+                      </a>
+                  </li>
+                  <li class="pc-item">
                       <a href="/guru" class="pc-link">
                           <span class="pc-micon"><i class="ph ph-chalkboard-teacher"></i></span>
                           <span class="pc-mtext">Data Guru</span>

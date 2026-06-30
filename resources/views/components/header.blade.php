@@ -56,22 +56,6 @@
                     $bolehPenilaianNav = in_array($userNav->divisi_id, $penilaianDivisiIdsNav) || $userNav->role !== 'KARYAWAN';
                 @endphp
 
-                @if($bolehPenilaianNav)
-                <div class="header-dropdown">
-                    <a href="#" class="header-link dropdown-trigger">
-                        <i class="ph ph-graduation-cap"></i>
-                        <span>Penilaian</span>
-                        <i class="ph ph-caret-down dropdown-arrow"></i>
-                    </a>
-                    <div class="dropdown-menu-custom">
-                        <a href="{{ $userNav->role !== 'KARYAWAN' ? '/penilaian' : '/penilaian-karyawan' }}" class="dropdown-item-custom {{ request()->is('penilaian*') ? 'active' : '' }}"><i class="ph ph-notebook"></i>Penilaian Siswa</a>
-                        @if($userNav->role !== 'KARYAWAN')
-                        <a href="/pengaturan-penilaian" class="dropdown-item-custom {{ request()->is('pengaturan-penilaian') ? 'active' : '' }}"><i class="ph ph-sliders"></i>Pengaturan Penilaian</a>
-                        @endif
-                    </div>
-                </div>
-                @endif
-
                 <a href="/ai-chat" class="header-link {{ request()->is('ai-chat') ? 'active' : '' }}">
                     <i class="ph ph-robot"></i>
                     <span>AI Chat</span>
@@ -86,9 +70,16 @@
                     <div class="dropdown-menu-custom">
                         <a href="/siswa" class="dropdown-item-custom {{ request()->is('siswa*') ? 'active' : '' }}"><i class="ph ph-users"></i>Data Siswa</a>
                         <a href="/kelas" class="dropdown-item-custom {{ request()->is('kelas*') ? 'active' : '' }}"><i class="ph ph-book-open"></i>Kelas</a>
+                        <a href="/batches" class="dropdown-item-custom {{ request()->is('batches*') ? 'active' : '' }}"><i class="ph ph-stack"></i>Batch</a>
                         <a href="/guru" class="dropdown-item-custom {{ request()->is('guru*') ? 'active' : '' }}"><i class="ph ph-chalkboard-teacher"></i>Data Guru</a>
                         <a href="/absensi-siswa" class="dropdown-item-custom {{ request()->is('absensi-siswa*') ? 'active' : '' }}"><i class="ph ph-clipboard-text"></i>Absensi Siswa</a>
                         <a href="/rekap-siswa" class="dropdown-item-custom {{ request()->is('rekap-siswa*') ? 'active' : '' }}"><i class="ph ph-chart-bar"></i>Rekap Siswa</a>
+                        @if($bolehPenilaianNav)
+                        <a href="{{ $userNav->role !== 'KARYAWAN' ? '/penilaian' : '/penilaian-karyawan' }}" class="dropdown-item-custom {{ request()->is('penilaian*') ? 'active' : '' }}"><i class="ph ph-notebook"></i>Penilaian Siswa</a>
+                        @if($userNav->role !== 'KARYAWAN')
+                        <a href="/pengaturan-penilaian" class="dropdown-item-custom {{ request()->is('pengaturan-penilaian') ? 'active' : '' }}"><i class="ph ph-sliders"></i>Pengaturan Penilaian</a>
+                        @endif
+                        @endif
                     </div>
                 </div>
 
@@ -227,20 +218,6 @@
             </div>
         </div>
 
-        @if($bolehPenilaianNav)
-        <div class="mobile-dropdown">
-            <a href="#" class="mobile-link mob-dropdown-trigger">
-                <i class="ph ph-graduation-cap"></i>Penilaian <i class="ph ph-caret-down ms-auto"></i>
-            </a>
-            <div class="mobile-submenu">
-                <a href="{{ $userNav->role !== 'KARYAWAN' ? '/penilaian' : '/penilaian-karyawan' }}" class="mobile-sub-link {{ request()->is('penilaian*') ? 'active' : '' }}">Penilaian Siswa</a>
-                @if($userNav->role !== 'KARYAWAN')
-                <a href="/pengaturan-penilaian" class="mobile-sub-link {{ request()->is('pengaturan-penilaian') ? 'active' : '' }}">Pengaturan Penilaian</a>
-                @endif
-            </div>
-        </div>
-        @endif
-
         <div class="mobile-dropdown">
             <a href="#" class="mobile-link mob-dropdown-trigger">
                 <i class="ph ph-student"></i>Siswa <i class="ph ph-caret-down ms-auto"></i>
@@ -248,9 +225,16 @@
             <div class="mobile-submenu">
                 <a href="/siswa" class="mobile-sub-link {{ request()->is('siswa*') ? 'active' : '' }}">Data Siswa</a>
                 <a href="/kelas" class="mobile-sub-link {{ request()->is('kelas*') ? 'active' : '' }}">Kelas</a>
+                <a href="/batches" class="mobile-sub-link {{ request()->is('batches*') ? 'active' : '' }}">Batch</a>
                 <a href="/guru" class="mobile-sub-link {{ request()->is('guru*') ? 'active' : '' }}">Data Guru</a>
                 <a href="/absensi-siswa" class="mobile-sub-link {{ request()->is('absensi-siswa*') ? 'active' : '' }}">Absensi Siswa</a>
                 <a href="/rekap-siswa" class="mobile-sub-link {{ request()->is('rekap-siswa*') ? 'active' : '' }}">Rekap Siswa</a>
+                @if($bolehPenilaianNav)
+                <a href="{{ $userNav->role !== 'KARYAWAN' ? '/penilaian' : '/penilaian-karyawan' }}" class="mobile-sub-link {{ request()->is('penilaian*') ? 'active' : '' }}">Penilaian Siswa</a>
+                @if($userNav->role !== 'KARYAWAN')
+                <a href="/pengaturan-penilaian" class="mobile-sub-link {{ request()->is('pengaturan-penilaian') ? 'active' : '' }}">Pengaturan Penilaian</a>
+                @endif
+                @endif
             </div>
         </div>
 

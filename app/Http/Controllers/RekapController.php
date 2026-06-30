@@ -18,9 +18,12 @@ class RekapController extends Controller
         $cabang_id = $request->cabang_id;
         $divisi_id = $request->divisi_id;
 
+        $hiddenDivisi = session('hidden_divisi_ids', []);
+
         $rekap = User::where('role', 'KARYAWAN')->where('status', 'AKTIF')
             ->when($cabang_id, fn ($q) => $q->whereJsonContains('cabang_ids', (string) $cabang_id))
             ->when($divisi_id, fn ($q) => $q->where('divisi_id', $divisi_id))
+            ->when($hiddenDivisi, fn ($q) => $q->whereNotIn('divisi_id', $hiddenDivisi))
             ->with([
                 'divisi',
                 'absensi' => fn ($q) => $q->whereBetween('tanggal', [$start_date, $end_date]),
@@ -95,7 +98,19 @@ class RekapController extends Controller
             });
 
         return view('admin.rekap.index', compact(
-            'rekap', 'start_date', 'end_date', 'list_cabang', 'list_divisi'
+            'rekap', 'start_date', 'end_date', 'list_cabang', 'list_divisi', 'hiddenDivisi'
         ));
+    }
+
+    public function getHiddenDivisi()
+    {
+        return response()->json(['ids' => session('hidden_divisi_ids', [])]);
+    }
+
+    public function setHiddenDivisi(Request $request)
+    {
+        $request->validate(['ids' => 'array']);
+        session(['hidden_divisi_ids' => $request->ids ?? []]);
+        return response()->json(['status' => 'ok']);
     }
 }

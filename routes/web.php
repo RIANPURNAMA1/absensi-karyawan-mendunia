@@ -24,6 +24,7 @@ use App\Http\Controllers\RekapKehadiranSenseiController;
 use App\Http\Controllers\SenseiController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\ShiftJadwalController;
+use App\Http\Controllers\BatchController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -116,6 +117,13 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::delete('/kelas/{id}', [\App\Http\Controllers\KelasController::class, 'destroy'])->name('kelas.destroy');
     Route::post('/kelas/{id}/toggle-status', [\App\Http\Controllers\KelasController::class, 'toggleStatus']);
 
+    // Batch Management
+    Route::get('/batches', [BatchController::class, 'index'])->name('batches.index');
+    Route::post('/batches', [BatchController::class, 'store'])->name('batches.store');
+    Route::put('/batches/{id}', [BatchController::class, 'update'])->name('batches.update');
+    Route::delete('/batches/{id}', [BatchController::class, 'destroy'])->name('batches.destroy');
+    Route::post('/batches/{id}/toggle-status', [BatchController::class, 'toggleStatus']);
+
     // Guru Management
     Route::get('/guru', [\App\Http\Controllers\GuruController::class, 'index'])->name('guru.index');
     Route::post('/guru', [\App\Http\Controllers\GuruController::class, 'store'])->name('guru.store');
@@ -127,6 +135,8 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::get('/data-kehadiran-khusus', [KehadiranKhususController::class, 'index']);
     Route::post('/admin/kehadiran-khusus/update-status', [KehadiranKhususController::class, 'updateStatus']);
     Route::get('/rekap-absensi', [RekapController::class, 'rekap'])->name('absensi.rekap');
+    Route::get('/rekap-absensi/hidden-divisi', [RekapController::class, 'getHiddenDivisi']);
+    Route::post('/rekap-absensi/hidden-divisi', [RekapController::class, 'setHiddenDivisi']);
     Route::get('/rekap-jadwal-shift', [RekapJadwalShiftController::class, 'index']);
     Route::get('/rekap-jadwal-shift/{userId}', [RekapJadwalShiftController::class, 'getData']);
     Route::post('/rekap-jadwal-shift/update-status', [RekapJadwalShiftController::class, 'updateStatus']);
@@ -247,6 +257,7 @@ Route::middleware(['auth', 'role:KARYAWAN,SISWA,GURU'])->group(function () {
     Route::get('/absensi/riwayat-json', [AbsensiController::class, 'riwayatJson'])->name('absensi.riwayat.json');
     Route::get('/absensi/detail/{tanggal}', [AbsensiController::class, 'detail'])->name('absensi.detail');
     Route::get('/absensi/detail-sensei/{tanggal}/{kelasId}', [AbsensiController::class, 'detailSensei'])->name('absensi.detailSensei');
+    Route::get('/absensi/riwayat-kelas/{kelasSensei}', [AbsensiController::class, 'riwayatKelas'])->name('absensi.riwayat-kelas');
 
     // Scan QR untuk absensi siswa
     Route::get('/absensi/scan', [AbsensiController::class, 'scanQr'])->name('absensi.scan');
@@ -361,6 +372,10 @@ Route::middleware(['auth', 'role:HR,MANAGER,SISWA,GURU'])->group(function () {
     Route::delete('/siswa/{id}', [\App\Http\Controllers\SiswaController::class, 'destroy'])->name('siswa.destroy');
     Route::post('/siswa/{id}/toggle-status', [\App\Http\Controllers\SiswaController::class, 'toggleStatus']);
     Route::post('/siswa/{id}/buatkan-akun', [\App\Http\Controllers\SiswaController::class, 'buatkanAkun']);
+    Route::post('/siswa/import', [\App\Http\Controllers\SiswaController::class, 'import'])->name('siswa.import');
+    Route::post('/siswa/import-ai', [\App\Http\Controllers\SiswaController::class, 'importAi'])->name('siswa.import-ai');
+    Route::post('/siswa/bulk-update-shift', [\App\Http\Controllers\SiswaController::class, 'bulkUpdateShift'])->name('siswa.bulk-update-shift');
+    Route::post('/siswa/bulk-delete', [\App\Http\Controllers\SiswaController::class, 'bulkDelete'])->name('siswa.bulk-delete');
 });
 
 Route::middleware(['auth', 'role:HR,MANAGER,SISWA,GURU'])->group(function () {
@@ -372,6 +387,9 @@ Route::middleware(['auth', 'role:HR,MANAGER,SISWA,GURU'])->group(function () {
     Route::get('/absensi-siswa/cek', [\App\Http\Controllers\AbsensiSiswaController::class, 'cekAbsensiSiswa']);
 
     Route::get('/rekap-siswa', [\App\Http\Controllers\AbsensiSiswaController::class, 'rekap'])->name('rekap-siswa.index');
+    Route::get('/rekap-siswa/export-excel', [\App\Http\Controllers\AbsensiSiswaController::class, 'exportExcel'])->name('rekap-siswa.export-excel');
+    Route::get('/rekap-siswa/export-pdf', [\App\Http\Controllers\AbsensiSiswaController::class, 'exportPdf'])->name('rekap-siswa.export-pdf');
+    Route::get('/rekap-siswa/{siswa}/kalender-json', [\App\Http\Controllers\AbsensiSiswaController::class, 'kalenderJson'])->name('rekap-siswa.kalender-json');
 });
 
 Route::get('/test-wa/{status}', function($status) {

@@ -5,12 +5,12 @@
 <div class="container-fluid px-4 py-4">
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
-            <h5 class="mb-0" style="font-weight: 700; font-size: 16px;">Data Kelas</h5>
-            <small class="text-muted">Master data kelas untuk siswa</small>
+            <h5 class="mb-0" style="font-weight: 700; font-size: 16px;">Data Batch</h5>
+            <small class="text-muted">Master data angkatan/batch untuk siswa</small>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahKelas">
-                <i class="ph ph-plus-circle me-1"></i> Tambah Kelas
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahBatch">
+                <i class="ph ph-plus-circle me-1"></i> Tambah Batch
             </button>
         </div>
     </div>
@@ -19,53 +19,53 @@
         <div class="p-3 border-bottom" style="border-bottom-color: #f0f0f0 !important;">
             <div class="d-flex align-items-center justify-content-between">
                 <span class="fw-semibold" style="font-size: 13px;"></span>
-                <span class="text-muted" style="font-size: 11px;">{{ $kelas->count() }} data</span>
+                <span class="text-muted" style="font-size: 11px;">{{ $batches->count() }} data</span>
             </div>
         </div>
         <div class="table-responsive">
-            <table id="kelasTable" class="table table-hover text-nowrap mb-0">
+            <table id="batchTable" class="table table-hover text-nowrap mb-0">
                 <thead>
                     <tr>
                         <th scope="col" width="5%">No</th>
-                        <th scope="col">Nama Kelas</th>
+                        <th scope="col">Nama Batch</th>
                         <th scope="col" width="10%" class="text-center">Status</th>
                         <th scope="col" width="10%" class="text-center">Jumlah Siswa</th>
                         <th scope="col" width="15%" class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($kelas as $k)
+                    @foreach ($batches as $b)
                         <tr>
                             <td>{{ $loop->iteration }}</td>
                             <td>
-                                <span class="fw-medium" style="font-size: 13px;">{{ $k->nama_kelas }}</span>
+                                <span class="fw-medium" style="font-size: 13px;">{{ $b->nama_batch }}</span>
                             </td>
                             <td class="text-center">
-                                @if ($k->status === 'AKTIF')
+                                @if ($b->status === 'AKTIF')
                                     <span class="badge bg-success">AKTIF</span>
                                 @else
                                     <span class="badge bg-secondary">NONAKTIF</span>
                                 @endif
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-info">{{ $k->siswas()->count() }}</span>
+                                <span class="badge bg-info">{{ $b->siswas()->count() }}</span>
                             </td>
                             <td class="text-center">
                                 <div class="d-flex gap-1 justify-content-center">
-                                    <button class="btn btn-sm btn-outline-warning edit-kelas"
-                                        data-id="{{ $k->id }}"
-                                        data-nama="{{ $k->nama_kelas }}">
+                                    <button class="btn btn-sm btn-outline-warning edit-batch"
+                                        data-id="{{ $b->id }}"
+                                        data-nama="{{ $b->nama_batch }}">
                                         <i class="ph ph-pencil-simple"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger hapus-kelas"
-                                        data-id="{{ $k->id }}"
-                                        data-nama="{{ $k->nama_kelas }}">
+                                    <button class="btn btn-sm btn-outline-danger hapus-batch"
+                                        data-id="{{ $b->id }}"
+                                        data-nama="{{ $b->nama_batch }}">
                                         <i class="ph ph-trash"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-secondary toggle-status-kelas"
-                                        data-id="{{ $k->id }}"
-                                        data-nama="{{ $k->nama_kelas }}"
-                                        data-status="{{ $k->status }}">
+                                    <button class="btn btn-sm btn-outline-secondary toggle-status-batch"
+                                        data-id="{{ $b->id }}"
+                                        data-nama="{{ $b->nama_batch }}"
+                                        data-status="{{ $b->status }}">
                                         <i class="ph ph-toggle"></i>
                                     </button>
                                 </div>
@@ -79,19 +79,19 @@
 </div>
 
 <!-- Modal Tambah -->
-<div class="modal fade" id="modalTambahKelas" tabindex="-1">
+<div class="modal fade" id="modalTambahBatch" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="formTambahKelas">
+            <form id="formTambahBatch">
                 @csrf
                 <div class="modal-header">
-                    <h6 class="modal-title">Tambah Kelas</h6>
+                    <h6 class="modal-title">Tambah Batch</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Nama Kelas <span class="text-danger">*</span></label>
-                        <input type="text" name="nama_kelas" class="form-control form-control-sm" placeholder="Contoh: XII IPA 1" required>
+                        <label class="form-label">Nama Batch <span class="text-danger">*</span></label>
+                        <input type="text" name="nama_batch" class="form-control form-control-sm" placeholder="Contoh: Batch 2025" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -104,21 +104,21 @@
 </div>
 
 <!-- Modal Edit -->
-<div class="modal fade" id="modalEditKelas" tabindex="-1">
+<div class="modal fade" id="modalEditBatch" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="formEditKelas">
+            <form id="formEditBatch">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="id" id="edit_id">
                 <div class="modal-header">
-                    <h6 class="modal-title">Edit Kelas</h6>
+                    <h6 class="modal-title">Edit Batch</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Nama Kelas <span class="text-danger">*</span></label>
-                        <input type="text" name="nama_kelas" id="edit_nama_kelas" class="form-control form-control-sm" required>
+                        <label class="form-label">Nama Batch <span class="text-danger">*</span></label>
+                        <input type="text" name="nama_batch" id="edit_nama_batch" class="form-control form-control-sm" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -137,7 +137,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function() {
-    $('#kelasTable').DataTable({
+    $('#batchTable').DataTable({
         paging: true,
         pageLength: 25,
         ordering: true,
@@ -146,19 +146,19 @@ $(document).ready(function() {
         lengthChange: false,
         columnDefs: [{ orderable: false, targets: [4] }],
         language: {
-            emptyTable: 'Belum ada data kelas'
+            emptyTable: 'Belum ada data batch'
         }
     });
 
-    $('#formTambahKelas').on('submit', function(e) {
+    $('#formTambahBatch').on('submit', function(e) {
         e.preventDefault();
         $.ajax({
-            url: '{{ route("kelas.store") }}',
+            url: '{{ route("batches.store") }}',
             type: 'POST',
             data: $(this).serialize(),
             success: function(res) {
                 Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message, timer: 1500, showConfirmButton: false });
-                $('#modalTambahKelas').modal('hide');
+                $('#modalTambahBatch').modal('hide');
                 setTimeout(() => location.reload(), 1500);
             },
             error: function(xhr) {
@@ -168,23 +168,23 @@ $(document).ready(function() {
         });
     });
 
-    $(document).on('click', '.edit-kelas', function() {
+    $(document).on('click', '.edit-batch', function() {
         var btn = $(this);
         $('#edit_id').val(btn.data('id'));
-        $('#edit_nama_kelas').val(btn.data('nama'));
-        $('#modalEditKelas').modal('show');
+        $('#edit_nama_batch').val(btn.data('nama'));
+        $('#modalEditBatch').modal('show');
     });
 
-    $('#formEditKelas').on('submit', function(e) {
+    $('#formEditBatch').on('submit', function(e) {
         e.preventDefault();
         var id = $('#edit_id').val();
         $.ajax({
-            url: '/kelas/' + id,
+            url: '/batches/' + id,
             type: 'POST',
             data: $(this).serialize() + '&_method=PUT',
             success: function(res) {
                 Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message, timer: 1500, showConfirmButton: false });
-                $('#modalEditKelas').modal('hide');
+                $('#modalEditBatch').modal('hide');
                 setTimeout(() => location.reload(), 1500);
             },
             error: function(xhr) {
@@ -194,12 +194,12 @@ $(document).ready(function() {
         });
     });
 
-    $(document).on('click', '.hapus-kelas', function() {
+    $(document).on('click', '.hapus-batch', function() {
         var id = $(this).data('id');
         var nama = $(this).data('nama');
         Swal.fire({
             title: 'Hapus ' + nama + '?',
-            text: 'Data kelas akan dihapus permanen',
+            text: 'Data batch akan dihapus permanen',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -208,7 +208,7 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '/kelas/' + id,
+                    url: '/batches/' + id,
                     type: 'DELETE',
                     data: { _token: '{{ csrf_token() }}' },
                     success: function(res) {
@@ -216,7 +216,7 @@ $(document).ready(function() {
                         setTimeout(() => location.reload(), 1500);
                     },
                     error: function(xhr) {
-                        var msg = xhr.responseJSON?.message || 'Gagal menghapus kelas';
+                        var msg = xhr.responseJSON?.message || 'Gagal menghapus batch';
                         Swal.fire({ icon: 'error', title: 'Gagal', text: msg });
                     }
                 });
@@ -224,7 +224,7 @@ $(document).ready(function() {
         });
     });
 
-    $(document).on('click', '.toggle-status-kelas', function() {
+    $(document).on('click', '.toggle-status-batch', function() {
         var id = $(this).data('id');
         var nama = $(this).data('nama');
         var status = $(this).data('status');
@@ -239,7 +239,7 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '/kelas/' + id + '/toggle-status',
+                    url: '/batches/' + id + '/toggle-status',
                     type: 'POST',
                     data: { _token: '{{ csrf_token() }}' },
                     success: function(res) {

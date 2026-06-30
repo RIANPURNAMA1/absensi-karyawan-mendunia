@@ -11,7 +11,7 @@
                         <i data-lucide="graduation-cap" class="w-6 h-6 text-blue-600"></i>
                     </div>
                     <div>
-                        <h2 class="text-lg font-black text-gray-900">Absen Sensei</h2>
+                        <h2 class="text-lg font-black text-gray-900">Absen Guru</h2>
                         <p class="text-[10px] text-gray-400">Isi data kelas yang diajarkan</p>
                     </div>
                 </div>
@@ -29,6 +29,19 @@
                         required>
                 </div>
 
+                <!-- Batch -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Batch</label>
+                    <select name="batch_id" 
+                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                        required>
+                        <option value="">Pilih Batch</option>
+                        @foreach ($batchList as $b)
+                        <option value="{{ $b->id }}">{{ $b->nama_batch }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <!-- Level yang Diajarkan -->
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Level yang Diajarkan</label>
@@ -36,10 +49,9 @@
                         class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                         required>
                         <option value="">Pilih Level</option>
-                        <option value="1">Level 1</option>
-                        <option value="2">Level 2</option>
-                        <option value="3">Level 3</option>
-                        <option value="4">Level 4</option>
+                        @foreach ($levels as $lv)
+                        <option value="{{ $lv }}">Level {{ $lv }}</option>
+                        @endforeach
                     </select>
                 </div>
 

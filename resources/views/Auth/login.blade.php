@@ -83,13 +83,13 @@
             <form id="login" action="/login/process" method="POST" class="space-y-6">
                 @csrf
                 <div class="space-y-2">
-                    <label class="text-xs font-bold text-slate-700 uppercase tracking-widest ml-1">Alamat Email</label>
+                    <label class="text-xs font-bold text-slate-700 uppercase tracking-widest ml-1">Email atau Nama</label>
                     <div class="relative">
                         <i data-lucide="mail"
                             class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-                        <input type="email" name="email" required
+                        <input type="text" name="email" required
                             class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-brand outline-none transition-all font-medium text-slate-800 placeholder-slate-400"
-                            placeholder="nama@perusahaan.com">
+                            placeholder="nama@email.com / Nama Siswa">
                     </div>
                 </div>
 
@@ -379,7 +379,7 @@
                     }, 1500);
                 },
                 error(xhr) {
-                    let msg = 'Email atau password salah';
+                    let msg = 'Email/Nama atau password salah';
                     if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
 
                     Swal.fire({
@@ -404,7 +404,7 @@
         });
 
         // 5. Animasi Input Focus (Visual Enhancement)
-        const inputs = document.querySelectorAll('input[type="email"], input[type="password"], #captchaInput');
+        const inputs = document.querySelectorAll('input[name="email"], input[type="password"], #captchaInput');
         inputs.forEach(input => {
             input.addEventListener('focus', function() {
                 this.parentElement.classList.add('scale-[1.01]');

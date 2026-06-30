@@ -37,7 +37,7 @@
     </style>
 </head>
 
-<body class="bg-gray-50">
+<body class="bg-gray-50 pb-24">
 
     <!-- STATUS BAR -->
     <div class="bg-white px-4 pt-3 pb-2">
@@ -90,7 +90,7 @@
 
                     <p class="text-xs text-black font-medium">
                         @if(isset($isSiswa) && $isSiswa)
-                            {{ auth()->user()->siswa->kelas ?? 'Kelas belum diatur' }}
+                            {{ $siswaRecord->kelasRelasi->nama_kelas ?? $siswaRecord->kelas ?? 'Kelas belum diatur' }}
                         @else
                             {{ auth()->user()->divisi->nama_divisi ?? 'Divisi belum diatur' }}
                         @endif
@@ -186,13 +186,44 @@
         @endif
     </div>
 
+    @if(isset($isSiswa) && $isSiswa && $siswaRecord)
+    <div class="px-5 pb-3">
+        <h2 class="text-base font-bold text-gray-900 mb-3">Kelas Saya</h2>
+        <div class="space-y-2">
+            @if($siswaKelasSensei && $siswaKelasSensei->count() > 0)
+            @foreach ($siswaKelasSensei as $ks)
+            <a href="{{ route('absensi.riwayat-kelas', $ks->id) }}"
+               class="block bg-white rounded-2xl p-4 shadow-sm border border-blue-100 active:scale-[0.98] transition-transform">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="book-open" class="w-5 h-5 text-blue-600"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-gray-900">{{ $ks->nama_kelas }}</p>
+                        <p class="text-xs text-gray-500">{{ $ks->batchRelasi->nama_batch ?? '-' }} &middot; Level {{ $ks->level }}</p>
+                        <p class="text-xs text-gray-400">Sensei: {{ $ks->user->name ?? $ks->user->nama ?? '-' }}</p>
+                        <p class="text-xs text-gray-400">{{ $ks->tanggal_mulai->format('d/m/Y') }} - {{ $ks->tanggal_selesai->format('d/m/Y') }}</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 flex-shrink-0"></i>
+                </div>
+            </a>
+            @endforeach
+            @else
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center text-gray-400 text-sm">
+                Belum ada kelas
+            </div>
+            @endif
+        </div>
+    </div>
+    @endif
+
     <div class="px-5 pb-5">
         <div class="flex items-center justify-between mb-3">
             <h2 class="text-base font-bold text-gray-900">Quick Actions</h2>
         </div>
 
         @if(!$isSiswa)
-        <div class="grid grid-cols-4 gap-2">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
             @if(Auth::user()->can_access_khusus)
             <a href="{{ route('absensi.khusus') }}"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
@@ -247,7 +278,7 @@
                 <div class="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="graduation-cap" class="w-5 h-5 text-violet-600"></i>
                 </div>
-                <span class="text-[11px] font-medium text-gray-700">Sensei</span>
+                <span class="text-[11px] font-medium text-gray-700">Guru</span>
             </button>
 
             <button onclick="openModalAgenda()"
@@ -285,22 +316,22 @@
             @endif
         </div>
         @else
-        <div class="flex flex-col items-center gap-4 py-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
             <button type="button" onclick="showUnderDevelopment()"
-                class="flex flex-col items-center gap-2 bg-white rounded-2xl p-6 shadow-sm active:scale-95 transition border-2 border-blue-100 w-full max-w-xs">
+                class="flex flex-col items-center gap-3 bg-white rounded-2xl p-6 shadow-sm active:scale-95 transition border-2 border-blue-100 hover:border-blue-300 hover:shadow-md">
                 <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
                     <i data-lucide="qr-code" class="w-8 h-8 text-blue-600"></i>
                 </div>
                 <span class="text-sm font-semibold text-gray-800">Scan QR Code</span>
-                <span class="text-xs text-gray-500">Scan untuk absensi</span>
+                <span class="text-xs text-gray-500 text-center">Scan untuk absensi</span>
             </button>
             <button onclick="toggleModalJadwal(true)"
-                class="flex flex-col items-center gap-2 bg-white rounded-2xl p-6 shadow-sm active:scale-95 transition border-2 border-purple-100 w-full max-w-xs">
+                class="flex flex-col items-center gap-3 bg-white rounded-2xl p-6 shadow-sm active:scale-95 transition border-2 border-purple-100 hover:border-purple-300 hover:shadow-md">
                 <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
                     <i data-lucide="calendar-range" class="w-8 h-8 text-purple-600"></i>
                 </div>
                 <span class="text-sm font-semibold text-gray-800">Lihat Jadwal</span>
-                <span class="text-xs text-gray-500">Cek jadwal shift Anda</span>
+                <span class="text-xs text-gray-500 text-center">Cek jadwal shift Anda</span>
             </button>
         </div>
         @endif

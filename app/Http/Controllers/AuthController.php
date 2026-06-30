@@ -46,28 +46,29 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
+        $request->validate([
+            'email' => 'required',
             'password' => 'required'
         ]);
 
-        // PAKSA TRUE: Ini akan membuat cookie 'remember_me' aktif selamanya
-        $remember = true;
+        // Cari user by email atau name
+        $user = User::where('email', $request->email)
+            ->orWhere('name', $request->email)
+            ->first();
 
-        if (!Auth::attempt($credentials, $remember)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
-                'message' => 'Email atau password salah'
+                'message' => 'Email/Nama atau password salah'
             ], 401);
         }
 
-        $user = Auth::user();
-
         if ($user->status !== 'AKTIF') {
-            Auth::logout();
             return response()->json([
                 'message' => 'Akun tidak aktif'
             ], 403);
         }
+
+        Auth::login($user, true);
 
         $user->update(['last_login' => now()]);
 

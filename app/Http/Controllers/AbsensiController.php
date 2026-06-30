@@ -121,8 +121,38 @@ class AbsensiController extends Controller
             }
         }
 
-        if ($userShifts->isEmpty() && $isSiswa && $user->siswa && $user->siswa->shift) {
-            $userShifts = collect([$user->siswa->shift]);
+        $siswaKelasSensei = collect();
+        $siswaRecord = null;
+        if ($isSiswa) {
+            $siswaRecord = \App\Models\Siswa::with('shift', 'kelasRelasi', 'batchRelasi')
+                ->where('user_id', $user->id)
+                ->first();
+            if (!$siswaRecord) {
+                $siswaRecord = \App\Models\Siswa::with('shift', 'kelasRelasi', 'batchRelasi')
+                    ->where('nama', $user->name)
+                    ->first();
+            }
+            if ($siswaRecord) {
+                $batchId = $siswaRecord->batch_id;
+                if (!$batchId && $siswaRecord->batch) {
+                    $batch = \App\Models\Batch::where('nama_batch', $siswaRecord->batch)->first();
+                    $batchId = $batch->id ?? null;
+                }
+                if ($batchId) {
+                    $siswaKelasSensei = KelasSensei::with('user', 'batchRelasi')
+                        ->where('batch_id', $batchId)
+                        ->where('status', 'aktif')
+                        ->get();
+                }
+                if ($siswaRecord->shift) {
+                    $userShifts = collect([$siswaRecord->shift]);
+                } elseif ($siswaRecord->shift_id) {
+                    $shift = \App\Models\Shift::find($siswaRecord->shift_id);
+                    if ($shift) {
+                        $userShifts = collect([$shift]);
+                    }
+                }
+            }
         }
 
         if (!$currentShift && $userShifts->count() > 0) {
@@ -186,6 +216,8 @@ class AbsensiController extends Controller
         return view('absensi.index', [
             'isSiswa' => $isSiswa,
             'isGuru' => $isGuru,
+            'siswaKelasSensei' => $siswaKelasSensei,
+            'siswaRecord' => $siswaRecord,
             'riwayat' => $riwayat,
             'riwayatSensei' => $riwayatSensei,
             'shifts' => $allShifts,
@@ -207,6 +239,8 @@ class AbsensiController extends Controller
             'showNotification' => $showNotification,
             'notifMessage' => $notifMessage,
             'pesanErrorCabang' => $pesanErrorCabang, // Lempar pesan ini ke view
+            'batchList' => \App\Models\Batch::aktif()->get(),
+            'levels' => [1, 2, 3, 4],
         ]);
     }
 
@@ -430,7 +464,7 @@ class AbsensiController extends Controller
         $user = Auth::user()->load(['divisi']);
         $isSiswa = $user->isSiswa();
 
-        if ($isSiswa) {
+        if ($isSiswa && $user->siswa) {
             $siswa = $user->siswa;
             $siswaAbsensi = \App\Models\AbsensiSiswa::where('siswa_id', $siswa->id)
                 ->whereMonth('tanggal', now()->month);
@@ -1348,8 +1382,15 @@ class AbsensiController extends Controller
 
     public function siswaIndex()
     {
-        $siswa = \App\Models\Siswa::with(['kelasRelasi', 'shift'])->latest()->get();
-        $kelasList = \App\Models\Kelas::withCount('siswas')->aktif()->get();
+        $siswa = \App\Models\Siswa::with(['kelasRelasi', 'shift', 'batchRelasi'])->latest()->get();
+
+        $kelasList = \App\Models\KelasSensei::with('user', 'batchRelasi')
+            ->where('status', 'aktif')
+            ->get()
+            ->map(function ($k) {
+                $k->siswa_count = \App\Models\Siswa::where('batch_id', $k->batch_id)->where('status', 'AKTIF')->count();
+                return $k;
+            });
 
         // Minggu ini (Senin-Jumat)
         $now = \Carbon\Carbon::now();
@@ -1367,5 +1408,27 @@ class AbsensiController extends Controller
             });
 
         return view('absensi.siswa', compact('siswa', 'kelasList', 'days', 'absensiSiswa'));
+    }
+
+    public function riwayatKelas($kelasSenseiId)
+    {
+        $user = Auth::user();
+        $kelasSensei = \App\Models\KelasSensei::with('user', 'batchRelasi')->findOrFail($kelasSenseiId);
+
+        $siswaRecord = \App\Models\Siswa::where('user_id', $user->id)->first();
+        if (!$siswaRecord) {
+            $siswaRecord = \App\Models\Siswa::where('nama', $user->name)->first();
+        }
+        if (!$siswaRecord) {
+            return redirect()->back()->with('error', 'Data siswa tidak ditemukan');
+        }
+
+        $absensi = \App\Models\AbsensiSiswa::with('cabang')
+            ->where('siswa_id', $siswaRecord->id)
+            ->whereBetween('tanggal', [$kelasSensei->tanggal_mulai, $kelasSensei->tanggal_selesai])
+            ->orderBy('tanggal', 'desc')
+            ->get();
+
+        return view('absensi.riwayat_kelas', compact('kelasSensei', 'absensi', 'siswaRecord'));
     }
 }

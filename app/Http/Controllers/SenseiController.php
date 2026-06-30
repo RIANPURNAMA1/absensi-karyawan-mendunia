@@ -31,6 +31,9 @@ class SenseiController extends Controller
             }])
             ->get();
 
+        $batchList = \App\Models\Batch::aktif()->get();
+        $levels = [1, 2, 3, 4];
+
         return view('absensi.sensei', [
             'kelasAktif' => $kelasAktif,
             'today' => $today,
@@ -39,6 +42,8 @@ class SenseiController extends Controller
             'cabangLong' => $cabang ? $cabang->longitude : 0,
             'radiusMeter' => $cabang ? $cabang->radius : 0,
             'namaCabang' => $cabang ? $cabang->nama_cabang : 'Belum Ditentukan',
+            'batchList' => $batchList,
+            'levels' => $levels,
         ]);
     }
 
@@ -46,7 +51,8 @@ class SenseiController extends Controller
     {
         $request->validate([
             'nama_kelas' => 'required|string|max:255',
-            'level' => 'required|in:1,2,3,4',
+            'batch_id' => 'required|exists:batches,id',
+            'level' => 'required|integer|min:1|max:4',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'catatan' => 'nullable|string',
@@ -54,6 +60,7 @@ class SenseiController extends Controller
 
         $kelas = KelasSensei::create([
             'user_id' => Auth::id(),
+            'batch_id' => $request->batch_id,
             'nama_kelas' => $request->nama_kelas,
             'level' => $request->level,
             'tanggal_mulai' => $request->tanggal_mulai,
@@ -61,6 +68,19 @@ class SenseiController extends Controller
             'catatan' => $request->catatan,
             'status' => 'aktif',
         ]);
+
+        // Update kelas siswa yang cocok dengan batch + level ini
+        $kelasModel = \App\Models\Kelas::firstOrCreate(
+            ['nama_kelas' => $request->nama_kelas],
+            ['status' => 'AKTIF']
+        );
+
+        \App\Models\Siswa::where('batch_id', $request->batch_id)
+            ->where('level', $request->level)
+            ->update([
+                'kelas_id' => $kelasModel->id,
+                'kelas' => $kelasModel->nama_kelas,
+            ]);
 
         return response()->json([
             'success' => true,

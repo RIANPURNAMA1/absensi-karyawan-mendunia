@@ -82,6 +82,21 @@
                     </div>
                 </form>
             </div>
+            <div class="p-3 border-bottom" style="border-bottom-color: #f0f0f0 !important;">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <span class="fw-semibold" style="font-size: 12px;">Sembunyikan Divisi:</span>
+                    <div class="d-flex align-items-center gap-2 flex-wrap" id="divisiCheckboxList">
+                        @foreach ($list_divisi as $d)
+                        <div class="form-check form-check-inline mb-0">
+                            <input class="form-check-input divisi-hide-cb" type="checkbox" value="{{ $d->id }}" id="hideDivisi{{ $d->id }}" {{ in_array($d->id, $hiddenDivisi) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="hideDivisi{{ $d->id }}" style="font-size: 12px;">{{ $d->nama_divisi }}</label>
+                        </div>
+                        @endforeach
+                    </div>
+                    <button class="btn btn-sm btn-outline-dark" id="btnHideDivisi"><i class="bi bi-eye-slash me-1"></i>Hide</button>
+                    <button class="btn btn-sm btn-outline-secondary" id="btnShowAllDivisi"><i class="bi bi-eye me-1"></i>Show All</button>
+                </div>
+            </div>
         </div>
 
         <div class="table-responsive">
@@ -96,7 +111,6 @@
                         <th class="text-center">Izin</th>
                         <th class="text-center">Alpa</th>
                         <th class="text-center">P.Awal</th>
-                        <th class="text-center">Libur</th>
                         <th class="text-center">Lembur</th>
                         <th class="text-center">Jam Lembur</th>
                         <th class="text-center">Kehadiran Sensei</th>
@@ -126,7 +140,6 @@
                                 {{ $r->alpa }}
                             </td>
                             <td class="text-center">{{ $r->pulang_awal }}</td>
-                            <td class="text-center">{{ $r->libur }}</td>
                             <td class="text-center fw-bold">{{ $r->jumlah_lembur }}<span class="text-xs">x</span></td>
                             <td class="text-center">{{ $r->total_jam_lembur }}</td>
                             <td class="text-center fw-bold">{{ $r->sensei_kehadiran }}<span class="text-xs">x</span></td>
@@ -191,6 +204,27 @@
                     info: "Data _START_–_END_ dari _TOTAL_",
                     paginate: { next:"Lanjut", previous:"Kembali" }
                 }
+            });
+
+            // Hide Divisi
+            $('#btnHideDivisi').on('click', function() {
+                var ids = [];
+                $('.divisi-hide-cb:checked').each(function() { ids.push($(this).val()); });
+                $.post('/rekap-absensi/hidden-divisi', {
+                    _token: '{{ csrf_token() }}',
+                    ids: ids
+                }, function() {
+                    location.reload();
+                });
+            });
+
+            $('#btnShowAllDivisi').on('click', function() {
+                $.post('/rekap-absensi/hidden-divisi', {
+                    _token: '{{ csrf_token() }}',
+                    ids: []
+                }, function() {
+                    location.reload();
+                });
             });
         });
     </script>

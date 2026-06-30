@@ -13,6 +13,7 @@ class KelasSensei extends Model
 
     protected $fillable = [
         'user_id',
+        'batch_id',
         'nama_kelas',
         'level',
         'tanggal_mulai',
@@ -29,6 +30,11 @@ class KelasSensei extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function batchRelasi()
+    {
+        return $this->belongsTo(Batch::class, 'batch_id');
     }
 
     public function absensi()

@@ -12,8 +12,11 @@ class Siswa extends Model
         'user_id',
         'shift_id',
         'kelas_id',
+        'batch_id',
         'nama',
         'kelas',
+        'batch',
+        'level',
         'jenis_kelamin',
         'tempat_lahir',
         'tanggal_lahir',
@@ -46,5 +49,10 @@ class Siswa extends Model
     public function kelasRelasi()
     {
         return $this->belongsTo(Kelas::class, 'kelas_id');
+    }
+
+    public function batchRelasi()
+    {
+        return $this->belongsTo(Batch::class, 'batch_id');
     }
 }

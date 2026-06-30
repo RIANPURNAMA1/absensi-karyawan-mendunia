@@ -25,10 +25,12 @@
             </div>
             <div class="col-auto">
                 <label class="form-label fw-semibold mb-1" style="font-size: 12px;">Kelas</label>
-                <select name="kelas_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                <select name="kelas_sensei_id" class="form-select form-select-sm" onchange="this.form.submit()">
                     <option value="">Semua Kelas</option>
                     @foreach ($kelasList as $k)
-                        <option value="{{ $k->id }}" {{ request('kelas_id') == $k->id ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
+                        <option value="{{ $k->id }}" {{ request('kelas_sensei_id') == $k->id ? 'selected' : '' }}>
+                            {{ $k->nama_kelas }} - Level {{ $k->level }} ({{ $k->user->name ?? $k->user->nama ?? '-' }}) - {{ $k->batchRelasi->nama_batch ?? '-' }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -199,7 +201,7 @@
                             <select id="massal_kelas" class="form-select form-select-sm" required>
                                 <option value="">- Pilih Kelas -</option>
                                 @foreach ($kelasList as $k)
-                                    <option value="{{ $k->id }}">{{ $k->nama_kelas }}</option>
+                                    <option value="{{ $k->id }}">{{ $k->nama_kelas }} - Level {{ $k->level }} ({{ $k->user->name ?? $k->user->nama ?? '-' }}) - {{ $k->batchRelasi->nama_batch ?? '-' }}</option>
                                 @endforeach
                             </select>
                         </div>
