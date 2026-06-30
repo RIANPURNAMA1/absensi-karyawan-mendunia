@@ -78,4 +78,8 @@ class Shift extends Model
         // Parameter kedua adalah foreign key di tabel users
         return $this->hasMany(User::class, 'shift_id');
     }
+    public function siswas()
+    {
+        return $this->hasMany(Siswa::class, 'shift_id');
+    }
 }

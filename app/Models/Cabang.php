@@ -8,6 +8,7 @@ class Cabang extends Model
 {
     protected $fillable = [
         'kode_cabang',
+        'barcode',
         'nama_cabang',
         'status_pusat',
         'latitude',
@@ -15,6 +16,15 @@ class Cabang extends Model
         'radius',
         'alamat'
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($cabang) {
+            if (!$cabang->barcode) {
+                $cabang->barcode = 'CAB-' . strtoupper(substr(md5(uniqid()), 0, 10));
+            }
+        });
+    }
 
     public function users()
     {
@@ -25,5 +35,10 @@ class Cabang extends Model
     public function absensis()
     {
         return $this->hasMany(Absensi::class);
+    }
+
+    public function absensiSiswa()
+    {
+        return $this->hasMany(AbsensiSiswa::class);
     }
 }

@@ -136,6 +136,50 @@
                 </ul>
             </li>
 
+          <!-- MANAJEMEN SISWA -->
+          <li class="pc-item pc-caption">
+              <label>Manajemen Siswa</label>
+          </li>
+          <li class="pc-item pc-hasmenu">
+              <a href="#!" class="pc-link">
+                  <span class="pc-micon"><i class="ph ph-student"></i></span>
+                  <span class="pc-mtext">Manajemen Siswa</span>
+                  <span class="pc-arrow"><i class="ph ph-caret-down"></i></span>
+              </a>
+              <ul class="pc-submenu">
+                  <li class="pc-item">
+                      <a href="/siswa" class="pc-link">
+                          <span class="pc-micon"><i class="ph ph-users"></i></span>
+                          <span class="pc-mtext">Data Siswa</span>
+                      </a>
+                  </li>
+                  <li class="pc-item">
+                      <a href="/kelas" class="pc-link">
+                          <span class="pc-micon"><i class="ph ph-book-open"></i></span>
+                          <span class="pc-mtext">Kelas</span>
+                      </a>
+                  </li>
+                  <li class="pc-item">
+                      <a href="/guru" class="pc-link">
+                          <span class="pc-micon"><i class="ph ph-chalkboard-teacher"></i></span>
+                          <span class="pc-mtext">Data Guru</span>
+                      </a>
+                  </li>
+                  <li class="pc-item">
+                      <a href="/absensi-siswa" class="pc-link">
+                          <span class="pc-micon"><i class="ph ph-clipboard-text"></i></span>
+                          <span class="pc-mtext">Absensi Siswa</span>
+                      </a>
+                  </li>
+                  <li class="pc-item">
+                      <a href="/rekap-siswa" class="pc-link">
+                          <span class="pc-micon"><i class="ph ph-chart-bar"></i></span>
+                          <span class="pc-mtext">Rekap Siswa</span>
+                      </a>
+                  </li>
+              </ul>
+          </li>
+
           <!-- PENGATURAN NOTIFIKASI -->
           <li class="pc-item pc-caption">
               <label>Notifikasi</label>

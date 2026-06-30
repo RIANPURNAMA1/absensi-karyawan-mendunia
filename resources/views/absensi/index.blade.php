@@ -89,7 +89,11 @@
                     </p>
 
                     <p class="text-xs text-black font-medium">
-                        {{ auth()->user()->divisi->nama_divisi ?? 'Divisi belum diatur' }}
+                        @if(isset($isSiswa) && $isSiswa)
+                            {{ auth()->user()->siswa->kelas ?? 'Kelas belum diatur' }}
+                        @else
+                            {{ auth()->user()->divisi->nama_divisi ?? 'Divisi belum diatur' }}
+                        @endif
                     </p>
                 </div>
             </a>
@@ -153,10 +157,12 @@
                             @endif
                         </div>
                     </div>
+                    @if(!$isSiswa)
                     <button onclick="mulaiAbsenFoto()"
                         class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
                         <i data-lucide="camera" class="w-5 h-5 text-blue-600"></i>
                     </button>
+                    @endif
                 </div>
 
                 <div class="flex items-center gap-6">
@@ -183,20 +189,10 @@
     <div class="px-5 pb-5">
         <div class="flex items-center justify-between mb-3">
             <h2 class="text-base font-bold text-gray-900">Quick Actions</h2>
-            <button class="text-blue-600 text-sm font-semibold">See All</button>
         </div>
 
+        @if(!$isSiswa)
         <div class="grid grid-cols-4 gap-2">
-            {{-- <button onclick="openAbsen()"
-                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition border border-blue-50">
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center relative overflow-hidden">
-                    <i data-lucide="scan-face" class="w-5 h-5 text-blue-600 relative z-10"></i>
-
-                    <div class="absolute inset-0 bg-blue-400/10 animate-pulse"></div>
-                </div>
-                <span class="text-[11px] font-bold text-gray-800">Face Scan</span>
-            </button> --}}
-
             @if(Auth::user()->can_access_khusus)
             <a href="{{ route('absensi.khusus') }}"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
@@ -262,6 +258,16 @@
                 <span class="text-[11px] font-medium text-gray-700">Agenda</span>
             </button>
 
+            @if(isset($isGuru) && $isGuru)
+            <a href="{{ route('absensi.siswa') }}"
+                class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+                <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">
+                    <i data-lucide="users" class="w-5 h-5 text-cyan-600"></i>
+                </div>
+                <span class="text-[11px] font-medium text-gray-700">Data Siswa</span>
+            </a>
+            @endif
+
             @php
                 $userAbs = auth()->user();
                 $penilaianAktif = \App\Models\PenilaianSetting::where('divisi_id', $userAbs->divisi_id)
@@ -278,8 +284,29 @@
             </a>
             @endif
         </div>
+        @else
+        <div class="flex flex-col items-center gap-4 py-4">
+            <button type="button" onclick="showUnderDevelopment()"
+                class="flex flex-col items-center gap-2 bg-white rounded-2xl p-6 shadow-sm active:scale-95 transition border-2 border-blue-100 w-full max-w-xs">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i data-lucide="qr-code" class="w-8 h-8 text-blue-600"></i>
+                </div>
+                <span class="text-sm font-semibold text-gray-800">Scan QR Code</span>
+                <span class="text-xs text-gray-500">Scan untuk absensi</span>
+            </button>
+            <button onclick="toggleModalJadwal(true)"
+                class="flex flex-col items-center gap-2 bg-white rounded-2xl p-6 shadow-sm active:scale-95 transition border-2 border-purple-100 w-full max-w-xs">
+                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                    <i data-lucide="calendar-range" class="w-8 h-8 text-purple-600"></i>
+                </div>
+                <span class="text-sm font-semibold text-gray-800">Lihat Jadwal</span>
+                <span class="text-xs text-gray-500">Cek jadwal shift Anda</span>
+            </button>
+        </div>
+        @endif
     </div>
 
+    @if(!$isSiswa)
     <!-- AGENDA HARI INI -->
     @if($agendaHariIni && $agendaHariIni->count() > 0)
     <div class="px-5 pb-5">
@@ -571,7 +598,7 @@
 
         </div>
     </div>
-
+    @endif
 
 <!-- BOTTOM NAV -->
     @include('components.bottom_Nav')

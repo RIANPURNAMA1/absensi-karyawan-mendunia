@@ -109,6 +109,18 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::put('/cabang/{id}', [CabangController::class, 'update'])->name('cabang.update');
     Route::delete('/cabang/{id}', [CabangController::class, 'destroy'])->name('cabang.destroy');
 
+    // Kelas Management
+    Route::get('/kelas', [\App\Http\Controllers\KelasController::class, 'index'])->name('kelas.index');
+    Route::post('/kelas', [\App\Http\Controllers\KelasController::class, 'store'])->name('kelas.store');
+    Route::put('/kelas/{id}', [\App\Http\Controllers\KelasController::class, 'update'])->name('kelas.update');
+    Route::delete('/kelas/{id}', [\App\Http\Controllers\KelasController::class, 'destroy'])->name('kelas.destroy');
+    Route::post('/kelas/{id}/toggle-status', [\App\Http\Controllers\KelasController::class, 'toggleStatus']);
+
+    // Guru Management
+    Route::get('/guru', [\App\Http\Controllers\GuruController::class, 'index'])->name('guru.index');
+    Route::post('/guru', [\App\Http\Controllers\GuruController::class, 'store'])->name('guru.store');
+    Route::delete('/guru/{id}', [\App\Http\Controllers\GuruController::class, 'destroy'])->name('guru.destroy');
+
     // Kehadiran & Monitoring
     Route::get('/data-kehadiran', [KehadiranController::class, 'index']);
     Route::post('/admin/absensi/update-status', [KehadiranController::class, 'updateStatus'])->name('admin.absensi.updateStatus');
@@ -205,7 +217,7 @@ Route::middleware(['auth', 'role:HR,MANAGER,KARYAWAN'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
+Route::middleware(['auth', 'role:KARYAWAN,SISWA,GURU'])->group(function () {
     Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
 
     // absensi foto
@@ -236,8 +248,13 @@ Route::middleware(['auth', 'role:KARYAWAN'])->group(function () {
     Route::get('/absensi/detail/{tanggal}', [AbsensiController::class, 'detail'])->name('absensi.detail');
     Route::get('/absensi/detail-sensei/{tanggal}/{kelasId}', [AbsensiController::class, 'detailSensei'])->name('absensi.detailSensei');
 
+    // Scan QR untuk absensi siswa
+    Route::get('/absensi/scan', [AbsensiController::class, 'scanQr'])->name('absensi.scan');
+    Route::post('/absensi/scan/proses', [AbsensiController::class, 'prosesScan'])->name('absensi.siswa.scan');
+
     // Profile
     Route::get('/absensi/profile', [AbsensiController::class, 'profile'])->name('absensi.profile');
+    Route::get('/absensi/siswa', [AbsensiController::class, 'siswaIndex'])->name('absensi.siswa');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/profile/password', [ProfileController::class, 'changePassword'])->name('password.change');
@@ -329,6 +346,32 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/ai-chat', [AiChatController::class, 'index'])->name('ai.chat');
     Route::post('/ai-chat/send', [AiChatController::class, 'send'])->name('ai.chat.send');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Siswa Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:HR,MANAGER,SISWA,GURU'])->group(function () {
+    Route::get('/siswa', [\App\Http\Controllers\SiswaController::class, 'index'])->name('siswa.index');
+    Route::post('/siswa', [\App\Http\Controllers\SiswaController::class, 'store'])->name('siswa.store');
+    Route::put('/siswa/{id}', [\App\Http\Controllers\SiswaController::class, 'update'])->name('siswa.update');
+    Route::delete('/siswa/{id}', [\App\Http\Controllers\SiswaController::class, 'destroy'])->name('siswa.destroy');
+    Route::post('/siswa/{id}/toggle-status', [\App\Http\Controllers\SiswaController::class, 'toggleStatus']);
+    Route::post('/siswa/{id}/buatkan-akun', [\App\Http\Controllers\SiswaController::class, 'buatkanAkun']);
+});
+
+Route::middleware(['auth', 'role:HR,MANAGER,SISWA,GURU'])->group(function () {
+    Route::get('/absensi-siswa', [\App\Http\Controllers\AbsensiSiswaController::class, 'index'])->name('absensi-siswa.index');
+    Route::post('/absensi-siswa', [\App\Http\Controllers\AbsensiSiswaController::class, 'store'])->name('absensi-siswa.store');
+    Route::post('/absensi-siswa/mass', [\App\Http\Controllers\AbsensiSiswaController::class, 'massStore'])->name('absensi-siswa.mass');
+    Route::put('/absensi-siswa/{id}', [\App\Http\Controllers\AbsensiSiswaController::class, 'update'])->name('absensi-siswa.update');
+    Route::get('/absensi-siswa/siswa-by-kelas', [\App\Http\Controllers\AbsensiSiswaController::class, 'dataSiswaByKelas'])->name('absensi-siswa.siswa-by-kelas');
+    Route::get('/absensi-siswa/cek', [\App\Http\Controllers\AbsensiSiswaController::class, 'cekAbsensiSiswa']);
+
+    Route::get('/rekap-siswa', [\App\Http\Controllers\AbsensiSiswaController::class, 'rekap'])->name('rekap-siswa.index');
 });
 
 Route::get('/test-wa/{status}', function($status) {

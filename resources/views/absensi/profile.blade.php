@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil Karyawan</title>
+    <title>@if(auth()->user()->isSiswa()) Profil Siswa @else Profil Karyawan @endif</title>
     {{-- <link rel="icon" href="{{ asset('assets/compiled/png/LOGO/logo4.png') }}" type="image/x-icon"> --}}
     <link rel="icon" href="{{ asset('assets/images/logo/logo-sm.png') }}" type="image/png" style="width: 40px">
     <!-- Tailwind CSS CDN -->
@@ -20,7 +20,7 @@
     </style>
 </head>
 
-<body class="bg-gray-50">
+<body class="bg-gray-50 pb-24">
 
     <!-- STATUS BAR -->
     <div class="bg-white px-4 pt-3 pb-2">
@@ -65,8 +65,8 @@
     </div>
 
 
-    <div class="px-5 py-5">
-        <div class="bg-gradient-to-br from-[#00c0ff] to-blue-700 rounded-3xl p-6 text-white shadow-lg mb-5">
+    <div class="px-5 py-6">
+        <div class="bg-gradient-to-br from-[#00c0ff] to-blue-700 rounded-3xl p-6 text-white shadow-lg mb-6">
             <div class="flex items-center gap-4 mb-4">
                 <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white/30 shadow-inner">
                     <img id="previewFoto"
@@ -78,6 +78,17 @@
 
                 <div class="flex-1">
                     <h2 class="text-xl font-bold mb-1">{{ $user->name }}</h2>
+                    @if(auth()->user()->isSiswa())
+                    <p class="text-blue-100 text-sm">
+                        {{ auth()->user()->siswa->kelas ?? 'Kelas' }}
+                    </p>
+                    <div class="flex items-center gap-2 mt-2">
+                        <div
+                            class="px-3 py-1 bg-white/20 backdrop-blur rounded-full text-[10px] font-bold uppercase tracking-wider">
+                            Siswa
+                        </div>
+                    </div>
+                    @else
                     <p class="text-blue-100 text-sm">
                         {{ $user->divisi->nama_divisi ?? 'Staff' }}
                     </p>
@@ -87,6 +98,7 @@
                             {{ $user->status_kerja ?? 'Karyawan Tetap' }}
                         </div>
                     </div>
+                    @endif
                 </div>
             </div>
 
@@ -106,7 +118,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm p-5 mb-5 border border-gray-50">
+        <div class="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-gray-50">
             <h3 class="text-sm font-bold text-gray-900 mb-4">Informasi Kontak</h3>
             <div class="space-y-4">
                 <div class="flex items-center gap-3">
@@ -140,7 +152,33 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm p-5 mb-10 border border-gray-50">
+        @if(auth()->user()->isSiswa())
+        <div class="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-gray-50">
+            <h3 class="text-sm font-bold text-gray-900 mb-4">Informasi Siswa</h3>
+            <div class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600">
+                        <i data-lucide="book-open" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-[10px] text-gray-400">Kelas</p>
+                        <p class="text-sm font-medium text-gray-800">{{ auth()->user()->siswa->kelas ?? '-' }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-teal-50 rounded-xl flex items-center justify-center text-teal-600">
+                        <i data-lucide="calendar" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-[10px] text-gray-400">Tanggal Bergabung</p>
+                        <p class="text-sm font-medium text-gray-800">
+                            {{ $user->created_at ? $user->created_at->translatedFormat('d F Y') : '-' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @else
+        <div class="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-gray-50">
             <h3 class="text-sm font-bold text-gray-900 mb-4">Informasi Kepegawaian</h3>
             <div class="space-y-4">
                 <div class="flex items-center gap-3">
@@ -164,6 +202,7 @@
                 </div>
             </div>
         </div>
+        @endif
         <div class="space-y-3 mb-20">
             <a href="{{ route('profile.edit') }}"
                 class="w-full bg-gradient-to-r from-[#00c0ff] to-blue-700 text-white py-4 rounded-2xl font-semibold text-base shadow-lg active:scale-95 transition flex items-center justify-center gap-2">

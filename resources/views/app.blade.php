@@ -85,6 +85,7 @@
     <script src="../assets/js/theme.js"></script>
     <script src="../assets/js/plugins/feather.min.js"></script>
 
+    @stack('scripts')
 </body>
 
 </html>

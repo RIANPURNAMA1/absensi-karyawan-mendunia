@@ -79,6 +79,16 @@ class User extends Authenticatable
         return $this->role === 'KARYAWAN';
     }
 
+    public function isSiswa()
+    {
+        return $this->role === 'SISWA';
+    }
+
+    public function isGuru()
+    {
+        return $this->role === 'GURU';
+    }
+
     public function divisi()
     {
         return $this->belongsTo(Divisi::class);
@@ -89,6 +99,10 @@ class User extends Authenticatable
         // Pastikan foreign key di tabel users adalah shift_id
         return $this->belongsTo(Shift::class, 'shift_id');
     }
+
+    // public function siswa(){
+    //     return $this->hasOne(Siswa::class, 'user_id');
+    // }
 
     // Accessor untuk multiple shifts ( seperti getCabangAttribute )
     public function getShiftsAttribute()
@@ -148,5 +162,10 @@ class User extends Authenticatable
     public function absensiKhusus()
     {
         return $this->hasMany(AbsensiKhusus::class);
+    }
+
+    public function siswa()
+    {
+        return $this->hasOne(\App\Models\Siswa::class);
     }
 }

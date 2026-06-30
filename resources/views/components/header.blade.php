@@ -79,6 +79,21 @@
 
                 <div class="header-dropdown">
                     <a href="#" class="header-link dropdown-trigger">
+                        <i class="ph ph-student"></i>
+                        <span>Siswa</span>
+                        <i class="ph ph-caret-down dropdown-arrow"></i>
+                    </a>
+                    <div class="dropdown-menu-custom">
+                        <a href="/siswa" class="dropdown-item-custom {{ request()->is('siswa*') ? 'active' : '' }}"><i class="ph ph-users"></i>Data Siswa</a>
+                        <a href="/kelas" class="dropdown-item-custom {{ request()->is('kelas*') ? 'active' : '' }}"><i class="ph ph-book-open"></i>Kelas</a>
+                        <a href="/guru" class="dropdown-item-custom {{ request()->is('guru*') ? 'active' : '' }}"><i class="ph ph-chalkboard-teacher"></i>Data Guru</a>
+                        <a href="/absensi-siswa" class="dropdown-item-custom {{ request()->is('absensi-siswa*') ? 'active' : '' }}"><i class="ph ph-clipboard-text"></i>Absensi Siswa</a>
+                        <a href="/rekap-siswa" class="dropdown-item-custom {{ request()->is('rekap-siswa*') ? 'active' : '' }}"><i class="ph ph-chart-bar"></i>Rekap Siswa</a>
+                    </div>
+                </div>
+
+                <div class="header-dropdown">
+                    <a href="#" class="header-link dropdown-trigger">
                         <i class="ph ph-gear"></i>
                         <span>Pengaturan</span>
                         <i class="ph ph-caret-down dropdown-arrow"></i>
@@ -225,6 +240,19 @@
             </div>
         </div>
         @endif
+
+        <div class="mobile-dropdown">
+            <a href="#" class="mobile-link mob-dropdown-trigger">
+                <i class="ph ph-student"></i>Siswa <i class="ph ph-caret-down ms-auto"></i>
+            </a>
+            <div class="mobile-submenu">
+                <a href="/siswa" class="mobile-sub-link {{ request()->is('siswa*') ? 'active' : '' }}">Data Siswa</a>
+                <a href="/kelas" class="mobile-sub-link {{ request()->is('kelas*') ? 'active' : '' }}">Kelas</a>
+                <a href="/guru" class="mobile-sub-link {{ request()->is('guru*') ? 'active' : '' }}">Data Guru</a>
+                <a href="/absensi-siswa" class="mobile-sub-link {{ request()->is('absensi-siswa*') ? 'active' : '' }}">Absensi Siswa</a>
+                <a href="/rekap-siswa" class="mobile-sub-link {{ request()->is('rekap-siswa*') ? 'active' : '' }}">Rekap Siswa</a>
+            </div>
+        </div>
 
         <a href="/ai-chat" class="mobile-link {{ request()->is('ai-chat*') ? 'active' : '' }}">
             <i class="ph ph-robot"></i>AI Chat

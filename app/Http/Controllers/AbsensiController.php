@@ -27,77 +27,72 @@ class AbsensiController extends Controller
 
     public function index()
     {
-        // 1. Load user beserta relasi shift-nya
-        $user = Auth::user()->load(['shift']);
+        $user = Auth::user();
+        $isSiswa = $user->isSiswa();
+        $isGuru = $user->isGuru();
 
-        // 2. Ambil data cabang dari Accessor (getCabangAttribute di Model User)
-        // Diasumsikan ini mengembalikan Collection
+        $user = $user->load(['shift', 'siswa.shift']);
+
         $cabangs = $user->cabang;
 
-        // --- PERBAIKAN LOGIKA CABANG ---
-        // Jika user belum punya cabang, kita buat data default (null/nol)
-        // agar halaman tetap bisa di-render tapi tombol absen di View tidak bisa berfungsi.
         $cabangTerpilih = null;
         $pesanErrorCabang = null;
 
         if ($cabangs && $cabangs->isNotEmpty()) {
             $cabangTerpilih = $cabangs->first();
         } else {
-            // Kita siapkan pesan untuk ditampilkan di View jika perlu
             $pesanErrorCabang = 'Anda belum terdaftar di cabang manapun. Fitur absensi dinonaktifkan.';
         }
 
-        // 3. Ambil 10 riwayat terakhir (karyawan)
-        $riwayat = Absensi::with('shift')
-            ->where('user_id', $user->id)
-            ->orderBy('tanggal', 'desc')
-            ->orderBy('shift_id', 'desc')
-            ->take(10)
-            ->get();
-
-        // 3b. Ambil 10 riwayat terakhir sensei
-        $riwayatSensei = AbsensiSensei::where('user_id', $user->id)
-            ->with('kelasSensei')
-            ->orderBy('tanggal', 'desc')
-            ->take(10)
-            ->get();
-
-        // 4. Ambil semua jadwal shift yang aktif untuk dropdown/informasi
-        $allShifts = \App\Models\Shift::where('status', 'AKTIF')->get();
-
-        // --- LOGIKA NOTIFIKASI BROWSER ---
+        $riwayat = collect();
+        $riwayatSensei = collect();
+        $allShifts = collect();
         $showNotification = false;
         $notifMessage = '';
 
-        if ($user->shift_id && $user->shift) {
-            $now = \Illuminate\Support\Carbon::now();
-            $today = \Illuminate\Support\Carbon::today()->toDateString();
+        if (!$isSiswa) {
+            $riwayat = Absensi::with('shift')
+                ->where('user_id', $user->id)
+                ->orderBy('tanggal', 'desc')
+                ->orderBy('shift_id', 'desc')
+                ->take(10)
+                ->get();
 
-            $jamHanya = \Illuminate\Support\Carbon::parse($user->shift->jam_masuk)->format('H:i:s');
-            $jamMasuk = \Illuminate\Support\Carbon::parse($today.' '.$jamHanya);
+            $riwayatSensei = AbsensiSensei::where('user_id', $user->id)
+                ->with('kelasSensei')
+                ->orderBy('tanggal', 'desc')
+                ->take(10)
+                ->get();
 
-            $sudahAbsen = Absensi::where('user_id', $user->id)
-                ->where('tanggal', $today)
-                ->exists();
+            $allShifts = \App\Models\Shift::where('status', 'AKTIF')->get();
 
-            if (! $sudahAbsen) {
-                $selisihMenit = $now->diffInMinutes($jamMasuk, false);
-                // Notifikasi muncul jika jam masuk tinggal 30 menit lagi
-                if ($selisihMenit > 0 && $selisihMenit <= 30) {
-                    $showNotification = true;
-                    $notifMessage = 'Waktunya bersiap! Jam masuk Anda pukul '.$jamMasuk->format('H:i').' ('.$selisihMenit.' menit lagi).';
+            if ($user->shift_id && $user->shift) {
+                $now = \Illuminate\Support\Carbon::now();
+                $today = \Illuminate\Support\Carbon::today()->toDateString();
+
+                $jamHanya = \Illuminate\Support\Carbon::parse($user->shift->jam_masuk)->format('H:i:s');
+                $jamMasuk = \Illuminate\Support\Carbon::parse($today.' '.$jamHanya);
+
+                $sudahAbsen = Absensi::where('user_id', $user->id)
+                    ->where('tanggal', $today)
+                    ->exists();
+
+                if (! $sudahAbsen) {
+                    $selisihMenit = $now->diffInMinutes($jamMasuk, false);
+                    if ($selisihMenit > 0 && $selisihMenit <= 30) {
+                        $showNotification = true;
+                        $notifMessage = 'Waktunya bersiap! Jam masuk Anda pukul '.$jamMasuk->format('H:i').' ('.$selisihMenit.' menit lagi).';
+                    }
                 }
             }
         }
 
-        // 5. Cari shift yang berlaku saat ini berdasarkan jam server
         $currentTime = now()->format('H:i:s');
         $currentShift = \App\Models\Shift::where('status', 'AKTIF')
             ->where('jam_masuk', '<=', $currentTime)
             ->where('jam_pulang', '>=', $currentTime)
             ->first();
 
-        // 5b. Ambil semua shift user berdasarkan mode pengaturan
         $userShifts = collect();
         $shiftMode = \App\Models\PengaturanShift::getMode();
 
@@ -126,7 +121,10 @@ class AbsensiController extends Controller
             }
         }
 
-        // Gunakan currentShift dari userShifts jika ada yang aktif sekarang (dengan toleransi)
+        if ($userShifts->isEmpty() && $isSiswa && $user->siswa && $user->siswa->shift) {
+            $userShifts = collect([$user->siswa->shift]);
+        }
+
         if (!$currentShift && $userShifts->count() > 0) {
             foreach ($userShifts as $shift) {
                 $toleransi = $shift->toleransi ?? 0;
@@ -141,49 +139,53 @@ class AbsensiController extends Controller
             }
         }
 
-        // 6. Ambil kelas sensei aktif untuk user
-        $today = now()->toDateString();
-        $kelasSenseiAktif = KelasSensei::where('user_id', $user->id)
-            ->where('status', 'aktif')
-            ->whereDate('tanggal_mulai', '<=', $today)
-            ->whereDate('tanggal_selesai', '>=', $today)
-            ->with(['absensi' => function ($q) use ($today) {
-                $q->where('tanggal', $today);
-            }])
-            ->get();
-
-        // 7. Cek apakah user memiliki kelas sensei aktif yang belum diabsen masuk hari ini
+        $kelasSenseiAktif = collect();
         $hasUnabsensedSensei = false;
-        foreach ($kelasSenseiAktif as $kelas) {
-            $absensiHariIni = $kelas->absensi->first();
-            if (!$absensiHariIni || !$absensiHariIni->jam_masuk) {
-                $hasUnabsensedSensei = true;
-                break;
+        $isLibur = false;
+        $agendaHariIni = collect();
+        $shiftJadwalKalender = collect();
+
+        if (!$isSiswa) {
+            $today = now()->toDateString();
+            $kelasSenseiAktif = KelasSensei::where('user_id', $user->id)
+                ->where('status', 'aktif')
+                ->whereDate('tanggal_mulai', '<=', $today)
+                ->whereDate('tanggal_selesai', '>=', $today)
+                ->with(['absensi' => function ($q) use ($today) {
+                    $q->where('tanggal', $today);
+                }])
+                ->get();
+
+            foreach ($kelasSenseiAktif as $kelas) {
+                $absensiHariIni = $kelas->absensi->first();
+                if (!$absensiHariIni || !$absensiHariIni->jam_masuk) {
+                    $hasUnabsensedSensei = true;
+                    break;
+                }
             }
+
+            $isLibur = HariLibur::apakahLibur($today);
+
+            $agendaHariIni = \App\Models\Agenda::where('user_id', $user->id)
+                ->where('tanggal', $today)
+                ->orderBy('jam_mulai', 'asc')
+                ->get();
+
+            $bulanIni = now()->month;
+            $tahunIni = now()->year;
+            $shiftJadwalKalender = ShiftJadwal::where('user_id', $user->id)
+                ->whereMonth('tanggal', $bulanIni)
+                ->whereYear('tanggal', $tahunIni)
+                ->with('shift')
+                ->get()
+                ->groupBy(function ($item) {
+                    return $item->tanggal->toDateString();
+                });
         }
 
-        // 8. Cek apakah hari ini libur (untuk sensei)
-        $isLibur = HariLibur::apakahLibur($today);
-
-        // 8. Ambil agenda hari ini
-        $agendaHariIni = \App\Models\Agenda::where('user_id', $user->id)
-            ->where('tanggal', $today)
-            ->orderBy('jam_mulai', 'asc')
-            ->get();
-
-        // 9. Ambil shift_jadwal untuk kalender bulan ini
-        $bulanIni = now()->month;
-        $tahunIni = now()->year;
-        $shiftJadwalKalender = ShiftJadwal::where('user_id', $user->id)
-            ->whereMonth('tanggal', $bulanIni)
-            ->whereYear('tanggal', $tahunIni)
-            ->with('shift')
-            ->get()
-            ->groupBy(function ($item) {
-                return $item->tanggal->toDateString();
-            });
-
         return view('absensi.index', [
+            'isSiswa' => $isSiswa,
+            'isGuru' => $isGuru,
             'riwayat' => $riwayat,
             'riwayatSensei' => $riwayatSensei,
             'shifts' => $allShifts,
@@ -426,15 +428,109 @@ class AbsensiController extends Controller
     public function profile()
     {
         $user = Auth::user()->load(['divisi']);
+        $isSiswa = $user->isSiswa();
 
-        // Hitung statistik bulan ini
-        $stats = [
-            'hadir' => \App\Models\Absensi::where('user_id', $user->id)->whereMonth('tanggal', now()->month)->where('status', 'HADIR')->count(),
-            'izin' => \App\Models\Absensi::where('user_id', $user->id)->whereMonth('tanggal', now()->month)->where('status', 'IZIN')->count(),
-            'terlambat' => \App\Models\Absensi::where('user_id', $user->id)->whereMonth('tanggal', now()->month)->where('status', 'TERLAMBAT')->count(),
-        ];
+        if ($isSiswa) {
+            $siswa = $user->siswa;
+            $siswaAbsensi = \App\Models\AbsensiSiswa::where('siswa_id', $siswa->id)
+                ->whereMonth('tanggal', now()->month);
+            $stats = [
+                'hadir' => (clone $siswaAbsensi)->where('status', 'HADIR')->count(),
+                'izin' => (clone $siswaAbsensi)->where('status', 'IZIN')->count(),
+                'terlambat' => (clone $siswaAbsensi)->where('status', 'TERLAMBAT')->count(),
+            ];
+        } else {
+            $stats = [
+                'hadir' => \App\Models\Absensi::where('user_id', $user->id)->whereMonth('tanggal', now()->month)->where('status', 'HADIR')->count(),
+                'izin' => \App\Models\Absensi::where('user_id', $user->id)->whereMonth('tanggal', now()->month)->where('status', 'IZIN')->count(),
+                'terlambat' => \App\Models\Absensi::where('user_id', $user->id)->whereMonth('tanggal', now()->month)->where('status', 'TERLAMBAT')->count(),
+            ];
+        }
 
-        return view('absensi.profile', compact('user', 'stats'));
+        return view('absensi.profile', compact('user', 'stats', 'isSiswa'));
+    }
+
+    public function scanQr()
+    {
+        return view('absensi.scan_qr');
+    }
+
+    public function prosesScan(Request $request)
+    {
+        $request->validate([
+            'barcode' => 'required|string',
+        ]);
+
+        $user = Auth::user();
+
+        if (!$user->isSiswa()) {
+            return response()->json(['message' => 'Hanya siswa yang dapat absen via QR'], 403);
+        }
+
+        $cabang = Cabang::where('barcode', $request->barcode)->first();
+
+        if (!$cabang) {
+            return response()->json(['message' => 'QR Code tidak dikenal'], 404);
+        }
+
+        $siswa = $user->siswa;
+
+        if (!$siswa) {
+            return response()->json(['message' => 'Data siswa tidak ditemukan'], 404);
+        }
+
+        $today = now()->toDateString();
+        $now = now()->format('H:i:s');
+
+        $existing = \App\Models\AbsensiSiswa::where('siswa_id', $siswa->id)
+            ->where('tanggal', $today)
+            ->first();
+
+        if ($existing) {
+            if ($existing->jam_masuk && !$existing->jam_keluar) {
+                $existing->update([
+                    'jam_keluar' => $now,
+                ]);
+
+                return response()->json([
+                    'message' => 'Absensi pulang berhasil',
+                    'cabang' => $cabang->nama_cabang,
+                    'jam' => 'Pulang: ' . $now,
+                    'status' => 'pulang',
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'Anda sudah absen hari ini',
+                'cabang' => $cabang->nama_cabang,
+                'jam' => 'Masuk: ' . $existing->jam_masuk . ' | Pulang: ' . ($existing->jam_keluar ?? '-'),
+            ], 422);
+        }
+
+        $shiftSiswa = $siswa->shift;
+        $status = 'HADIR';
+        if ($shiftSiswa) {
+            $batasTerlambat = Carbon::parse($shiftSiswa->jam_masuk)->addMinutes($shiftSiswa->toleransi ?? 15);
+            $jamSekarang = Carbon::parse($now);
+            if ($jamSekarang->gt($batasTerlambat)) {
+                $status = 'TERLAMBAT';
+            }
+        }
+
+        $absensi = \App\Models\AbsensiSiswa::create([
+            'siswa_id' => $siswa->id,
+            'cabang_id' => $cabang->id,
+            'tanggal' => $today,
+            'jam_masuk' => $now,
+            'status' => $status,
+        ]);
+
+        return response()->json([
+            'message' => 'Absensi berhasil',
+            'cabang' => $cabang->nama_cabang,
+            'jam' => 'Masuk: ' . $now,
+            'status' => $status,
+        ]);
     }
 
     public function absenMasuk(Request $request)
@@ -1247,6 +1343,29 @@ class AbsensiController extends Controller
             'status' => $statusBaru,
             'path' => $fotoPath,
             'shift_name' => $absensi->shift->nama_shift,
-        ]);
+        ]        );
+    }
+
+    public function siswaIndex()
+    {
+        $siswa = \App\Models\Siswa::with(['kelasRelasi', 'shift'])->latest()->get();
+        $kelasList = \App\Models\Kelas::withCount('siswas')->aktif()->get();
+
+        // Minggu ini (Senin-Jumat)
+        $now = \Carbon\Carbon::now();
+        $monday = $now->copy()->startOfWeek();
+        $days = [];
+        for ($i = 0; $i < 5; $i++) {
+            $days[] = $monday->copy()->addDays($i)->toDateString();
+        }
+
+        // Ambil semua absensi siswa untuk minggu ini
+        $absensiSiswa = \App\Models\AbsensiSiswa::whereBetween('tanggal', [$days[0], $days[4]])
+            ->get()
+            ->keyBy(function ($item) {
+                return $item->siswa_id . '_' . \Carbon\Carbon::parse($item->tanggal)->toDateString();
+            });
+
+        return view('absensi.siswa', compact('siswa', 'kelasList', 'days', 'absensiSiswa'));
     }
 }

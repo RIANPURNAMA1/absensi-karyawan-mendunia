@@ -1,5 +1,5 @@
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 safe-area-bottom">
-        <div class="flex items-center justify-around">
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-4 safe-area-bottom">
+        <div class="flex items-center justify-around gap-2">
             <a href="/absensi" class="flex flex-col items-center gap-1 text-blue-700">
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                     <path
@@ -13,6 +13,15 @@
                 <span class="text-xs font-medium">Jadwal Shift</span>
             </button>
 
+            @if(auth()->user()->isSiswa())
+            <a href="{{ route('absensi.scan') }}" class="flex flex-col items-center -mt-8">
+                <div
+                    class="w-14 h-14 bg-gradient-to-br from-[#00c0ff] to-blue-700 rounded-full flex items-center justify-center shadow-lg">
+                    <i data-lucide="qr-code" class="w-7 h-7 text-white"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-700 mt-2">Scan QR</span>
+            </a>
+            @else
             <button onclick="mulaiAbsenFoto()" class="flex flex-col items-center -mt-8">
                 <div
                     class="w-14 h-14 bg-gradient-to-br from-[#00c0ff] to-blue-700 rounded-full flex items-center justify-center shadow-lg">
@@ -20,6 +29,7 @@
                 </div>
                 <span class="text-xs font-medium text-gray-700 mt-2">Attedance</span>
             </button>
+            @endif
 
             <button onclick="window.location='/report'" class="flex flex-col items-center gap-1 text-gray-400">
                 <i data-lucide="trending-up" class="w-6 h-6"></i>
