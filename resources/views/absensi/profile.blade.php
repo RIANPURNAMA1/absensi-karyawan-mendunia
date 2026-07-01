@@ -17,6 +17,27 @@
         .safe-area-bottom {
             padding-bottom: env(safe-area-inset-bottom);
         }
+
+        /* === PROFILE THEME: 0D1F3C === */
+        /* Hanya kartu header gradient (Foto Profil + stats) */
+        .from-\[\#00c0ff\] {
+            background: linear-gradient(135deg, #0D1F3C, #1a2d4a) !important;
+        }
+        .to-blue-700 {
+            background: linear-gradient(135deg, #0D1F3C, #1a2d4a) !important;
+        }
+        .bg-gradient-to-br.from-\[\#00c0ff\].to-blue-700 {
+            background: linear-gradient(135deg, #0D1F3C, #1a2d4a) !important;
+        }
+
+        /* Tombol Edit Profil & Keamanan */
+        .bg-gradient-to-r.from-\[\#00c0ff\].to-blue-700 {
+            background: linear-gradient(135deg, #0D1F3C, #1a2d4a) !important;
+        }
+        .space-y-3 a.bg-gradient-to-r.from-\[\#00c0ff\].to-blue-700 {
+            background: linear-gradient(135deg, #0D1F3C, #1a2d4a) !important;
+        }
+        .bg-gradient-to-r .text-white { color: #fff !important; }
     </style>
 </head>
 

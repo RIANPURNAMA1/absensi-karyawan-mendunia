@@ -123,6 +123,7 @@ class AbsensiController extends Controller
 
         $siswaKelasSensei = collect();
         $siswaRecord = null;
+        $riwayatAbsensiSiswa = collect();
         if ($isSiswa) {
             $siswaRecord = \App\Models\Siswa::with('shift', 'kelasRelasi', 'batchRelasi')
                 ->where('user_id', $user->id)
@@ -152,6 +153,12 @@ class AbsensiController extends Controller
                         $userShifts = collect([$shift]);
                     }
                 }
+
+                $riwayatAbsensiSiswa = \App\Models\AbsensiSiswa::with('cabang')
+                    ->where('siswa_id', $siswaRecord->id)
+                    ->orderBy('tanggal', 'desc')
+                    ->take(10)
+                    ->get();
             }
         }
 
@@ -173,9 +180,10 @@ class AbsensiController extends Controller
         $hasUnabsensedSensei = false;
         $isLibur = false;
         $agendaHariIni = collect();
+        $riwayatAgenda = collect();
         $shiftJadwalKalender = collect();
 
-        if (!$isSiswa) {
+        if ($isGuru) {
             $today = now()->toDateString();
             $kelasSenseiAktif = KelasSensei::where('user_id', $user->id)
                 ->where('status', 'aktif')
@@ -201,6 +209,7 @@ class AbsensiController extends Controller
                 ->orderBy('jam_mulai', 'asc')
                 ->get();
 
+
             $bulanIni = now()->month;
             $tahunIni = now()->year;
             $shiftJadwalKalender = ShiftJadwal::where('user_id', $user->id)
@@ -213,11 +222,20 @@ class AbsensiController extends Controller
                 });
         }
 
+        if (!$isSiswa) {
+            $riwayatAgenda = \App\Models\Agenda::where('user_id', $user->id)
+                ->whereNotNull('jam_absen_masuk')
+                ->orderBy('tanggal', 'desc')
+                ->limit(10)
+                ->get();
+        }
+
         return view('absensi.index', [
             'isSiswa' => $isSiswa,
             'isGuru' => $isGuru,
             'siswaKelasSensei' => $siswaKelasSensei,
             'siswaRecord' => $siswaRecord,
+            'riwayatAbsensiSiswa' => $riwayatAbsensiSiswa,
             'riwayat' => $riwayat,
             'riwayatSensei' => $riwayatSensei,
             'shifts' => $allShifts,
@@ -227,6 +245,7 @@ class AbsensiController extends Controller
             'hasUnabsensedSensei' => $hasUnabsensedSensei,
             'isLibur' => $isLibur,
             'agendaHariIni' => $agendaHariIni,
+            'riwayatAgenda' => $riwayatAgenda,
             'shiftJadwalKalender' => $shiftJadwalKalender,
 
             // Data Geofencing (Aman meski $cabangTerpilih null karena menggunakan null coalescing ??)
@@ -1382,10 +1401,13 @@ class AbsensiController extends Controller
 
     public function siswaIndex()
     {
+        $user = auth()->user();
+
         $siswa = \App\Models\Siswa::with(['kelasRelasi', 'shift', 'batchRelasi'])->latest()->get();
 
         $kelasList = \App\Models\KelasSensei::with('user', 'batchRelasi')
             ->where('status', 'aktif')
+            ->when($user->role === 'GURU', fn($q) => $q->where('user_id', $user->id))
             ->get()
             ->map(function ($k) {
                 $k->siswa_count = \App\Models\Siswa::where('batch_id', $k->batch_id)->where('status', 'AKTIF')->count();
@@ -1408,6 +1430,228 @@ class AbsensiController extends Controller
             });
 
         return view('absensi.siswa', compact('siswa', 'kelasList', 'days', 'absensiSiswa'));
+    }
+
+    public function updateSiswaStatus(Request $request)
+    {
+        $request->validate([
+            'siswa_id' => 'required|exists:siswas,id',
+            'tanggal' => 'required|date',
+            'status' => 'required|in:HADIR,TERLAMBAT,IZIN,SAKIT,ALPA',
+        ]);
+
+        $absensi = \App\Models\AbsensiSiswa::updateOrCreate(
+            [
+                'siswa_id' => $request->siswa_id,
+                'tanggal' => $request->tanggal,
+            ],
+            [
+                'status' => $request->status,
+                'cabang_id' => \App\Models\Siswa::find($request->siswa_id)->cabang_id ?? null,
+            ]
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Status berhasil diperbarui',
+            'data' => $absensi,
+        ]);
+    }
+
+    public function riwayatSiswaJson($siswa)
+    {
+        $siswaModel = \App\Models\Siswa::findOrFail($siswa);
+        $bulan = request('bulan', now()->month);
+        $tahun = request('tahun', now()->year);
+
+        $start = \Carbon\Carbon::create($tahun, $bulan, 1)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+
+        $absensi = \App\Models\AbsensiSiswa::where('siswa_id', $siswa)
+            ->whereBetween('tanggal', [$start, $end])
+            ->orderBy('tanggal')
+            ->get()
+            ->keyBy(function ($item) {
+                return \Carbon\Carbon::parse($item->tanggal)->day;
+            });
+
+        $days = [];
+        for ($d = 1; $d <= $start->daysInMonth; $d++) {
+            $date = \Carbon\Carbon::create($tahun, $bulan, $d);
+            $days[] = [
+                'day' => $d,
+                'dayName' => $date->translatedFormat('D'),
+                'status' => isset($absensi[$d]) ? $absensi[$d]->status : null,
+                'jam_masuk' => isset($absensi[$d]) ? $absensi[$d]->jam_masuk : null,
+                'jam_keluar' => isset($absensi[$d]) ? $absensi[$d]->jam_keluar : null,
+            ];
+        }
+
+        return response()->json([
+            'nama' => $siswaModel->nama,
+            'foto' => $siswaModel->foto && file_exists(public_path('uploads/siswa/' . $siswaModel->foto))
+                ? asset('uploads/siswa/' . $siswaModel->foto)
+                : 'https://ui-avatars.com/api/?name=' . urlencode($siswaModel->nama) . '&background=00c0ff&color=fff&size=64',
+            'kelas' => $siswaModel->kelasRelasi->nama_kelas ?? $siswaModel->kelas ?? '-',
+            'bulan' => $start->translatedFormat('F Y'),
+            'bulan_angka' => $bulan,
+            'tahun' => $tahun,
+            'days' => $days,
+            'startOfWeek' => $start->dayOfWeek,
+        ]);
+    }
+
+    public function penilaianSiswaJson($batchId)
+    {
+        $user = Auth::user();
+        $siswa = \App\Models\Siswa::where('batch_id', $batchId)->where('status', 'AKTIF')->get();
+        $namaSiswa = $siswa->pluck('nama')->toArray();
+
+        $penilaian = \App\Models\Penilaian::where('user_id', $user->id)
+            ->whereIn('nama_siswa', $namaSiswa)
+            ->orderBy('tanggal_penilaian', 'desc')
+            ->get()
+            ->groupBy('nama_siswa');
+
+        $data = $siswa->map(function ($s) use ($penilaian) {
+            $nilaiSiswa = $penilaian[$s->nama] ?? collect();
+            return [
+                'id' => $s->id,
+                'nama' => $s->nama,
+                'foto' => $s->foto && file_exists(public_path('uploads/siswa/' . $s->foto))
+                    ? asset('uploads/siswa/' . $s->foto)
+                    : 'https://ui-avatars.com/api/?name=' . urlencode($s->nama) . '&background=00c0ff&color=fff&size=32',
+                'nilai_terakhir' => $nilaiSiswa->first()?->nilai,
+                'total_penilaian' => $nilaiSiswa->count(),
+            ];
+        });
+
+        return response()->json($data);
+    }
+
+    public function assessmentTemplate($kelasSenseiId)
+    {
+        $kelas = KelasSensei::findOrFail($kelasSenseiId);
+        $level = $kelas->level;
+        $batchId = $kelas->batch_id;
+
+        $categories = \App\Models\AssessmentCategory::with('components')
+            ->where('level', $level)
+            ->orderBy('urutan')
+            ->get();
+
+        $siswa = \App\Models\Siswa::where('batch_id', $batchId)->where('status', 'AKTIF')->orderBy('nama')->get();
+        $siswaData = $siswa->map(function ($s) {
+            return [
+                'id' => $s->id,
+                'nama' => $s->nama,
+                'foto' => $s->foto && file_exists(public_path('uploads/siswa/' . $s->foto))
+                    ? asset('uploads/siswa/' . $s->foto)
+                    : 'https://ui-avatars.com/api/?name=' . urlencode($s->nama) . '&background=00c0ff&color=fff&size=32',
+            ];
+        });
+
+        return response()->json([
+            'level' => $level,
+            'batch_id' => $batchId,
+            'categories' => $categories->map(function ($cat) {
+                return [
+                    'id' => $cat->id,
+                    'nama_kategori' => $cat->nama_kategori,
+                    'components' => $cat->components->sortBy('urutan')->values()->map(function ($c) {
+                        return [
+                            'id' => $c->id,
+                            'sub_komponen' => $c->sub_komponen,
+                        ];
+                    }),
+                ];
+            }),
+            'students' => $siswaData,
+        ]);
+    }
+
+    public function getDayAssessments(Request $request)
+    {
+        $request->validate([
+            'batch_id' => 'required|exists:batches,id',
+            'tanggal' => 'required|date',
+            'kelas_sensei_id' => 'nullable|exists:kelas_sensei,id',
+        ]);
+
+        $componentIds = collect();
+        if ($request->kelas_sensei_id) {
+            $kelas = \App\Models\KelasSensei::find($request->kelas_sensei_id);
+            if ($kelas) {
+                $categories = \App\Models\AssessmentCategory::with('components')
+                    ->where('level', $kelas->level)
+                    ->get();
+                $componentIds = $categories->pluck('components')->flatten()->pluck('id');
+            }
+        } else {
+            $kelas = \App\Models\KelasSensei::where('batch_id', $request->batch_id)->first();
+            if ($kelas) {
+                $categories = \App\Models\AssessmentCategory::with('components')
+                    ->where('level', $kelas->level)
+                    ->get();
+                $componentIds = $categories->pluck('components')->flatten()->pluck('id');
+            }
+        }
+
+        $assessments = \App\Models\StudentAssessment::with('component')
+            ->where('batch_id', $request->batch_id)
+            ->where('tanggal', $request->tanggal)
+            ->when($componentIds->isNotEmpty(), fn($q) => $q->whereIn('component_id', $componentIds))
+            ->get()
+            ->keyBy(fn ($a) => $a->siswa_id . '_' . $a->component_id);
+
+        return response()->json([
+            'assessments' => $assessments->map(function ($a) {
+                return [
+                    'siswa_id' => $a->siswa_id,
+                    'component_id' => $a->component_id,
+                    'nilai' => (float) $a->nilai,
+                ];
+            })->values(),
+        ]);
+    }
+
+    public function saveAssessments(Request $request)
+    {
+        $request->validate([
+            'batch_id' => 'required|exists:batches,id',
+            'tanggal' => 'required|date',
+            'siswa_id' => 'required|exists:siswas,id',
+            'nilai' => 'required|array',
+            'nilai.*' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        $user = Auth::user();
+
+        foreach ($request->nilai as $componentId => $nilai) {
+            if ($nilai !== '' && $nilai !== null) {
+                \App\Models\StudentAssessment::updateOrCreate(
+                    [
+                        'component_id' => $componentId,
+                        'siswa_id' => $request->siswa_id,
+                        'batch_id' => $request->batch_id,
+                        'tanggal' => $request->tanggal,
+                    ],
+                    [
+                        'user_id' => $user->id,
+                        'nilai' => $nilai,
+                    ]
+                );
+            } else {
+                \App\Models\StudentAssessment::where([
+                    'component_id' => $componentId,
+                    'siswa_id' => $request->siswa_id,
+                    'batch_id' => $request->batch_id,
+                    'tanggal' => $request->tanggal,
+                ])->delete();
+            }
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Nilai berhasil disimpan']);
     }
 
     public function riwayatKelas($kelasSenseiId)

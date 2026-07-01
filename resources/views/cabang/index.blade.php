@@ -105,17 +105,17 @@
 <div class="modal fade" id="modalQR" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
-            <div class="text-center px-4 pt-4 pb-3" style="background: linear-gradient(135deg, #00c0ff 0%, #1e3c72 100%);">
+            <div class="text-center px-4 pt-4 pb-3" style="background: linear-gradient(135deg, #0D1F3C 0%, #1a2d4a 100%);">
                 <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 mt-3 me-3" data-bs-dismiss="modal"></button>
                 <div class="flex items-center justify-center gap-1 mb-1">
                     <img src="{{ asset('assets/images/logo/logo-sm.png') }}"
                         alt="Mendunia.id"
                         style="width: 14px; height: 14px; object-fit: contain;"
                         onerror="this.style.display='none'">
-                    <span class="text-white/70 fw-semibold" style="font-size: 9px; letter-spacing: 2px;">MENDUNIA.ID</span>
+                    <span class="text-white fw-semibold" style="font-size: 9px; letter-spacing: 2px; opacity:0.7;">MENDUNIA.ID</span>
                 </div>
                 <h5 class="text-white fw-bold mb-0" style="font-size: 16px;">QR Code Cabang</h5>
-                <p class="text-white/60 text-xs mb-0 mt-1">Scan QR ini untuk absensi masuk</p>
+                <p class="text-white text-xs mb-0 mt-1" style="opacity:0.6;">Scan QR ini untuk absensi masuk</p>
             </div>
             <div class="text-center px-4 py-3">
                 <div class="d-flex align-items-center justify-content-center gap-1 mb-1">

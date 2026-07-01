@@ -1,8 +1,8 @@
 <div class="modal fade" id="modalTambahShift" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-1 " style="">
-                <h5 class="modal-title fw-bold"><i class="ph ph-plus-circle me-2"></i>Tambah Shift Kerja</h5>
+            <div class="modal-header border-1 text-white" style="background: linear-gradient(135deg, #0D1F3C 0%, #1a2d4a 100%);">
+                <h5 class="modal-title text-white fw-bold"><i class="ph ph-plus-circle me-2"></i>Tambah Shift Kerja</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
@@ -71,7 +71,7 @@
 <div class="modal fade" id="modalEditShift" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #0D1F3C 0%, #1a2d4a 100%);">
                 <h5 class="modal-title text-white fw-bold"><i class="ph ph-pencil-line me-2"></i>Edit Shift Kerja</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>

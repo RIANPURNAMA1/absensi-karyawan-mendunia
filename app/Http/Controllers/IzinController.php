@@ -41,7 +41,7 @@ class IzinController extends Controller
             return back()->with('error', 'Izin sudah diproses');
         }
 
-        if (!auth()->user()->isHR() && !auth()->user()->isManager()) {
+        if (!auth()->user()->isHR() && !auth()->user()->isManager() && !auth()->user()->isGuru()) {
             abort(403, 'Tidak punya akses approval');
         }
 
@@ -61,7 +61,23 @@ class IzinController extends Controller
             ]);
 
             // 3️⃣ Generate absensi otomatis
-            ServicesIzinApprovalService::generateAbsensi($izin);
+            if ($izin->user->isSiswa()) {
+                $siswa = $izin->user->siswa;
+                if ($siswa) {
+                    $dates = $izin->getTanggalRange();
+                    foreach ($dates as $date) {
+                        \App\Models\AbsensiSiswa::firstOrCreate(
+                            ['siswa_id' => $siswa->id, 'tanggal' => $date->toDateString()],
+                            [
+                                'status' => $izin->jenis_izin === 'SAKIT' ? 'SAKIT' : 'IZIN',
+                                'keterangan' => $izin->alasan,
+                            ]
+                        );
+                    }
+                }
+            } else {
+                ServicesIzinApprovalService::generateAbsensi($izin);
+            }
         });
 
         return back()->with('success', 'Izin disetujui & absensi otomatis dibuat');
@@ -74,6 +90,10 @@ class IzinController extends Controller
 
         if ($izin->status !== 'PENDING') {
             return back()->with('error', 'Izin sudah diproses');
+        }
+
+        if (!auth()->user()->isHR() && !auth()->user()->isManager() && !auth()->user()->isGuru()) {
+            abort(403, 'Tidak punya akses approval');
         }
 
         DB::transaction(function () use ($izin, $request) {
@@ -92,6 +112,34 @@ class IzinController extends Controller
         });
 
         return back()->with('success', 'Izin ditolak');
+    }
+
+    public function pendingByBatch($batchId)
+    {
+        $siswaIds = \App\Models\Siswa::where('batch_id', $batchId)->pluck('id');
+        $userIds = \App\Models\Siswa::where('batch_id', $batchId)->pluck('user_id');
+
+        $pendingIzins = Izin::whereIn('user_id', $userIds)
+            ->where('status', 'PENDING')
+            ->with('user')
+            ->get()
+            ->filter(function ($izin) {
+                return $izin->user && $izin->user->siswa;
+            })
+            ->map(function ($izin) {
+                $siswa = $izin->user->siswa;
+                return [
+                    'id' => $izin->id,
+                    'siswa_id' => $siswa->id,
+                    'nama' => $izin->user->name ?? $izin->user->nama ?? '-',
+                    'jenis_izin' => $izin->jenis_izin,
+                    'tgl_mulai' => $izin->tgl_mulai->format('Y-m-d'),
+                    'tgl_selesai' => $izin->tgl_selesai->format('Y-m-d'),
+                    'alasan' => $izin->alasan,
+                ];
+            })->values();
+
+        return response()->json($pendingIzins);
     }
 
     /**
@@ -129,9 +177,17 @@ class IzinController extends Controller
         }
 
         // 🔒 3. CEK: Apakah sudah ada absen pada tanggal mulai izin?
-        $sudahAbsen = \App\Models\Absensi::where('user_id', $userId)
-            ->where('tanggal', $tglMulai)
-            ->exists();
+        $user = Auth::user();
+        if ($user->isSiswa()) {
+            $siswa = $user->siswa;
+            $sudahAbsen = $siswa && \App\Models\AbsensiSiswa::where('siswa_id', $siswa->id)
+                ->where('tanggal', $tglMulai)
+                ->exists();
+        } else {
+            $sudahAbsen = \App\Models\Absensi::where('user_id', $userId)
+                ->where('tanggal', $tglMulai)
+                ->exists();
+        }
 
         if ($sudahAbsen) {
             $msg = 'Gagal mengajukan izin. Anda tercatat sudah melakukan absensi pada tanggal ' . \Carbon\Carbon::parse($tglMulai)->format('d-m-Y') . '.';

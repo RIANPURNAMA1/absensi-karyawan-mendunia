@@ -16,15 +16,23 @@
             @if(auth()->user()->isSiswa())
             <a href="{{ route('absensi.scan') }}" class="flex flex-col items-center -mt-8">
                 <div
-                    class="w-14 h-14 bg-gradient-to-br from-[#00c0ff] to-blue-700 rounded-full flex items-center justify-center shadow-lg">
+                    class="w-14 h-14 bg-gradient-to-br from-[#0D1F3C] to-[#1a2d4a] rounded-full flex items-center justify-center shadow-lg">
                     <i data-lucide="qr-code" class="w-7 h-7 text-white"></i>
                 </div>
                 <span class="text-xs font-medium text-gray-700 mt-2">Scan QR</span>
             </a>
+            @elseif(auth()->user()->role === 'GURU')
+            <button onclick="senseiAlert()" class="flex flex-col items-center -mt-8">
+                <div
+                    class="w-14 h-14 bg-gradient-to-br from-[#0D1F3C] to-[#1a2d4a] rounded-full flex items-center justify-center shadow-lg">
+                    <i data-lucide="camera" class="w-7 h-7 text-white"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-700 mt-2">Attedance</span>
+            </button>
             @else
             <button onclick="mulaiAbsenFoto()" class="flex flex-col items-center -mt-8">
                 <div
-                    class="w-14 h-14 bg-gradient-to-br from-[#00c0ff] to-blue-700 rounded-full flex items-center justify-center shadow-lg">
+                    class="w-14 h-14 bg-gradient-to-br from-[#0D1F3C] to-[#1a2d4a] rounded-full flex items-center justify-center shadow-lg">
                     <i data-lucide="camera" class="w-7 h-7 text-white"></i>
                 </div>
                 <span class="text-xs font-medium text-gray-700 mt-2">Attedance</span>
@@ -44,3 +52,18 @@
     </div>
       {{-- modal absensi manual --}}
     @include('absensi.modal_manual')
+
+    <script>
+        function senseiAlert() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Anda adalah Sensei',
+                    text: 'Silakan absen berdasarkan kelas Anda',
+                    confirmButtonColor: '#0D1F3C',
+                });
+            } else {
+                alert('Anda adalah Sensei. Silakan absen berdasarkan kelas Anda.');
+            }
+        }
+    </script>

@@ -12,7 +12,7 @@ class RekapKehadiranSenseiController extends Controller
 {
     public function index()
     {
-        $sensei = User::where('role', 'KARYAWAN')
+        $sensei = User::whereIn('role', ['KARYAWAN', 'GURU'])
             ->whereHas('kelasSensei')
             ->orderBy('name', 'asc')
             ->get();
@@ -47,8 +47,8 @@ class RekapKehadiranSenseiController extends Controller
                     'id' => $kelas->id,
                     'nama_kelas' => $kelas->nama_kelas,
                     'level' => $kelas->level,
-                    'tanggal_mulai' => $kelas->tanggal_mulai,
-                    'tanggal_selesai' => $kelas->tanggal_selesai,
+                    'tanggal_mulai' => $tglMulai->toDateString(),
+                    'tanggal_selesai' => $tglSelesai->toDateString(),
                     'total_pertemuan' => $totalPertemuan,
                     'jumlah_absen' => $jumlahAbsen,
                     'sensei' => $kelas->user->name ?? '-',

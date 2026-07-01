@@ -3,7 +3,7 @@
        <div class="modal-dialog modal-lg modal-dialog-centered">
            <div class="modal-content border-0 shadow-lg">
 
-               <div class="modal-header border-0" style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">
+                <div class="modal-header border-0" style="background: linear-gradient(135deg, #0D1F3C 0%, #1a2d4a 100%);">
                    <h5 class="modal-title text-white fw-bold">
                        <i class="ph ph-user-plus me-2"></i>Tambah Karyawan
                    </h5>
@@ -203,7 +203,7 @@
            <div class="modal-content border-0 shadow-lg">
 
                <div class="modal-header text-white border-0"
-                   style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">
+                    style="background: linear-gradient(135deg, #0D1F3C 0%, #1a2d4a 100%);">
                    <h5 class="modal-title fw-bold text-white">
                        <i class="ph ph-user-circle-plus me-2"></i>Edit Data Karyawan
                    </h5>

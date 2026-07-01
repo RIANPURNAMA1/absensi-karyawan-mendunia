@@ -388,8 +388,9 @@ class KehadiranSenseiController extends Controller
         $status = $request->status;
         $start_date = $request->start_date;
         $end_date = $request->end_date;
+        $batch_id = $request->batch_id;
 
-        $query = KelasSensei::with('user');
+        $query = KelasSensei::with('user', 'batchRelasi');
 
         if ($user_id) {
             $query->where('user_id', $user_id);
@@ -397,6 +398,10 @@ class KehadiranSenseiController extends Controller
 
         if ($status) {
             $query->where('status', $status);
+        }
+
+        if ($batch_id) {
+            $query->where('batch_id', $batch_id);
         }
 
         if ($start_date) {
@@ -457,13 +462,17 @@ class KehadiranSenseiController extends Controller
             ->orderBy('name', 'asc')
             ->get();
 
+        $list_batch = \App\Models\Batch::orderBy('nama_batch', 'asc')->get();
+
         return view('admin.kelas_sensei.index', [
             'kelas' => $kelas,
             'list_sensei' => $list_sensei,
+            'list_batch' => $list_batch,
             'user_id_selected' => $user_id,
             'status_selected' => $status,
             'start_date' => $start_date,
             'end_date' => $end_date,
+            'batch_id_selected' => $batch_id,
         ]);
     }
 

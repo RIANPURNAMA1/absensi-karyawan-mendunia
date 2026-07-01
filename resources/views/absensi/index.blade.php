@@ -35,6 +35,20 @@
             z-index: 60;
         }
     </style>
+    <style>
+        /* === ABSENSI THEME: 0D1F3C === */
+        /* Shift card / status card gradient */
+        .from-\[\#00c0ff\] { background: linear-gradient(135deg, #0D1F3C, #1a2d4a) !important; }
+        .to-blue-700 { background: linear-gradient(135deg, #0D1F3C, #1a2d4a) !important; }
+
+        /* Status card untuk absensi - Dateng Pagi etc */
+        .bg-gradient-to-br.from-\[\#00c0ff\].to-blue-700 {
+            background: linear-gradient(135deg, #0D1F3C, #1a2d4a) !important;
+        }
+
+        /* Status badge pada riwayat dengan warna yang sesuai tema */
+        .border-l-4.border-blue-500 { border-left-color: #089CF3 !important; }
+    </style>
 </head>
 
 <body class="bg-gray-50 pb-24">
@@ -70,7 +84,7 @@
 
 
     <!-- HEADER -->
-    <div class="bg-white px-5 pt-4 pb-6 shadow-sm">
+    <div class="bg-white px-5 pt-4 pb-6 shadow-sm absensi-header">
         <div class="flex items-center justify-between mb-4">
             <!-- PROFILE INFO (CLICKABLE) -->
             <a href="/absensi/profile" class="flex items-center gap-3 hover:opacity-80 transition">
@@ -157,12 +171,12 @@
                             @endif
                         </div>
                     </div>
-                    @if(!$isSiswa)
-                    <button onclick="mulaiAbsenFoto()"
-                        class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
-                        <i data-lucide="camera" class="w-5 h-5 text-blue-600"></i>
-                    </button>
-                    @endif
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="text-3xl font-bold font-mono tabular-nums leading-none" id="liveClock">
+                            {{ now()->format('H:i:s') }}
+                        </span>
+                        <span class="text-blue-200 text-[10px] uppercase tracking-wider">Jam Sekarang</span>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-6">
@@ -192,19 +206,41 @@
         <div class="space-y-2">
             @if($siswaKelasSensei && $siswaKelasSensei->count() > 0)
             @foreach ($siswaKelasSensei as $ks)
+            @php
+                $now = \Carbon\Carbon::now();
+                $mulai = \Carbon\Carbon::parse($ks->tanggal_mulai);
+                $selesai = \Carbon\Carbon::parse($ks->tanggal_selesai);
+                $isActive = $now->between($mulai, $selesai);
+            @endphp
             <a href="{{ route('absensi.riwayat-kelas', $ks->id) }}"
-               class="block bg-white rounded-2xl p-4 shadow-sm border border-blue-100 active:scale-[0.98] transition-transform">
+               class="block rounded-2xl p-4 shadow-sm active:scale-[0.98] transition-transform
+                   {{ $isActive ? 'bg-gradient-to-br from-[#0D1F3C] to-[#1a2d4a] border border-emerald-400/30' : 'bg-white border border-blue-100' }}">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <i data-lucide="book-open" class="w-5 h-5 text-blue-600"></i>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+                        {{ $isActive ? 'bg-emerald-900/40' : 'bg-blue-100' }}">
+                        <i data-lucide="book-open" class="w-5 h-5 {{ $isActive ? 'text-emerald-300' : 'text-blue-600' }}"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-gray-900">{{ $ks->nama_kelas }}</p>
-                        <p class="text-xs text-gray-500">{{ $ks->batchRelasi->nama_batch ?? '-' }} &middot; Level {{ $ks->level }}</p>
-                        <p class="text-xs text-gray-400">Sensei: {{ $ks->user->name ?? $ks->user->nama ?? '-' }}</p>
-                        <p class="text-xs text-gray-400">{{ $ks->tanggal_mulai->format('d/m/Y') }} - {{ $ks->tanggal_selesai->format('d/m/Y') }}</p>
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-semibold {{ $isActive ? 'text-white' : 'text-gray-900' }}">{{ $ks->nama_kelas }}</p>
+                            @if($isActive)
+                                <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Aktif</span>
+                            @endif
+                        </div>
+                        <p class="text-xs {{ $isActive ? 'text-emerald-200/70' : 'text-gray-500' }}">{{ $ks->batchRelasi->nama_batch ?? '-' }} &middot; Level {{ $ks->level }}</p>
+                        <p class="text-xs {{ $isActive ? 'text-white/50' : 'text-gray-400' }}">Sensei: {{ $ks->user->name ?? $ks->user->nama ?? '-' }}</p>
+                        <p class="text-xs {{ $isActive ? 'text-white/50' : 'text-gray-400' }}">{{ $ks->tanggal_mulai->format('d/m/Y') }} - {{ $ks->tanggal_selesai->format('d/m/Y') }}</p>
                     </div>
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 flex-shrink-0"></i>
+                    @if($isActive)
+                        <div class="flex flex-col items-center gap-1">
+                            <div class="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                                <i data-lucide="camera" class="w-4 h-4 text-emerald-300"></i>
+                            </div>
+                            <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-300">Absen</span>
+                        </div>
+                    @else
+                        <i data-lucide="chevron-right" class="w-4 h-4 {{ $isActive ? 'text-white/30' : 'text-gray-300' }} flex-shrink-0"></i>
+                    @endif
                 </div>
             </a>
             @endforeach
@@ -234,7 +270,7 @@
             </a>
             @endif
 
-            <button type="button" onclick="showUnderDevelopment()"
+            <button type="button" onclick="mulaiAbsenFoto()"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="qr-code" class="w-5 h-5 text-blue-600"></i>
@@ -273,6 +309,7 @@
                 </div>
                 <span class="text-[11px] font-medium text-gray-700">Jadwal</span>
             </button>
+            @if(isset($isGuru) && $isGuru)
             <button onclick="openModalSensei()"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
                 <div class="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">
@@ -280,6 +317,7 @@
                 </div>
                 <span class="text-[11px] font-medium text-gray-700">Guru</span>
             </button>
+            @endif
 
             <button onclick="openModalAgenda()"
                 class="flex flex-col items-center gap-1 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
@@ -316,15 +354,15 @@
             @endif
         </div>
         @else
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-            <button type="button" onclick="showUnderDevelopment()"
+        <div class="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+            <a href="{{ route('absensi.scan') }}"
                 class="flex flex-col items-center gap-3 bg-white rounded-2xl p-6 shadow-sm active:scale-95 transition border-2 border-blue-100 hover:border-blue-300 hover:shadow-md">
                 <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
                     <i data-lucide="qr-code" class="w-8 h-8 text-blue-600"></i>
                 </div>
                 <span class="text-sm font-semibold text-gray-800">Scan QR Code</span>
                 <span class="text-xs text-gray-500 text-center">Scan untuk absensi</span>
-            </button>
+            </a>
             <button onclick="toggleModalJadwal(true)"
                 class="flex flex-col items-center gap-3 bg-white rounded-2xl p-6 shadow-sm active:scale-95 transition border-2 border-purple-100 hover:border-purple-300 hover:shadow-md">
                 <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
@@ -337,77 +375,58 @@
         @endif
     </div>
 
-    @if(!$isSiswa)
-    <!-- AGENDA HARI INI -->
-    @if($agendaHariIni && $agendaHariIni->count() > 0)
+    @if(isset($isSiswa) && $isSiswa && $riwayatAbsensiSiswa && $riwayatAbsensiSiswa->count() > 0)
     <div class="px-5 pb-5">
         <div class="flex items-center justify-between mb-3">
-            <h2 class="text-base font-bold text-gray-900">Agenda Hari Ini</h2>
-            <button onclick="openModalAgenda()" class="text-amber-600 text-sm font-semibold flex items-center gap-1">
-                <i data-lucide="plus" class="w-4 h-4"></i> Tambah
-            </button>
+            <h2 class="text-base font-bold text-gray-900">Riwayat Absensi</h2>
+            <a href="{{ route('absensi.riwayat') }}" class="text-blue-600 text-sm font-semibold">Lihat Semua</a>
         </div>
-        <div class="space-y-3">
-            @foreach($agendaHariIni as $agenda)
-            <div class="bg-white rounded-2xl p-4 shadow-sm border border-amber-100">
-                <div class="flex items-start gap-3">
-                    @if($agenda->foto)
-                    <img src="{{ asset('uploads/agenda/'.$agenda->foto) }}" alt="Foto" class="w-16 h-16 object-cover rounded-xl">
-                    @else
-                    <div class="w-16 h-16 bg-amber-100 rounded-xl flex items-center justify-center">
-                        <i data-lucide="camera" class="w-8 h-8 text-amber-600"></i>
+        <div class="space-y-2">
+            @foreach ($riwayatAbsensiSiswa as $ra)
+            @php
+                $statusColor = match($ra->status) {
+                    'HADIR' => 'text-green-600 bg-green-100',
+                    'TERLAMBAT' => 'text-yellow-600 bg-yellow-100',
+                    'IZIN' => 'text-blue-600 bg-blue-100',
+                    'SAKIT' => 'text-red-600 bg-red-100',
+                    'ALPA' => 'text-gray-600 bg-gray-100',
+                    default => 'text-gray-600 bg-gray-100',
+                };
+            @endphp
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 {{ explode(' ', $statusColor)[1] }}">
+                        <span class="text-sm font-bold {{ explode(' ', $statusColor)[0] }}">
+                            {{ \Carbon\Carbon::parse($ra->tanggal)->format('d') }}
+                        </span>
                     </div>
-                    @endif
-                    <div class="flex-1">
-                        <div class="flex items-center justify-between">
-                            @if($agenda->keterangan)
-                            <h3 class="font-semibold text-gray-900">{{ $agenda->keterangan }}</h3>
-                            @else
-                            <h3 class="font-semibold text-gray-900">Agenda tanpa keterangan</h3>
-                            @endif
-                            @if($agenda->jam_absen_masuk && $agenda->jam_absen_keluar)
-                            <span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">Selesai</span>
-                            @elseif($agenda->jam_absen_masuk)
-                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full">Hadir</span>
-                            @else
-                            <span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full">Terjadwal</span>
-                            @endif
-                        </div>
-                        <div class="flex items-center gap-1 mt-2">
-                            <i data-lucide="clock" class="w-3 h-3 text-gray-400"></i>
-                            <span class="text-[10px] text-gray-500">
-                                {{ $agenda->jam_absen_masuk ? \Carbon\Carbon::parse($agenda->jam_absen_masuk)->format('H:i') : '' }}
-                                {{ $agenda->jam_absen_keluar ? '- '.\Carbon\Carbon::parse($agenda->jam_absen_keluar)->format('H:i') : '' }}
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-semibold text-gray-900">
+                                {{ \Carbon\Carbon::parse($ra->tanggal)->translatedFormat('l, d M Y') }}
+                            </p>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {{ $statusColor }}">
+                                {{ $ra->status }}
                             </span>
                         </div>
+                        <p class="text-xs text-gray-400">
+                            {{ $ra->jam_masuk ? \Carbon\Carbon::parse($ra->jam_masuk)->format('H:i') : '--:--' }}
+                            -
+                            {{ $ra->jam_keluar ? \Carbon\Carbon::parse($ra->jam_keluar)->format('H:i') : '--:--' }}
+                            @if($ra->cabang)
+                                &middot; {{ $ra->cabang->nama_cabang }}
+                            @endif
+                        </p>
                     </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 flex-shrink-0"></i>
                 </div>
-                @if($agenda->jam_absen_masuk && !$agenda->jam_absen_keluar)
-                <button onclick="absenAgendaPulang({{ $agenda->id }})" class="mt-3 w-full py-2.5 bg-green-600 text-white rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                    Absen Pulang
-                </button>
-                @endif
             </div>
             @endforeach
         </div>
     </div>
-    @else
-    <div class="px-5 pb-5">
-        <div class="flex items-center justify-between mb-3">
-            <h2 class="text-base font-bold text-gray-900">Agenda Hari Ini</h2>
-            <button onclick="openModalAgenda()" class="text-amber-600 text-sm font-semibold flex items-center gap-1">
-                <i data-lucide="plus" class="w-4 h-4"></i> Tambah
-            </button>
-        </div>
-        <div class="text-center py-8 text-gray-400 bg-gray-50 rounded-2xl">
-            <i data-lucide="camera" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
-            <p class="text-sm">Belum ada agenda hari ini</p>
-            <p class="text-xs mt-1">Klik + untuk absen agenda</p>
-        </div>
-    </div>
     @endif
 
+    @if(isset($isGuru) && $isGuru)
     <!-- KELAS SENSEI AKTIF -->
     <div class="px-5 pb-5" id="sectionKelasSensei">
         <div class="flex items-center justify-between mb-3">
@@ -435,6 +454,7 @@
                         $absensiHariIni = $kelas->absensi->first();
                         $sudahMasuk = $absensiHariIni && $absensiHariIni->jam_masuk;
                         $sudahPulang = $absensiHariIni && $absensiHariIni->jam_keluar;
+                        $kelasSelesai = \Carbon\Carbon::parse($kelas->tanggal_selesai)->endOfDay()->isPast();
                     @endphp
                     <div class="bg-white rounded-2xl p-4 shadow-sm border border-violet-100" data-kelas-id="{{ $kelas->id }}">
                         <div class="flex items-start justify-between mb-3">
@@ -447,14 +467,20 @@
                                     <p class="text-xs text-gray-500">Level {{ $kelas->level }} - {{ \Carbon\Carbon::parse($kelas->tanggal_mulai)->format('d M') }} - {{ \Carbon\Carbon::parse($kelas->tanggal_selesai)->format('d M') }}</p>
                                 </div>
                             </div>
-                            @if($sudahMasuk && !$sudahPulang)
+                            @if($kelasSelesai)
+                                <span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">SELESAI</span>
+                            @elseif($sudahMasuk && !$sudahPulang)
                                 <span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">HADIR</span>
                             @elseif($sudahMasuk && $sudahPulang)
                                 <span class="px-2 py-1 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-full">SELESAI</span>
                             @endif
                         </div>
                         <div class="flex gap-2">
-                            @if(!$sudahMasuk)
+                            @if($kelasSelesai)
+                                <div class="flex-1 py-2.5 bg-green-100 text-green-700 rounded-xl text-sm font-bold text-center">
+                                    Kelas Sudah Selesai
+                                </div>
+                            @elseif(!$sudahMasuk)
                                 <button onclick="absenSenseiMasuk({{ $kelas->id }})" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold active:scale-95 transition">
                                     Absen Masuk
                                 </button>
@@ -479,6 +505,7 @@
             </div>
         @endif
     </div>
+    @endif
 
     {{-- Modal Jadwal Dinamis --}}
     <div id="modalJadwal" class="fixed inset-0 z-50 hidden">
@@ -555,6 +582,7 @@
     </div>
 
 
+    @if(!isset($isSiswa) || !$isSiswa)
     <!-- RIWAYAT ABSENSI -->
     <div class="px-5 pb-24">
         <div class="flex items-center justify-between mb-3">
@@ -564,45 +592,7 @@
 
         <div class="space-y-3">
             <div id="riwayatContainer">
-                @forelse ($riwayat as $a)
-                    <div class="bg-white rounded-2xl p-4 mb-2 shadow-sm flex items-center gap-4 border-l-4 border-blue-500">
-                        <a href="{{ route('absensi.riwayat') }}"
-                            class="flex items-center gap-4 p-4 hover:bg-gray-50 transition w-full">
-                            <div
-                                class="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
-                                <div class="text-center">
-                                    <div class="text-xs text-blue-600 font-medium">
-                                        {{ \Carbon\Carbon::parse($a->tanggal)->translatedFormat('D') }}
-                                    </div>
-                                    <div class="text-xl font-bold text-blue-700">
-                                        {{ \Carbon\Carbon::parse($a->tanggal)->format('d') }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">KARYAWAN</span>
-                                    @if ($a->shift)
-                                        <span class="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">{{ $a->shift->nama_shift }}</span>
-                                    @endif
-                                    <h3 class="font-semibold text-gray-900">{{ $a->status }}</h3>
-                                </div>
-                                <div class="flex gap-4 text-xs text-gray-500">
-                                    <span>In: {{ $a->jam_masuk ?? '-' }}</span>
-                                    <span>Out: {{ $a->jam_keluar ?? '-' }}</span>
-                                </div>
-                            </div>
-
-                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
-                        </a>
-                    </div>
-                @empty
-                    <div class="text-center text-gray-500 text-sm">
-                        Belum ada riwayat absensi karyawan
-                    </div>
-                @endforelse
-
+                @if(isset($isGuru) && $isGuru)
                 {{-- Riwayat Sensei --}}
                 @forelse ($riwayatSensei as $a)
                     <a href="{{ route('absensi.detailSensei', ['tanggal' => $a->tanggal, 'kelasId' => $a->kelas_sensei_id]) }}"
@@ -624,12 +614,74 @@
                         </div>
                     </a>
                 @empty
+                    <div class="text-center text-gray-500 text-sm">
+                        Belum ada riwayat absensi
+                    </div>
                 @endforelse
+                @else
+                {{-- Riwayat Karyawan --}}
+                @forelse ($riwayat as $a)
+                    <a href="{{ route('absensi.riwayat') }}"
+                        class="flex items-center gap-3 bg-white rounded-xl p-3 shadow-sm active:scale-95 transition">
+                        <div class="text-center">
+                            <div class="text-[10px] font-medium text-blue-600">
+                                {{ \Carbon\Carbon::parse($a->tanggal)->translatedFormat('D') }}
+                            </div>
+                            <div class="text-lg font-bold text-blue-700">
+                                {{ \Carbon\Carbon::parse($a->tanggal)->format('d') }}
+                            </div>
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-[9px] font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">{{ $a->shift->nama_shift ?? '-' }}</span>
+                                <span class="text-xs font-semibold {{ $a->status == 'TERLAMBAT' ? 'text-red-600' : 'text-gray-800' }}">{{ $a->status }}</span>
+                            </div>
+                            <div class="text-[11px] text-gray-500 mt-0.5">
+                                In: {{ $a->jam_masuk ? \Carbon\Carbon::parse($a->jam_masuk)->format('H:i') : '-' }}
+                                &middot; Out: {{ $a->jam_keluar ? \Carbon\Carbon::parse($a->jam_keluar)->format('H:i') : '-' }}
+                            </div>
+                        </div>
+
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 flex-shrink-0"></i>
+                    </a>
+                @empty
+                    <div class="text-center text-gray-500 text-sm">
+                        Belum ada riwayat absensi
+                    </div>
+                @endforelse
+                @endif
+
+                {{-- Riwayat Agenda --}}
+                @if(isset($riwayatAgenda) && $riwayatAgenda->count() > 0)
+                @foreach($riwayatAgenda as $ag)
+                <div class="bg-white rounded-xl p-3 shadow-sm border border-amber-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="calendar-check" class="w-5 h-5 text-amber-600"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-[9px] font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">AGENDA</span>
+                                <span class="text-xs font-semibold text-gray-800 truncate">{{ $ag->judul }}</span>
+                            </div>
+                            <div class="text-[11px] text-gray-500 mt-0.5">
+                                {{ \Carbon\Carbon::parse($ag->tanggal)->translatedFormat('l, d M') }}
+                                &middot; {{ $ag->jam_absen_masuk ? \Carbon\Carbon::parse($ag->jam_absen_masuk)->format('H:i') : '-' }}
+                                - {{ $ag->jam_absen_keluar ? \Carbon\Carbon::parse($ag->jam_absen_keluar)->format('H:i') : '-' }}
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 flex-shrink-0"></i>
+                    </div>
+                </div>
+                @endforeach
+                @endif
             </div>
 
         </div>
     </div>
-    @endif
+
+@endif
 
 <!-- BOTTOM NAV -->
     @include('components.bottom_Nav')
@@ -957,11 +1009,11 @@
                         const sudahMasuk = absensi && absensi.jam_masuk;
                         const sudahPulang = absensi && absensi.jam_keluar;
                         const status = absensi ? absensi.status : '';
-                        
+                        const kelasSelesai = kelas.tanggal_selesai && new Date(kelas.tanggal_selesai + 'T23:59:59') < new Date();
+
                         let statusBadge = '';
                         let buttonHtml = '';
 
-                        // Status badges sesuai dengan AbsensiController
                         const statusConfig = {
                             'HADIR': { bg: 'bg-green-100', text: 'text-green-700', label: 'HADIR' },
                             'TERLAMBAT': { bg: 'bg-red-100', text: 'text-red-700', label: 'TERLAMBAT' },
@@ -969,7 +1021,10 @@
                             'TIDAK ABSEN PULANG': { bg: 'bg-red-100', text: 'text-red-700', label: 'TIDAK ABSEN PULANG' }
                         };
 
-                        if (sudahMasuk && !sudahPulang) {
+                        if (kelasSelesai) {
+                            statusBadge = '<span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">SELESAI</span>';
+                            buttonHtml = '<div class="flex-1 py-2.5 bg-green-100 text-green-700 rounded-xl text-sm font-bold text-center">Kelas Sudah Selesai</div>';
+                        } else if (sudahMasuk && !sudahPulang) {
                             const cfg = statusConfig[status] || statusConfig['HADIR'];
                             statusBadge = `<span class="px-2 py-1 ${cfg.bg} ${cfg.text} text-[10px] font-bold rounded-full">${cfg.label}</span>`;
                             buttonHtml = `<button onclick="absenSenseiPulang(${kelas.id})" class="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-bold active:scale-95 transition">Absen Pulang</button>`;
@@ -1347,6 +1402,7 @@
                         method: 'POST',
                         headers: { 
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-Requested-With': 'XMLHttpRequest',
                             'Accept': 'application/json'
                         },
                         body: formData
@@ -1372,6 +1428,19 @@
     </script>
 
     @include('absensi.modal_absen_sensei')
+
+    <script>
+        function updateLiveClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            const el = document.getElementById('liveClock');
+            if (el) el.textContent = h + ':' + m + ':' + s;
+        }
+        setInterval(updateLiveClock, 1000);
+        updateLiveClock();
+    </script>
 
 </body>
 

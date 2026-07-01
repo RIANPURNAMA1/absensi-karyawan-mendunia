@@ -51,7 +51,7 @@
     </div>
 
     <div class="px-5 py-5">
-        <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-3xl p-6 text-white shadow-lg mb-5">
+        <div class="bg-[rgb(19,38,67)] rounded-3xl p-6 text-white shadow-lg mb-5">
             <div class="flex items-center gap-4 mb-4">
                 <div class="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center">
                     <i data-lucide="calendar" class="w-8 h-8"></i>
@@ -66,10 +66,10 @@
 
             @php
                 $statusColors = [
-                    'HADIR' => 'bg-green-500/20',
-                    'TERLAMBAT' => 'bg-orange-500/20',
-                    'PULANG LEBIH AWAL' => 'bg-yellow-500/20',
-                    'TIDAK ABSEN PULANG' => 'bg-red-500/20',
+                    'HADIR' => 'bg-green-100 text-green-700',
+                    'TERLAMBAT' => 'bg-red-100 text-red-700',
+                    'PULANG LEBIH AWAL' => 'bg-amber-100 text-amber-700',
+                    'TIDAK ABSEN PULANG' => 'bg-red-100 text-red-700',
                 ];
                 $statusIcons = [
                     'HADIR' => 'check-circle',
@@ -77,11 +77,11 @@
                     'PULANG LEBIH AWAL' => 'arrow-left-circle',
                     'TIDAK ABSEN PULANG' => 'x-circle',
                 ];
-                $currentColor = $statusColors[$absensi->status] ?? 'bg-gray-500/20';
+                $currentColor = $statusColors[$absensi->status] ?? 'bg-gray-100 text-gray-700';
                 $currentIcon = $statusIcons[$absensi->status] ?? 'help-circle';
             @endphp
 
-            <div class="flex items-center gap-2 px-4 py-3 {{ $currentColor }} backdrop-blur rounded-2xl">
+            <div class="flex items-center gap-2 px-4 py-3 {{ $currentColor }} rounded-2xl">
                 <i data-lucide="{{ $currentIcon }}" class="w-5 h-5"></i>
                 <span class="font-semibold text-base">{{ $absensi->status }}</span>
             </div>

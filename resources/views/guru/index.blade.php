@@ -4,11 +4,11 @@
 <div class="container-fluid px-4 py-4">
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
-            <h5 class="mb-0" style="font-weight: 700; font-size: 16px;">Data Guru</h5>
-            <small class="text-muted">Kelola data guru dari pengguna yang terdaftar</small>
+            <h5 class="mb-0" style="font-weight: 700; font-size: 16px;">Data Sensei</h5>
+            <small class="text-muted">Kelola data sensei dari pengguna yang terdaftar</small>
         </div>
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahGuru">
-            <i class="ph ph-plus-circle me-1"></i> Tambah Guru
+            <i class="ph ph-plus-circle me-1"></i> Tambah Sensei
         </button>
     </div>
 
@@ -54,7 +54,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="text-center text-muted py-4">Belum ada data guru</td>
+                    <td colspan="6" class="text-center text-muted py-4">Belum ada data sensei</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -62,18 +62,18 @@
     </div>
 </div>
 
-<!-- Modal Tambah Guru -->
+<!-- Modal Tambah Sensei -->
 <div class="modal fade" id="modalTambahGuru" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="formTambahGuru">
                 @csrf
                 <div class="modal-header">
-                    <h6 class="modal-title">Tambah Guru dari Pengguna</h6>
+                    <h6 class="modal-title">Tambah Sensei dari Pengguna</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted small mb-3">Centang pengguna yang ingin dijadikan guru:</p>
+                    <p class="text-muted small mb-3">Centang pengguna yang ingin dijadikan sensei:</p>
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                         <table class="table table-sm table-hover">
                             <thead>
@@ -101,7 +101,7 @@
                                                 class="rounded-circle" style="width: 24px; height: 24px; object-fit: cover;">
                                             <span>{{ $u->name }}</span>
                                             @if ($gurus->pluck('user_id')->contains($u->id))
-                                                <span class="badge bg-secondary">Sudah jadi guru</span>
+                                                <span class="badge bg-secondary">Sudah jadi sensei</span>
                                             @endif
                                         </div>
                                     </td>
@@ -115,7 +115,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-sm btn-primary">Simpan Guru</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Simpan Sensei</button>
                 </div>
             </form>
         </div>
@@ -158,8 +158,8 @@ $(document).ready(function() {
         var id = $(this).data('id');
         var nama = $(this).data('nama');
         Swal.fire({
-            title: 'Hapus Guru?',
-            text: 'Yakin ingin menghapus ' + nama + ' dari data guru?',
+            title: 'Hapus Sensei?',
+            text: 'Yakin ingin menghapus ' + nama + ' dari data sensei?',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',

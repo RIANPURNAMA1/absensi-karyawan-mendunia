@@ -11,6 +11,11 @@
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
         .card-stats { transition: transform 0.2s ease; }
         .card-stats:active { transform: scale(0.95); }
+
+        /* Skor Disiplin card theme */
+        .bg-blue-600.rounded-3xl {
+            background: #0D1F3C !important;
+        }
     </style>
 </head>
 

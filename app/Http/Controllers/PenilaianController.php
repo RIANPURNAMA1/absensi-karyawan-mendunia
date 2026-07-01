@@ -3,8 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Divisi;
+use App\Models\KelasSensei;
 use App\Models\Penilaian;
 use App\Models\PenilaianSetting;
+use App\Models\Siswa;
+use App\Models\StudentAssessment;
+use App\Models\AssessmentCategory;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -39,30 +44,233 @@ class PenilaianController extends Controller
         return redirect()->back()->with('success', 'Pengaturan penilaian berhasil disimpan.');
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
 
-        if ($user->role === 'KARYAWAN') {
-            $aktif = PenilaianSetting::where('divisi_id', $user->divisi_id)
-                ->where('penilaian_aktif', true)->exists();
+        $levels = KelasSensei::select('level')->distinct()->orderBy('level')->pluck('level');
 
-            if (!$aktif) {
-                abort(403, 'Fitur penilaian tidak aktif untuk divisi Anda.');
+        $queryGuru = User::whereIn('id', KelasSensei::select('user_id')->distinct());
+        if ($user->role === 'GURU') {
+            $queryGuru->where('id', $user->id);
+        }
+        $gurus = $queryGuru->orderBy('name')->get(['id', 'name']);
+
+        $level = $request->level;
+        $guruId = $request->guru_id;
+        $batchId = $request->batch_id;
+
+        if ($user->role === 'GURU') {
+            $guruId = $user->id;
+        }
+
+        $kelasList = collect();
+        if ($level && $guruId) {
+            $kelasList = KelasSensei::with('batchRelasi')
+                ->where('level', $level)
+                ->where('user_id', $guruId)
+                ->get();
+        }
+
+        $students = collect();
+        $categories = collect();
+        $days = [];
+        $assessmentCheck = collect();
+
+        $weekStart = $request->week
+            ? Carbon::parse($request->week)->startOfWeek(Carbon::MONDAY)
+            : Carbon::now()->startOfWeek(Carbon::MONDAY);
+
+        $prevWeek = $weekStart->copy()->subWeek()->toDateString();
+        $nextWeek = $weekStart->copy()->addWeek()->toDateString();
+
+        for ($i = 0; $i < 5; $i++) {
+            $days[] = $weekStart->copy()->addDays($i)->toDateString();
+        }
+
+        if ($batchId && $level && $guruId) {
+            $kelas = KelasSensei::where('batch_id', $batchId)
+                ->where('level', $level)
+                ->where('user_id', $guruId)
+                ->first();
+            $students = Siswa::where('batch_id', $batchId)->where('status', 'AKTIF')->orderBy('nama')->get(['id', 'nama']);
+
+            if ($kelas) {
+                $categories = AssessmentCategory::with('components')
+                    ->where('level', $kelas->level)
+                    ->orderBy('urutan')
+                    ->get();
+
+                $studentIds = $students->pluck('id');
+                $componentIds = $categories->pluck('components')->flatten()->pluck('id');
+
+                // Week checkmarks
+                $existing = StudentAssessment::whereIn('siswa_id', $studentIds)
+                    ->whereIn('component_id', $componentIds)
+                    ->where('batch_id', $batchId)
+                    ->whereBetween('tanggal', [$days[0], $days[4]])
+                    ->select('siswa_id', 'tanggal')
+                    ->distinct()
+                    ->get();
+
+                foreach ($students as $s) {
+                    foreach ($days as $d) {
+                        $key = $s->id . '_' . $d;
+                        $assessmentCheck[$key] = $existing->contains(fn($a) =>
+                            $a->siswa_id === $s->id && $a->tanggal === $d
+                        );
+                    }
+                }
             }
         }
 
-        if (in_array($user->role, ['HR', 'MANAGER'])) {
-            $penilaians = Penilaian::with('user')
-                ->orderBy('tanggal_penilaian', 'desc')
-                ->get();
-        } else {
-            $penilaians = Penilaian::where('user_id', $user->id)
-                ->orderBy('tanggal_penilaian', 'desc')
-                ->get();
+        return view('penilaian.index', compact(
+            'levels', 'gurus', 'level', 'guruId', 'batchId',
+            'kelasList', 'students', 'categories',
+            'days', 'assessmentCheck', 'weekStart', 'prevWeek', 'nextWeek'
+        ));
+    }
+
+    public function dayDetail(Request $request)
+    {
+        $request->validate([
+            'siswa_id' => 'required|integer',
+            'batch_id' => 'required|integer',
+            'level' => 'required|string',
+            'guru_id' => 'required|integer',
+            'tanggal' => 'nullable|date',
+        ]);
+
+        $siswa = Siswa::findOrFail($request->siswa_id);
+        $kelas = KelasSensei::where('batch_id', $request->batch_id)
+            ->where('level', $request->level)
+            ->where('user_id', $request->guru_id)
+            ->first();
+
+        if (!$kelas) {
+            return response()->json(['error' => 'Kelas tidak ditemukan'], 404);
         }
 
-        return view('penilaian.index', compact('penilaians'));
+        $categories = AssessmentCategory::with('components')
+            ->where('level', $kelas->level)
+            ->orderBy('urutan')
+            ->get();
+
+        $componentIds = $categories->pluck('components')->flatten()->pluck('id');
+
+        $query = StudentAssessment::where('siswa_id', $request->siswa_id)
+            ->whereIn('component_id', $componentIds)
+            ->where('batch_id', $request->batch_id);
+
+        if ($request->tanggal) {
+            $query->where('tanggal', $request->tanggal);
+        }
+
+        $assessments = $query->orderBy('tanggal')->get();
+
+        $tanggalMulai = Carbon::parse($kelas->tanggal_mulai);
+
+        $result = [];
+        foreach ($categories as $cat) {
+            $catData = [
+                'nama_kategori' => $cat->nama_kategori,
+                'components' => [],
+                'pertemuan' => [],
+            ];
+
+            foreach ($cat->components as $comp) {
+                $catData['components'][] = [
+                    'id' => $comp->id,
+                    'nama' => $comp->sub_komponen,
+                ];
+            }
+
+            // Group by date
+            $catAssessments = $assessments->filter(fn($a) =>
+                $cat->components->pluck('id')->contains($a->component_id)
+            )->groupBy('tanggal');
+
+            foreach ($catAssessments as $date => $items) {
+                $carbonDate = Carbon::parse($date);
+                $hari = $carbonDate->locale('id')->dayName;
+
+                // Pertemuan ke
+                $pertemuanKe = 1;
+                $checkDate = $tanggalMulai->copy();
+                while ($checkDate->lt($carbonDate)) {
+                    if ($checkDate->dayOfWeek !== 0 && $checkDate->dayOfWeek !== 6
+                        && !\App\Models\HariLibur::apakahLibur($checkDate->toDateString())) {
+                        $pertemuanKe++;
+                    }
+                    $checkDate->addDay();
+                }
+
+                $scores = [];
+                foreach ($cat->components as $comp) {
+                    $a = $items->firstWhere('component_id', $comp->id);
+                    $scores[] = $a ? (float) $a->nilai : null;
+                }
+
+                $catData['pertemuan'][] = [
+                    'tanggal' => $carbonDate->format('d/m/Y'),
+                    'hari' => $hari,
+                    'pertemuan_ke' => $pertemuanKe,
+                    'scores' => $scores,
+                ];
+            }
+
+            // Sort pertemuan by date
+            usort($catData['pertemuan'], fn($a, $b) => strcmp($a['tanggal'], $b['tanggal']));
+
+            // Compute summary stats for this category
+            $compAverages = [];
+            $compImprovements = [];
+            foreach ($cat->components as $comp) {
+                $allScores = $assessments->filter(fn($a) => $a->component_id === $comp->id)->pluck('nilai')->map(fn($v) => (float) $v);
+                if ($allScores->isNotEmpty()) {
+                    $compAverages[$comp->id] = round($allScores->average(), 1);
+                    $compImprovements[$comp->id] = round($allScores->last() - $allScores->first(), 1);
+                } else {
+                    $compAverages[$comp->id] = null;
+                    $compImprovements[$comp->id] = null;
+                }
+            }
+
+            $avgValues = array_filter($compAverages, fn($v) => $v !== null);
+            $nilaiAkhir = !empty($avgValues) ? round(array_sum($avgValues) / count($avgValues), 1) : null;
+            $resikoClass = null;
+            $resikoText = null;
+            if ($nilaiAkhir !== null) {
+                $resikoClass = $nilaiAkhir >= 75 ? 'success' : ($nilaiAkhir >= 65 ? 'warning' : 'danger');
+                $resikoText = match(true) {
+                    $nilaiAkhir >= 85 => '🟢 Sangat Siap',
+                    $nilaiAkhir >= 75 => '🟢 Siap',
+                    $nilaiAkhir >= 65 => '🟡 Perlu Pendampingan',
+                    default => '🔴 Berisiko',
+                };
+            }
+
+            $catData['summary'] = [
+                'averages' => $compAverages,
+                'improvements' => $compImprovements,
+                'nilai_akhir' => $nilaiAkhir,
+                'resiko' => $resikoText,
+                'resiko_class' => $resikoClass,
+            ];
+
+            $result[] = $catData;
+        }
+
+        $carbon = $request->tanggal ? Carbon::parse($request->tanggal) : Carbon::now();
+
+        $totalPertemuan = collect($result)->sum(fn($c) => count($c['pertemuan']));
+
+        return response()->json([
+            'level' => $kelas->level,
+            'siswa' => $siswa->nama,
+            'total_pertemuan' => $totalPertemuan,
+            'categories' => $result,
+        ]);
     }
 
     public function karyawanIndex()

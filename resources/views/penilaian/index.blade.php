@@ -1,6 +1,12 @@
 @extends('app')
 
 @section('content')
+<style>
+.modal-open .container-fluid {
+    filter: blur(4px);
+    transition: filter 0.2s ease;
+}
+</style>
 <div class="container-fluid px-4 py-4">
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show py-2" role="alert">
@@ -11,296 +17,361 @@
 
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
-            <h5 class="mb-0" style="font-weight: 700; font-size: 16px;">Penilaian Siswa</h5>
-            <small class="text-muted">Kelola data penilaian dan evaluasi siswa</small>
-        </div>
-        <div>
-            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahPenilaian">
-                <i class="ph ph-plus-circle me-1"></i> Tambah Penilaian
-            </button>
+            <h5 class="mb-0" style="font-weight: 700; font-size: 16px;">Rekap Penilaian Siswa</h5>
+            <small class="text-muted">Ceklis = sudah diisi oleh sensei</small>
         </div>
     </div>
 
-    {{-- Statistik Cards --}}
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="bg-primary bg-opacity-10 p-3 rounded-3">
-                            <i class="ph ph-users text-primary fs-4"></i>
-                        </div>
-                        <div>
-                            <small class="text-muted">Total Siswa Dinilai</small>
-                            <h5 class="mb-0 fw-bold">{{ $penilaians->count() }}</h5>
-                        </div>
+    {{-- Filters --}}
+    <form method="GET" action="{{ route('penilaian.index') }}" id="filterForm">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Level</label>
+                        <select name="level" class="form-select" onchange="this.form.submit()">
+                            <option value="">Semua Level</option>
+                            @foreach($levels as $lvl)
+                                <option value="{{ $lvl }}" {{ $level == $lvl ? 'selected' : '' }}>Level {{ $lvl }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Guru</label>
+                        <select name="guru_id" class="form-select" onchange="this.form.submit()" {{ auth()->user()->role === 'GURU' ? 'disabled' : '' }}>
+                            @if(auth()->user()->role === 'GURU')
+                                <option value="{{ auth()->id() }}" selected>{{ auth()->user()->name }}</option>
+                            @else
+                                <option value="">Semua Guru</option>
+                                @foreach($gurus as $guru)
+                                    <option value="{{ $guru->id }}" {{ $guruId == $guru->id ? 'selected' : '' }}>{{ $guru->name }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Batch / Kelas</label>
+                        <select name="batch_id" class="form-select" onchange="this.form.submit()">
+                            <option value="">Pilih Batch</option>
+                            @foreach($kelasList as $k)
+                                <option value="{{ $k->batch_id }}" {{ $batchId == $k->batch_id ? 'selected' : '' }}>
+                                    {{ $k->batchRelasi->nama_batch ?? $k->nama_kelas }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{{ route('penilaian.index') }}" class="btn btn-outline-secondary w-100">Reset</a>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="bg-success bg-opacity-10 p-3 rounded-3">
-                            <i class="ph ph-trophy text-success fs-4"></i>
-                        </div>
-                        <div>
-                            <small class="text-muted">Rata-rata Nilai</small>
-                            <h5 class="mb-0 fw-bold">{{ $penilaians->avg('nilai') ? number_format($penilaians->avg('nilai'), 1) : '-' }}</h5>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="bg-warning bg-opacity-10 p-3 rounded-3">
-                            <i class="ph ph-book-open text-warning fs-4"></i>
-                        </div>
-                        <div>
-                            <small class="text-muted">Mata Pelajaran</small>
-                            <h5 class="mb-0 fw-bold">{{ $penilaians->pluck('mata_pelajaran')->unique()->filter()->count() }}</h5>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="bg-info bg-opacity-10 p-3 rounded-3">
-                            <i class="ph ph-graduation-cap text-info fs-4"></i>
-                        </div>
-                        <div>
-                            <small class="text-muted">Kelas</small>
-                            <h5 class="mb-0 fw-bold">{{ $penilaians->pluck('kelas')->unique()->filter()->count() }}</h5>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    </form>
 
-    {{-- Table --}}
-    <div class="rounded-3">
-        <div class="p-3 border-bottom" style="border-bottom-color: #f0f0f0 !important;">
-            <div class="d-flex align-items-center justify-content-between">
-                <span class="fw-semibold" style="font-size: 13px;">Data Penilaian</span>
-                <span class="text-muted" style="font-size: 11px;">{{ $penilaians->count() }} data</span>
+    @if($batchId && $categories->isNotEmpty())
+        {{-- Week Navigation --}}
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h6 class="fw-semibold mb-0" style="font-size: 14px;">
+                {{ \Carbon\Carbon::parse($days[0])->format('d/m') }} - {{ \Carbon\Carbon::parse($days[4])->format('d/m/Y') }}
+            </h6>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('penilaian.index', array_merge(request()->query(), ['week' => $prevWeek])) }}" class="btn btn-sm btn-outline-secondary border-0">&larr;</a>
+                <a href="{{ route('penilaian.index', array_merge(request()->query(), ['week' => $nextWeek])) }}" class="btn btn-sm btn-outline-secondary border-0">&rarr;</a>
             </div>
         </div>
-        <div class="table-responsive">
-            <table class="table table-hover text-nowrap mb-0">
-                <thead>
-                    <tr>
-                        <th scope="col">No</th>
-                        <th scope="col">Nama Siswa</th>
-                        <th scope="col">Kelas</th>
-                        <th scope="col">Mata Pelajaran</th>
-                        <th scope="col">Nilai</th>
-                        <th scope="col">Tanggal</th>
-                        <th scope="col">Keterangan</th>
-                        <th scope="col" class="text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($penilaians as $penilaian)
+
+        {{-- Legend --}}
+        <div class="d-flex gap-3 mb-3" style="font-size: 11px;">
+            <span class="text-muted">&#10003; Terisi</span>
+            <span class="text-muted">&ndash; Kosong</span>
+        </div>
+
+        {{-- Week Table --}}
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover text-nowrap mb-0">
+                    <thead>
                         <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>
-                                <span class="fw-medium" style="font-size: 13px;">{{ $penilaian->nama_siswa }}</span>
-                            </td>
-                            <td>{{ $penilaian->kelas ?? '-' }}</td>
-                            <td>{{ $penilaian->mata_pelajaran ?? '-' }}</td>
-                            <td>
-                                @if($penilaian->nilai)
+                            <th scope="col" style="position: sticky; left: 0; background: #fff; z-index: 1; min-width: 140px;">Nama Siswa</th>
+                            @foreach($days as $d)
+                                @php $carbon = \Carbon\Carbon::parse($d); @endphp
+                                <th scope="col" class="text-center" style="min-width: 70px;">
+                                    <span style="font-size: 11px;">{{ $carbon->translatedFormat('D') }}</span>
+                                    <span class="text-muted d-block" style="font-size: 10px;">{{ $carbon->format('d/m') }}</span>
+                                </th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($students as $student)
+                            <tr>
+                                <td style="position: sticky; left: 0; background: #fff; z-index: 1;">
+                                    <span class="fw-medium" style="font-size: 13px;">{{ $student->nama }}</span>
+                                </td>
+                                @foreach($days as $d)
                                     @php
-                                        $nilai = $penilaian->nilai;
-                                        if ($nilai >= 90) $badge = 'success';
-                                        elseif ($nilai >= 75) $badge = 'primary';
-                                        elseif ($nilai >= 60) $badge = 'warning';
-                                        else $badge = 'danger';
+                                        $key = $student->id . '_' . $d;
+                                        $hasAssessment = $assessmentCheck[$key] ?? false;
                                     @endphp
-                                    <span class="badge bg-{{ $badge }} fw-normal px-2 py-1">{{ number_format($nilai, 0) }}</span>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-                            <td style="font-size: 12px;">{{ $penilaian->tanggal_penilaian->format('d/m/Y') }}</td>
-                            <td>
-                                <span style="font-size: 12px; max-width: 150px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                    {{ $penilaian->keterangan ?? '-' }}
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <div class="d-flex gap-1 justify-content-center">
-                                    <a href="javascript:void(0)" class="btn btn-sm btn-outline-secondary border-0" title="Edit"
-                                        onclick="editPenilaian({{ $penilaian->id }}, '{{ $penilaian->nama_siswa }}', '{{ $penilaian->kelas }}', '{{ $penilaian->mata_pelajaran }}', '{{ $penilaian->nilai }}', '{{ $penilaian->keterangan }}', '{{ $penilaian->tanggal_penilaian->format('Y-m-d') }}')">
-                                        <i class="ph ph-note-pencil"></i>
-                                    </a>
-                                    <a href="javascript:void(0)" class="btn btn-sm btn-outline-secondary border-0" title="Hapus"
-                                        onclick="deletePenilaian({{ $penilaian->id }})">
-                                        <i class="ph ph-trash"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
+                                    <td class="text-center">
+                                        @if($hasAssessment)
+                                            <a href="javascript:void(0)"
+                                                onclick="openSummaryModal({{ $student->id }}, '{{ $student->nama }}', {{ $batchId }}, '{{ $level }}', {{ $guruId }})"
+                                                class="text-decoration-none">
+                                                <span class="badge bg-success fw-normal px-2 py-1" style="font-size: 13px; cursor: pointer;">&#10003;</span>
+                                            </a>
+                                        @else
+                                            <span class="text-muted" style="font-size: 13px;">-</span>
+                                        @endif
+                                    </td>
+                                @endforeach
+                            </tr>
+                        @endforeach
 
-                    @if($penilaians->isEmpty())
-                        <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
-                                <i class="ph ph-notebook d-block fs-2 mb-2"></i>
-                                Belum ada data penilaian. Klik "Tambah Penilaian" untuk memulai.
-                            </td>
-                        </tr>
-                    @endif
-                </tbody>
-            </table>
+                        @if($students->isEmpty())
+                            <tr>
+                                <td colspan="{{ 1 + count($days) }}" class="text-center text-muted py-4">
+                                    <i class="ph ph-notebook d-block fs-2 mb-2"></i>
+                                    Tidak ada siswa aktif di batch ini.
+                                </td>
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
+
+    @elseif($batchId)
+        <div class="text-center text-muted py-5">
+            <i class="ph ph-warning-circle d-block fs-1 mb-2"></i>
+            Belum ada kategori penilaian untuk level ini.
+        </div>
+    @else
+        <div class="text-center text-muted py-5">
+            <i class="ph ph-funnel d-block fs-1 mb-2"></i>
+            Pilih Level, Guru, dan Batch untuk melihat rekap penilaian.
+        </div>
+    @endif
 </div>
 
-{{-- Modal Tambah Penilaian --}}
-<div class="modal fade" id="modalTambahPenilaian" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <form action="{{ route('penilaian.store') }}" method="POST">
-            @csrf
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h6 class="modal-title fw-bold">Tambah Penilaian</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+{{-- Summary Modal --}}
+<div class="modal fade" id="summaryModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width: 95%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h6 class="modal-title fw-bold" id="summaryModalTitle"></h6>
+                    <small class="text-muted" id="summaryModalSubtitle"></small>
                 </div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Nama Siswa <span class="text-danger">*</span></label>
-                            <input type="text" name="nama_siswa" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Kelas</label>
-                            <input type="text" name="kelas" class="form-control" placeholder="Mis: XII IPA 1">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Mata Pelajaran</label>
-                            <input type="text" name="mata_pelajaran" class="form-control" placeholder="Mis: Matematika">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Nilai</label>
-                            <input type="number" name="nilai" class="form-control" min="0" max="100" step="0.01" placeholder="0-100">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Tanggal Penilaian <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal_penilaian" class="form-control" value="{{ date('Y-m-d') }}" required>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label">Keterangan</label>
-                            <textarea name="keterangan" class="form-control" rows="3" placeholder="Catatan tambahan..."></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm">Simpan</button>
-                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-        </form>
-    </div>
-</div>
-
-{{-- Modal Edit Penilaian --}}
-<div class="modal fade" id="modalEditPenilaian" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <form id="formEditPenilaian" method="POST">
-            @csrf
-            @method('PUT')
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h6 class="modal-title fw-bold">Edit Penilaian</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Nama Siswa <span class="text-danger">*</span></label>
-                            <input type="text" name="nama_siswa" id="edit_nama_siswa" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Kelas</label>
-                            <input type="text" name="kelas" id="edit_kelas" class="form-control">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Mata Pelajaran</label>
-                            <input type="text" name="mata_pelajaran" id="edit_mata_pelajaran" class="form-control">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Nilai</label>
-                            <input type="number" name="nilai" id="edit_nilai" class="form-control" min="0" max="100" step="0.01">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Tanggal Penilaian <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal_penilaian" id="edit_tanggal_penilaian" class="form-control" required>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label">Keterangan</label>
-                            <textarea name="keterangan" id="edit_keterangan" class="form-control" rows="3"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm">Simpan Perubahan</button>
-                </div>
+            <div class="modal-body" id="summaryModalBody">
+                <div class="text-center text-muted py-3">Memuat...</div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
-function editPenilaian(id, namaSiswa, kelas, mapel, nilai, keterangan, tanggal) {
-    $('#edit_nama_siswa').val(namaSiswa);
-    $('#edit_kelas').val(kelas === '-' ? '' : kelas);
-    $('#edit_mata_pelajaran').val(mapel === '-' ? '' : mapel);
-    $('#edit_nilai').val(nilai);
-    $('#edit_keterangan').val(keterangan === '-' ? '' : keterangan);
-    $('#edit_tanggal_penilaian').val(tanggal);
-
-    let url = "{{ route('penilaian.update', ':id') }}";
-    url = url.replace(':id', id);
-    $('#formEditPenilaian').attr('action', url);
-
-    $('#modalEditPenilaian').modal('show');
+function getResikoBadge(avg) {
+    var cls, text;
+    if (avg >= 85) { cls = 'success'; text = '🟢 Sangat Siap'; }
+    else if (avg >= 75) { cls = 'success'; text = '🟢 Siap'; }
+    else if (avg >= 65) { cls = 'warning'; text = '🟡 Perlu Pendampingan'; }
+    else { cls = 'danger'; text = '🔴 Berisiko'; }
+    return '<span class="badge bg-' + cls + ' fw-normal">' + text + '</span>';
 }
 
-function deletePenilaian(id) {
-    Swal.fire({
-        title: 'Hapus penilaian?',
-        text: 'Data penilaian akan dihapus permanen',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Ya, Hapus',
-        cancelButtonText: 'Batal'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: '/penilaian/' + id,
-                type: 'POST',
-                data: { _token: '{{ csrf_token() }}', _method: 'DELETE' },
-                success: function() {
-                    Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Penilaian berhasil dihapus', timer: 1500, showConfirmButton: false });
-                    setTimeout(() => location.reload(), 1500);
-                },
-                error: function() {
-                    Swal.fire({ icon: 'error', title: 'Gagal', text: 'Penilaian gagal dihapus' });
+function openSummaryModal(siswaId, namaSiswa, batchId, level, guruId) {
+    $('#summaryModalTitle').text(namaSiswa);
+    $('#summaryModalSubtitle').text('');
+    $('#summaryModalBody').html('<div class="text-center text-muted py-3">Memuat...</div>');
+    $('#summaryModal').modal('show');
+
+    $.ajax({
+        url: '{{ route('penilaian.day-detail') }}',
+        data: { siswa_id: siswaId, batch_id: batchId, level: level, guru_id: guruId },
+        success: function(res) {
+            $('#summaryModalSubtitle').text(res.total_pertemuan + ' pertemuan');
+
+            var html = '';
+            var isRekapAkhir = res.level === '2' || res.level === '3' || res.level === '4';
+
+            $.each(res.categories, function(i, cat) {
+                if (!cat.summary || cat.summary.nilai_akhir === null) return;
+
+                html += '<div class="mb-4">';
+                html += '<h6 class="fw-semibold mb-2" style="font-size: 13px;">' + cat.nama_kategori + '</h6>';
+
+                html += '<div class="table-responsive">';
+                html += '<table class="table table-sm table-bordered mb-0" style="font-size: 12px;">';
+
+                if (isRekapAkhir) {
+                    // --- Level 2/3 REKAP AKHIR ---
+                    var nComp = cat.components.length;
+                    var teoriIndices = [];
+                    var praktekIndices = [];
+                    for (var idx = 0; idx < nComp; idx++) {
+                        if (idx < nComp - 2) teoriIndices.push(idx);
+                        else praktekIndices.push(idx);
+                    }
+
+                    // Compute aggregate from latest (last pertemuan)
+                    var latestScores = [];
+                    var latestPertemuanKe = 0;
+                    if (cat.pertemuan.length > 0) {
+                        var lastPt = cat.pertemuan[cat.pertemuan.length - 1];
+                        latestScores = lastPt.scores;
+                        latestPertemuanKe = lastPt.pertemuan_ke || 0;
+                    }
+                    var semuaScores = latestScores.filter(function(s) { return s !== null; });
+                    var rataRata = semuaScores.length > 0 ? semuaScores.reduce(function(a, b) { return a + b; }, 0) / semuaScores.length : null;
+                    var totalTeori = 0, countTeori = 0, totalPraktek = 0, countPraktek = 0;
+                    $.each(latestScores, function(j, s) {
+                        if (s !== null) {
+                            if (teoriIndices.indexOf(j) !== -1) { totalTeori += s; countTeori++; }
+                            if (praktekIndices.indexOf(j) !== -1) { totalPraktek += s; countPraktek++; }
+                        }
+                    });
+                    var nilaiTeori = countTeori > 0 ? totalTeori : null;
+                    var nilaiPraktek = countPraktek > 0 ? totalPraktek : null;
+
+                    html += '<thead style="background-color: #d4a017; color: #fff;">';
+                    html += '<tr><th colspan="' + (cat.components.length + 4) + '" class="text-center">TOTAL NILAI</th>';
+                    html += '</tr><tr>';
+                    $.each(cat.components, function(j, comp) {
+                        var label = comp.nama;
+                        if (comp.nama === 'Simulasi' && latestPertemuanKe > 0) {
+                            var week = Math.ceil(latestPertemuanKe / 5);
+                            label = 'Simulasi ' + week;
+                        }
+                        html += '<th class="text-center" style="font-size: 11px;">' + label + '</th>';
+                    });
+                    html += '<th class="text-center" style="min-width:80px;border-top:none;">NILAI TEORI</th>';
+                    html += '<th class="text-center" style="min-width:90px;border-top:none;">NILAI PRAKTEK</th>';
+                    html += '<th class="text-center" style="min-width:100px;border-top:none;">NILAI RATA-RATA</th>';
+                    html += '<th class="text-center" style="min-width:80px;border-top:none;">RESIKO</th>';
+                    html += '</tr></thead><tbody><tr>';
+                    $.each(cat.components, function(j, comp) {
+                        var s = (j < latestScores.length) ? latestScores[j] : null;
+                        if (s !== null) {
+                            var badge = s >= 90 ? 'success' : (s >= 75 ? 'primary' : (s >= 60 ? 'warning' : 'danger'));
+                            html += '<td class="text-center"><span class="badge bg-' + badge + ' fw-normal px-2 py-1" style="font-size: 10px;">' + Math.round(s) + '</span></td>';
+                        } else {
+                            html += '<td class="text-center text-muted">-</td>';
+                        }
+                    });
+                    html += '<td class="text-center fw-bold">' + (nilaiTeori !== null ? nilaiTeori.toFixed(1) : '-') + '</td>';
+                    html += '<td class="text-center fw-bold">' + (nilaiPraktek !== null ? nilaiPraktek.toFixed(1) : '-') + '</td>';
+                    html += '<td class="text-center fw-bold">' + (rataRata !== null ? rataRata.toFixed(1) : '-') + '</td>';
+                    html += '<td class="text-center">' + (rataRata !== null ? getResikoBadge(rataRata) : '-') + '</td>';
+                    html += '</tr></tbody></table></div>';
+
+                    // Per-date detail: Tampilkan PR, Hafalan, Kanji, Ulangan, Shoukai, Translate + Rata-Rata
+                    html += '<details class="mt-2"><summary class="text-muted" style="font-size: 11px; cursor: pointer;">Detail per pertemuan</summary>';
+                    html += '<div class="table-responsive mt-1"><table class="table table-sm table-bordered mb-0" style="font-size: 11px;">';
+                    html += '<thead style="background-color: #d4a017; color: #fff;"><tr><th>Tanggal</th>';
+                    $.each(cat.components, function(j, comp) {
+                        html += '<th class="text-center">' + comp.nama + '</th>';
+                    });
+                    html += '<th class="text-center">Rata-Rata</th></tr></thead><tbody>';
+                    $.each(cat.pertemuan, function(k, pt) {
+                        html += '<tr><td>' + pt.hari + ', ' + pt.tanggal + '</td>';
+                        var total = 0, count = 0;
+                        $.each(pt.scores, function(j, s) {
+                            if (s !== null) { total += s; count++; }
+                            var badge = 'secondary';
+                            if (s !== null) {
+                                if (s >= 90) badge = 'success';
+                                else if (s >= 75) badge = 'primary';
+                                else if (s >= 60) badge = 'warning';
+                                else badge = 'danger';
+                                html += '<td class="text-center"><span class="badge bg-' + badge + ' fw-normal px-2 py-1" style="font-size: 10px;">' + Math.round(s) + '</span></td>';
+                            } else {
+                                html += '<td class="text-center text-muted">-</td>';
+                            }
+                        });
+                        var avg = count > 0 ? (total / count) : null;
+                        html += '<td class="text-center fw-bold">' + (avg !== null ? avg.toFixed(1) : '-') + '</td></tr>';
+                    });
+                    html += '</tbody></table></div></details>';
+
+                } else {
+                    // --- Level 1 Rata-Rata / Peningkatan ---
+                    html += '<thead style="background-color: #d4a017; color: #fff;"><tr><th rowspan="2">No</th><th rowspan="2">Nama Siswa</th>';
+                    html += '<th colspan="' + cat.components.length + '" class="text-center">Nilai Rata-Rata</th>';
+                    html += '<th colspan="' + cat.components.length + '" class="text-center">Peningkatan</th>';
+                    html += '<th rowspan="2" class="text-center">Nilai Akhir</th>';
+                    html += '<th rowspan="2" class="text-center">Resiko</th>';
+                    html += '</tr><tr>';
+                    $.each(cat.components, function(j, comp) {
+                        html += '<th class="text-center" style="font-size: 11px;">' + comp.nama + '</th>';
+                    });
+                    $.each(cat.components, function(j, comp) {
+                        html += '<th class="text-center" style="font-size: 11px;">' + comp.nama + '</th>';
+                    });
+                    html += '</tr></thead><tbody>';
+                    html += '<tr><td>1</td><td>' + res.siswa + '</td>';
+
+                    $.each(cat.components, function(j, comp) {
+                        var avg = cat.summary.averages[comp.id];
+                        html += '<td class="text-center">' + (avg !== null ? avg.toFixed(1) : '-') + '</td>';
+                    });
+                    $.each(cat.components, function(j, comp) {
+                        var imp = cat.summary.improvements[comp.id];
+                        if (imp !== null) {
+                            var cls = imp < 0 ? 'text-danger' : (imp > 0 ? 'text-success' : '');
+                            html += '<td class="text-center ' + cls + '">' + (imp > 0 ? '+' : '') + imp.toFixed(1) + '</td>';
+                        } else {
+                            html += '<td class="text-center">-</td>';
+                        }
+                    });
+                    html += '<td class="text-center fw-bold">' + cat.summary.nilai_akhir.toFixed(1) + '</td>';
+                    html += '<td class="text-center"><span class="badge bg-' + cat.summary.resiko_class + ' fw-normal">' + cat.summary.resiko + '</span></td>';
+                    html += '</tr></tbody></table></div>';
+
+                    // Per-date detail below (Level 1)
+                    html += '<details class="mt-2"><summary class="text-muted" style="font-size: 11px; cursor: pointer;">Detail per pertemuan</summary>';
+                    html += '<div class="table-responsive mt-1"><table class="table table-sm table-bordered mb-0" style="font-size: 11px;">';
+                    html += '<thead style="background-color: #d4a017; color: #fff;"><tr><th>Tanggal</th>';
+                    $.each(cat.components, function(j, comp) {
+                        html += '<th class="text-center">' + comp.nama + '</th>';
+                    });
+                    html += '<th class="text-center">Rata-Rata</th></tr></thead><tbody>';
+                    $.each(cat.pertemuan, function(k, pt) {
+                        html += '<tr><td>' + pt.hari + ', ' + pt.tanggal + '</td>';
+                        var total = 0, count = 0;
+                        $.each(pt.scores, function(j, s) {
+                            if (s !== null) { total += s; count++; }
+                            var badge = 'secondary';
+                            if (s !== null) {
+                                if (s >= 90) badge = 'success';
+                                else if (s >= 75) badge = 'primary';
+                                else if (s >= 60) badge = 'warning';
+                                else badge = 'danger';
+                                html += '<td class="text-center"><span class="badge bg-' + badge + ' fw-normal px-2 py-1" style="font-size: 10px;">' + Math.round(s) + '</span></td>';
+                            } else {
+                                html += '<td class="text-center text-muted">-</td>';
+                            }
+                        });
+                        var avg = count > 0 ? (total / count) : null;
+                        html += '<td class="text-center fw-bold">' + (avg !== null ? avg.toFixed(1) : '-') + '</td></tr>';
+                    });
+                    html += '</tbody></table></div></details>';
                 }
+
+                html += '</div>';
             });
+
+            if (html === '') {
+                html = '<div class="text-center text-muted py-3">Belum ada data penilaian untuk siswa ini.</div>';
+            }
+
+            $('#summaryModalBody').html(html);
+        },
+        error: function() {
+            $('#summaryModalBody').html('<div class="text-center text-danger py-3">Gagal memuat data penilaian.</div>');
         }
     });
 }

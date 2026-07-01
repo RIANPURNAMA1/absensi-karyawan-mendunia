@@ -106,6 +106,7 @@
                     <div class="legend-item"><div class="legend-box bg-info"></div> Pulang Cepat</div>
                     <div class="legend-item"><div class="legend-box bg-light border"></div> Belum Absen</div>
                     <div class="legend-item"><div class="legend-box bg-secondary"></div> Libur</div>
+                    <div class="legend-item"><div class="legend-box" style="background:#fff3cd;"></div> Rentang Kelas</div>
                 </div>
             </div>
         </div>
@@ -218,7 +219,7 @@ function loadData() {
                     return;
                 }
                 renderKelasInfo(res.kelas_list);
-                renderGrid(res.data, bulan, tahun);
+                renderGrid(res.data, bulan, tahun, res.kelas_list);
                 renderSummary(res.data);
                 $('#rekapContainer').removeClass('d-none');
                 $('#emptyState').addClass('d-none');
@@ -268,7 +269,7 @@ function renderKelasInfo(kelasList) {
     $('#kelasInfoContainer').html(html);
 }
 
-function renderGrid(data, bulan, tahun) {
+function renderGrid(data, bulan, tahun, kelasList) {
     const daysInMonth = new Date(tahun, bulan, 0).getDate();
     const firstDay = new Date(tahun, bulan - 1, 1).getDay();
     const bulanNama = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -306,6 +307,15 @@ function renderGrid(data, bulan, tahun) {
         const dayOfWeek = new Date(tahun, bulan - 1, day).getDay();
         const cellData = data[dateStr];
 
+        let inClassRange = false;
+        if (kelasList) {
+            kelasList.forEach(k => {
+                if (dateStr >= k.tanggal_mulai && dateStr <= k.tanggal_selesai) {
+                    inClassRange = true;
+                }
+            });
+        }
+
         let cellHtml = '';
         if (cellData && cellData.entries && cellData.entries.length > 0) {
             const entries = cellData.entries;
@@ -318,7 +328,8 @@ function renderGrid(data, bulan, tahun) {
             cellHtml = `<div class="date-number">${day}</div>`;
         }
 
-        const cell = $(`<td>${cellHtml}</td>`);
+        const cellStyle = inClassRange ? ' style="background-color:#fff3cd;"' : '';
+        const cell = $(`<td${cellStyle}>${cellHtml}</td>`);
         row.append(cell);
 
         if (dayOfWeek === 6 || day === daysInMonth) {

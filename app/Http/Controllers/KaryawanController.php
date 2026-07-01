@@ -15,7 +15,7 @@ class KaryawanController extends Controller
     public function index(Request $request)
     {
         // 1. Hapus 'cabang' dari with()
-        $query = User::with(['divisi', 'shift'])->where('role', 'KARYAWAN');
+        $query = User::with(['divisi', 'shift'])->whereIn('role', ['KARYAWAN', 'GURU']);
 
         // 2. Logika Filter Cabang (Gunakan whereJsonContains)
         if ($request->filled('cabang_id')) {

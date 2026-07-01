@@ -35,7 +35,7 @@
         }
 
         .bg-brand-gradient {
-            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+            background: linear-gradient(135deg, #0D1F3C 0%, #1a2d4a 100%);
         }
 
         .floating-element {
@@ -147,7 +147,7 @@
                 </div>
 
                 <button type="submit" id="btnLogin"
-                    class="w-full py-4 bg-brand text-white rounded-2xl font-bold shadow-xl shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 active:scale-[0.98] transition-all flex items-center justify-center gap-2 uppercase tracking-wider text-sm">
+                    class="w-full py-4 bg-[#0D1F3C] text-white rounded-2xl font-bold shadow-xl shadow-blue-900/20 hover:bg-[#1a2d4a] hover:shadow-blue-900/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 uppercase tracking-wider text-sm">
                     <span>Masuk Dashboard</span>
                     <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
@@ -375,7 +375,7 @@
                     });
 
                     setTimeout(() => {
-                        window.location.href = res.redirect ?? '/dashboard';
+                        window.location.href = res.redirect ?? '/absensi';
                     }, 1500);
                 },
                 error(xhr) {

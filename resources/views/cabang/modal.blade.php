@@ -1,8 +1,8 @@
 <div class="modal fade" id="modalTambahCabang" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-1 text-white" style="">
-                <h5 class="modal-title  fw-bold"><i class="ph ph-map-pin-plus me-2"></i>Tambah Cabang Baru</h5>
+            <div class="modal-header border-1 text-white" style="background: linear-gradient(135deg, #0D1F3C 0%, #1a2d4a 100%);">
+                <h5 class="modal-title text-white fw-bold"><i class="ph ph-map-pin-plus me-2"></i>Tambah Cabang Baru</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="formTambahCabang" action="{{ route('cabang.store') }}" method="POST">
@@ -69,7 +69,7 @@
 <div class="modal fade" id="modalEditCabang" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);">
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #0D1F3C 0%, #1a2d4a 100%);">
                 <h5 class="modal-title text-white fw-bold"><i class="ph ph-pencil-line me-2"></i>Edit Data Cabang</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>

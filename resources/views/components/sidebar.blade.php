@@ -136,6 +136,23 @@
                 </ul>
             </li>
 
+          <!-- SENSEI -->
+          <li class="pc-item pc-caption">
+              <label>Sensei</label>
+          </li>
+          <li class="pc-item">
+              <a href="/guru" class="pc-link">
+                  <span class="pc-micon"><i class="ph ph-chalkboard-teacher"></i></span>
+                  <span class="pc-mtext">Data Sensei</span>
+              </a>
+          </li>
+          <li class="pc-item">
+              <a href="/ai-chat" class="pc-link">
+                  <span class="pc-micon"><i class="ph ph-robot"></i></span>
+                  <span class="pc-mtext">Sensei AI Chat</span>
+              </a>
+          </li>
+
           <!-- MANAJEMEN SISWA -->
           <li class="pc-item pc-caption">
               <label>Manajemen Siswa</label>
@@ -159,24 +176,18 @@
                           <span class="pc-mtext">Kelas</span>
                       </a>
                   </li>
-                  <li class="pc-item">
-                      <a href="/batches" class="pc-link">
-                          <span class="pc-micon"><i class="ph ph-stack"></i></span>
-                          <span class="pc-mtext">Batch</span>
-                      </a>
-                  </li>
-                  <li class="pc-item">
-                      <a href="/guru" class="pc-link">
-                          <span class="pc-micon"><i class="ph ph-chalkboard-teacher"></i></span>
-                          <span class="pc-mtext">Data Guru</span>
-                      </a>
-                  </li>
-                  <li class="pc-item">
-                      <a href="/absensi-siswa" class="pc-link">
-                          <span class="pc-micon"><i class="ph ph-clipboard-text"></i></span>
-                          <span class="pc-mtext">Absensi Siswa</span>
-                      </a>
-                  </li>
+                   <li class="pc-item">
+                       <a href="/batches" class="pc-link">
+                           <span class="pc-micon"><i class="ph ph-stack"></i></span>
+                           <span class="pc-mtext">Batch</span>
+                       </a>
+                   </li>
+                   <li class="pc-item">
+                       <a href="/absensi-siswa" class="pc-link">
+                           <span class="pc-micon"><i class="ph ph-clipboard-text"></i></span>
+                           <span class="pc-mtext">Absensi Siswa</span>
+                       </a>
+                   </li>
                   <li class="pc-item">
                       <a href="/rekap-siswa" class="pc-link">
                           <span class="pc-micon"><i class="ph ph-chart-bar"></i></span>
@@ -242,44 +253,7 @@
              </a>
          </li> --}}
 
-         @if ($roleUser !== 'HR')
-             <!-- BLOG WEBSITE -->
-             <li class="pc-item pc-caption">
-                 <label>Konten Website</label>
-             </li>
-             <li class="pc-item pc-hasmenu">
-                 <a href="#!" class="pc-link">
-                     <span class="pc-micon"><i class="ph ph-article"></i></span>
-                     <span class="pc-mtext">Blog Website</span>
-                     <span class="pc-arrow"><i class="ph ph-caret-down"></i></span>
-                 </a>
-                 <ul class="pc-submenu">
-                     <li class="pc-item">
-                         <a href="/blog/artikel" class="pc-link">Daftar Artikel</a>
-                     </li>
-                     <li class="pc-item">
-                         <a href="/blog/kategori" class="pc-link">Kategori</a>
-                     </li>
-                     <li class="pc-item">
-                         <a href="/blog/tambah" class="pc-link">Buat Artikel Baru</a>
-                     </li>
-                     <li class="pc-item">
-                         <a href="/blog/komentar" class="pc-link">Kelola Komentar</a>
-                     </li>
-                 </ul>
-             </li>
           @endif
-
-          <!-- AI ASSISTANT -->
-          <li class="pc-item pc-caption">
-              <label>AI</label>
-          </li>
-          <li class="pc-item">
-              <a href="/ai-chat" class="pc-link">
-                  <span class="pc-micon"><i class="ph ph-robot"></i></span>
-                  <span class="pc-mtext">AI Assistant Chat</span>
-              </a>
-          </li>
 
           <!-- PENGATURAN -->
           <li class="pc-item pc-caption">

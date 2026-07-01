@@ -5,6 +5,7 @@
                 <img src="{{ asset('assets/images/logo/logo5.png') }}" alt="logo" />
             </a>
             <span class="header-brand-name" style="font-style: italic;">Absensi Mendunia</span>
+        </div>
 
             <nav class="header-nav">
                 <a href="/" class="header-link {{ request()->is('/') ? 'active' : '' }}">
@@ -71,7 +72,7 @@
                         <a href="/siswa" class="dropdown-item-custom {{ request()->is('siswa*') ? 'active' : '' }}"><i class="ph ph-users"></i>Data Siswa</a>
                         <a href="/kelas" class="dropdown-item-custom {{ request()->is('kelas*') ? 'active' : '' }}"><i class="ph ph-book-open"></i>Kelas</a>
                         <a href="/batches" class="dropdown-item-custom {{ request()->is('batches*') ? 'active' : '' }}"><i class="ph ph-stack"></i>Batch</a>
-                        <a href="/guru" class="dropdown-item-custom {{ request()->is('guru*') ? 'active' : '' }}"><i class="ph ph-chalkboard-teacher"></i>Data Guru</a>
+                        <a href="/guru" class="dropdown-item-custom {{ request()->is('guru*') ? 'active' : '' }}"><i class="ph ph-chalkboard-teacher"></i>Data Sensei</a>
                         <a href="/absensi-siswa" class="dropdown-item-custom {{ request()->is('absensi-siswa*') ? 'active' : '' }}"><i class="ph ph-clipboard-text"></i>Absensi Siswa</a>
                         <a href="/rekap-siswa" class="dropdown-item-custom {{ request()->is('rekap-siswa*') ? 'active' : '' }}"><i class="ph ph-chart-bar"></i>Rekap Siswa</a>
                         @if($bolehPenilaianNav)
@@ -96,9 +97,44 @@
                     </div>
                 </div>
             </nav>
-        </div>
 
         <div class="header-right">
+            <!-- SIDEBAR TOGGLE (visible only in sidebar modes) -->
+            <button class="layout-toggle-btn" id="headerSidebarToggle" title="Toggle Sidebar" style="display:none;">
+                <i class="ph ph-sidebar"></i>
+            </button>
+
+            <!-- LAYOUT SWITCHER -->
+            <div class="header-dropdown">
+                <button class="layout-toggle-btn dropdown-trigger" title="Ganti Tampilan">
+                    <i class="ph ph-layout"></i>
+                </button>
+                <div class="dropdown-menu-custom dropdown-menu-right layout-switcher-dropdown">
+                    <button class="layout-option" data-layout="default">
+                        <span class="layout-option-icon icon-default">
+                            <span class="bar-top"></span>
+                            <span class="bar-body"></span>
+                        </span>
+                        <span>Navbar Default</span>
+                    </button>
+                    <button class="layout-option active" data-layout="sidebar">
+                        <span class="layout-option-icon icon-sidebar">
+                            <span class="bar-left"></span>
+                            <span class="bar-top"></span>
+                            <span class="bar-body" style="left:10px;"></span>
+                        </span>
+                        <span>Navbar + Sidebar</span>
+                    </button>
+                    <button class="layout-option" data-layout="minimal">
+                        <span class="layout-option-icon icon-minimal">
+                            <span class="bar-left"></span>
+                            <span class="bar-body" style="left:0;"></span>
+                        </span>
+                        <span>Sidebar Saja</span>
+                    </button>
+                </div>
+            </div>
+
             <div class="header-dropdown">
                 <a href="#" class="header-icon dropdown-trigger">
                     <i class="ph ph-bell"></i>
@@ -151,18 +187,15 @@
             </div>
 
             <div class="header-dropdown">
-                <a href="#" class="header-avatar dropdown-trigger">
-                    <img src="{{ Auth::user()->foto_profil ? asset('uploads/profil/' . Auth::user()->foto_profil) : asset('assets/images/user/avatar-2.jpg') }}" alt="avatar" />
+                <a href="#" class="header-profile dropdown-trigger">
+                    <img src="{{ Auth::user()->foto_profil ? asset('uploads/profil/' . Auth::user()->foto_profil) : asset('assets/images/user/avatar-2.jpg') }}" alt="avatar" class="header-profile-avatar" />
+                    <div class="header-profile-info">
+                        <span class="header-profile-name">{{ Auth::user()->name }}</span>
+                        <span class="header-profile-role">{{ Auth::user()->role }}</span>
+                    </div>
+                    <i class="ph ph-caret-down header-profile-arrow"></i>
                 </a>
                 <div class="dropdown-menu-custom dropdown-menu-right dropdown-menu-profile">
-                    <div class="profile-info">
-                        <img src="{{ Auth::user()->foto_profil ? asset('uploads/profil/' . Auth::user()->foto_profil) : asset('assets/images/user/avatar-2.jpg') }}" alt="avatar" class="rounded-circle" />
-                        <div>
-                            <h6>{{ Auth::user()->name }}</h6>
-                            <small>{{ Auth::user()->role }}</small>
-                        </div>
-                    </div>
-                    <div class="dropdown-divider-custom"></div>
                     <a href="/pengaturan" class="dropdown-item-custom"><i class="ph ph-user-gear"></i>Manajemen Akun</a>
                     <div class="dropdown-divider-custom"></div>
                     <a href="#" class="dropdown-item-custom text-danger" id="btnLogout"><i class="ph ph-sign-out"></i>Logout</a>
@@ -226,7 +259,7 @@
                 <a href="/siswa" class="mobile-sub-link {{ request()->is('siswa*') ? 'active' : '' }}">Data Siswa</a>
                 <a href="/kelas" class="mobile-sub-link {{ request()->is('kelas*') ? 'active' : '' }}">Kelas</a>
                 <a href="/batches" class="mobile-sub-link {{ request()->is('batches*') ? 'active' : '' }}">Batch</a>
-                <a href="/guru" class="mobile-sub-link {{ request()->is('guru*') ? 'active' : '' }}">Data Guru</a>
+                <a href="/guru" class="mobile-sub-link {{ request()->is('guru*') ? 'active' : '' }}">Data Sensei</a>
                 <a href="/absensi-siswa" class="mobile-sub-link {{ request()->is('absensi-siswa*') ? 'active' : '' }}">Absensi Siswa</a>
                 <a href="/rekap-siswa" class="mobile-sub-link {{ request()->is('rekap-siswa*') ? 'active' : '' }}">Rekap Siswa</a>
                 @if($bolehPenilaianNav)

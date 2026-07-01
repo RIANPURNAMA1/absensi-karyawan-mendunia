@@ -9,6 +9,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        /* Header card theme */
+        .bg-gradient-to-br.from-blue-500.to-blue-700 {
+            background: linear-gradient(135deg, #0D1F3C, #1a2d4a) !important;
+        }
     </style>
 </head>
 <body class="bg-gray-50 pb-24">

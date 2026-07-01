@@ -66,7 +66,7 @@
 
         <!-- Month Selector -->
         <div
-            class="flex items-center justify-between bg-gradient-to-r from-[#00c0ff] to-blue-700 rounded-2xl p-4 text-white">
+            class="flex items-center justify-between bg-gradient-to-r from-[#0D1F3C] to-[#1a2d4a] rounded-2xl p-4 text-white">
             <button onclick="changeMonth(-1)" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                 <i data-lucide="chevron-left" class="w-5 h-5"></i>
             </button>

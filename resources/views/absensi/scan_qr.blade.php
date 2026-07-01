@@ -114,7 +114,7 @@
     </style>
 </head>
 
-<body class="bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 min-h-screen">
+<body class="min-h-screen" style="background: #0D1F3C;">
     <div class="min-h-screen flex flex-col">
         <!-- Header with Logo & Brand -->
         <div class="px-5 pt-5 pb-3">

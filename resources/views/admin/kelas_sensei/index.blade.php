@@ -36,6 +36,18 @@
                             </select>
                         </div>
                         <div class="col-md-2">
+                            <label class="form-label fw-semibold mb-1" style="font-size: 12px;">Batch</label>
+                            <select name="batch_id" class="form-select form-select-sm">
+                                <option value="">Semua Batch</option>
+                                @foreach ($list_batch as $batch)
+                                    <option value="{{ $batch->id }}"
+                                        {{ $batch_id_selected == $batch->id ? 'selected' : '' }}>
+                                        {{ $batch->nama_batch }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-2">
                             <label class="form-label fw-semibold mb-1" style="font-size: 12px;">Status</label>
                             <select name="status" class="form-select form-select-sm">
                                 <option value="">Semua Status</option>
@@ -71,6 +83,7 @@
                         <tr>
                             <th scope="col" class="text-center" style="width: 50px;">No</th>
                             <th scope="col">Nama Kelas</th>
+                            <th scope="col">Batch</th>
                             <th scope="col">Level</th>
                             <th scope="col">Nama Sensei</th>
                             <th scope="col">Tanggal Mulai</th>
@@ -90,6 +103,9 @@
                                 <td class="text-center text-muted">{{ $no++ }}</td>
                                 <td>
                                     <span class="fw-medium" style="font-size: 13px;">{{ $kelasItem->nama_kelas }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info-subtle text-info rounded-pill fw-normal px-2 py-1">{{ $kelasItem->batchRelasi->nama_batch ?? '-' }}</span>
                                 </td>
                                 <td>
                                     <span class="badge bg-secondary-subtle text-secondary rounded-pill fw-normal px-2 py-1">{{ $kelasItem->level }}</span>

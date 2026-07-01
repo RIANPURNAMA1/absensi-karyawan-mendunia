@@ -61,7 +61,7 @@
     </div>
 
     <div class="px-5 py-5">
-        <div class="bg-gradient-to-br from-[#00c0ff] to-blue-700 rounded-3xl p-6 text-white shadow-lg mb-5">
+        <div class="bg-gradient-to-br from-[#0D1F3C] to-[#1a2d4a] rounded-3xl p-6 text-white shadow-lg mb-5">
             <div class="flex items-center gap-4 mb-4">
                 <div class="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center">
                     <i data-lucide="calendar" class="w-8 h-8"></i>

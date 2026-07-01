@@ -200,12 +200,16 @@ Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:HR,MANAGER,KARYAWAN'])->group(function () {
+Route::middleware(['auth', 'role:HR,MANAGER,KARYAWAN,GURU'])->group(function () {
     Route::get('/penilaian', [PenilaianController::class, 'index'])->name('penilaian.index');
+    Route::get('/penilaian/day-detail', [PenilaianController::class, 'dayDetail'])->name('penilaian.day-detail');
+    Route::get('/penilaian-karyawan', [PenilaianController::class, 'karyawanIndex'])->name('penilaian.karyawan');
+});
+
+Route::middleware(['auth', 'role:HR,MANAGER,KARYAWAN'])->group(function () {
     Route::post('/penilaian', [PenilaianController::class, 'store'])->name('penilaian.store');
     Route::put('/penilaian/{id}', [PenilaianController::class, 'update'])->name('penilaian.update');
     Route::delete('/penilaian/{id}', [PenilaianController::class, 'destroy'])->name('penilaian.destroy');
-    Route::get('/penilaian-karyawan', [PenilaianController::class, 'karyawanIndex'])->name('penilaian.karyawan');
 });
 
 /*
@@ -214,11 +218,12 @@ Route::middleware(['auth', 'role:HR,MANAGER,KARYAWAN'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:HR,MANAGER,KARYAWAN'])->group(function () {
+Route::middleware(['auth', 'role:HR,MANAGER,KARYAWAN,GURU'])->group(function () {
     Route::get('/izin-cuti', [IzinController::class, 'approvalList'])->name('izin.approval.list');
     Route::post('/izin/{id}/approve', [IzinController::class, 'approve'])->name('izin.approve');
     Route::post('/izin/{id}/reject', [IzinController::class, 'reject'])->name('izin.reject');
     Route::get('/lampiran/{filename}', [IzinController::class, 'lihatLampiran'])->name('izin.lampiran');
+    Route::get('/izin/pending-by-batch/{batchId}', [IzinController::class, 'pendingByBatch'])->name('izin.pendingByBatch');
 });
 
 /*
@@ -265,7 +270,6 @@ Route::middleware(['auth', 'role:KARYAWAN,SISWA,GURU'])->group(function () {
 
     // Profile
     Route::get('/absensi/profile', [AbsensiController::class, 'profile'])->name('absensi.profile');
-    Route::get('/absensi/siswa', [AbsensiController::class, 'siswaIndex'])->name('absensi.siswa');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/profile/password', [ProfileController::class, 'changePassword'])->name('password.change');
@@ -306,6 +310,16 @@ Route::middleware(['auth', 'role:KARYAWAN,SISWA,GURU'])->group(function () {
     Route::get('/absensi/agenda/by-date', [AgendaController::class, 'getByDate'])->name('agenda.byDate');
     Route::post('/absensi/agenda/absen-masuk', [AgendaController::class, 'absenMasuk'])->name('agenda.absenMasuk');
     Route::post('/absensi/agenda/absen-pulang', [AgendaController::class, 'absenPulang'])->name('agenda.absenPulang');
+});
+
+Route::middleware(['auth', 'role:GURU'])->group(function () {
+    Route::get('/absensi/siswa', [AbsensiController::class, 'siswaIndex'])->name('absensi.siswa');
+    Route::post('/absensi/siswa/update-status', [AbsensiController::class, 'updateSiswaStatus'])->name('absensi.siswa.update-status');
+    Route::get('/absensi/siswa/riwayat/{siswa}', [AbsensiController::class, 'riwayatSiswaJson'])->name('absensi.siswa.riwayat');
+    Route::get('/absensi/siswa/penilaian/{batchId}', [AbsensiController::class, 'penilaianSiswaJson'])->name('absensi.siswa.penilaian');
+    Route::get('/absensi/siswa/penilaian-template/{kelasSenseiId}', [AbsensiController::class, 'assessmentTemplate'])->name('absensi.siswa.penilaian.template');
+    Route::post('/absensi/siswa/penilaian-day', [AbsensiController::class, 'getDayAssessments'])->name('absensi.siswa.penilaian.day');
+    Route::post('/absensi/siswa/penilaian-save', [AbsensiController::class, 'saveAssessments'])->name('absensi.siswa.penilaian.save');
 });
 
 /*
@@ -365,7 +379,7 @@ Route::middleware(['auth'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:HR,MANAGER,SISWA,GURU'])->group(function () {
+Route::middleware(['auth', 'role:HR,MANAGER,GURU'])->group(function () {
     Route::get('/siswa', [\App\Http\Controllers\SiswaController::class, 'index'])->name('siswa.index');
     Route::post('/siswa', [\App\Http\Controllers\SiswaController::class, 'store'])->name('siswa.store');
     Route::put('/siswa/{id}', [\App\Http\Controllers\SiswaController::class, 'update'])->name('siswa.update');
@@ -378,7 +392,7 @@ Route::middleware(['auth', 'role:HR,MANAGER,SISWA,GURU'])->group(function () {
     Route::post('/siswa/bulk-delete', [\App\Http\Controllers\SiswaController::class, 'bulkDelete'])->name('siswa.bulk-delete');
 });
 
-Route::middleware(['auth', 'role:HR,MANAGER,SISWA,GURU'])->group(function () {
+Route::middleware(['auth', 'role:HR,MANAGER,GURU'])->group(function () {
     Route::get('/absensi-siswa', [\App\Http\Controllers\AbsensiSiswaController::class, 'index'])->name('absensi-siswa.index');
     Route::post('/absensi-siswa', [\App\Http\Controllers\AbsensiSiswaController::class, 'store'])->name('absensi-siswa.store');
     Route::post('/absensi-siswa/mass', [\App\Http\Controllers\AbsensiSiswaController::class, 'massStore'])->name('absensi-siswa.mass');
