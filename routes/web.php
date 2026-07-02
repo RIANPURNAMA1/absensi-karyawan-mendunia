@@ -379,7 +379,7 @@ Route::middleware(['auth'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:HR,MANAGER,GURU'])->group(function () {
+Route::middleware(['auth', 'role:HR,MANAGER'])->group(function () {
     Route::get('/siswa', [\App\Http\Controllers\SiswaController::class, 'index'])->name('siswa.index');
     Route::post('/siswa', [\App\Http\Controllers\SiswaController::class, 'store'])->name('siswa.store');
     Route::put('/siswa/{id}', [\App\Http\Controllers\SiswaController::class, 'update'])->name('siswa.update');

@@ -59,6 +59,7 @@ class PenilaianController extends Controller
         $level = $request->level;
         $guruId = $request->guru_id;
         $batchId = $request->batch_id;
+        $kelasSenseiId = $request->kelas_sensei_id;
 
         if ($user->role === 'GURU') {
             $guruId = $user->id;
@@ -70,6 +71,21 @@ class PenilaianController extends Controller
                 ->where('level', $level)
                 ->where('user_id', $guruId)
                 ->get();
+        }
+
+        $kelas = null;
+        if ($kelasSenseiId) {
+            $kelas = KelasSensei::with('batchRelasi')->find($kelasSenseiId);
+            if ($kelas) {
+                $batchId = $kelas->batch_id;
+                $level = $kelas->level;
+                $guruId = $kelas->user_id;
+            }
+        } elseif ($batchId && $level && $guruId) {
+            $kelas = KelasSensei::where('batch_id', $batchId)
+                ->where('level', $level)
+                ->where('user_id', $guruId)
+                ->first();
         }
 
         $students = collect();
@@ -88,45 +104,38 @@ class PenilaianController extends Controller
             $days[] = $weekStart->copy()->addDays($i)->toDateString();
         }
 
-        if ($batchId && $level && $guruId) {
-            $kelas = KelasSensei::where('batch_id', $batchId)
-                ->where('level', $level)
-                ->where('user_id', $guruId)
-                ->first();
-            $students = Siswa::where('batch_id', $batchId)->where('status', 'AKTIF')->orderBy('nama')->get(['id', 'nama']);
+        if ($kelas) {
+            $students = Siswa::with('kelasRelasi')->where('batch_id', $batchId)->where('status', 'AKTIF')->orderBy('nama')->get(['id', 'nama', 'kelas', 'kelas_id']);
 
-            if ($kelas) {
-                $categories = AssessmentCategory::with('components')
-                    ->where('level', $kelas->level)
-                    ->orderBy('urutan')
-                    ->get();
+            $categories = AssessmentCategory::with('components')
+                ->where('level', $kelas->level)
+                ->orderBy('urutan')
+                ->get();
 
-                $studentIds = $students->pluck('id');
-                $componentIds = $categories->pluck('components')->flatten()->pluck('id');
+            $studentIds = $students->pluck('id');
+            $componentIds = $categories->pluck('components')->flatten()->pluck('id');
 
-                // Week checkmarks
-                $existing = StudentAssessment::whereIn('siswa_id', $studentIds)
-                    ->whereIn('component_id', $componentIds)
-                    ->where('batch_id', $batchId)
-                    ->whereBetween('tanggal', [$days[0], $days[4]])
-                    ->select('siswa_id', 'tanggal')
-                    ->distinct()
-                    ->get();
+            $existing = StudentAssessment::whereIn('siswa_id', $studentIds)
+                ->whereIn('component_id', $componentIds)
+                ->where('batch_id', $batchId)
+                ->whereBetween('tanggal', [$days[0], $days[4]])
+                ->select('siswa_id', 'tanggal')
+                ->distinct()
+                ->get();
 
-                foreach ($students as $s) {
-                    foreach ($days as $d) {
-                        $key = $s->id . '_' . $d;
-                        $assessmentCheck[$key] = $existing->contains(fn($a) =>
-                            $a->siswa_id === $s->id && $a->tanggal === $d
-                        );
-                    }
+            foreach ($students as $s) {
+                foreach ($days as $d) {
+                    $key = $s->id . '_' . $d;
+                    $assessmentCheck[$key] = $existing->contains(fn($a) =>
+                        $a->siswa_id === $s->id && $a->tanggal === $d
+                    );
                 }
             }
         }
 
         return view('penilaian.index', compact(
             'levels', 'gurus', 'level', 'guruId', 'batchId',
-            'kelasList', 'students', 'categories',
+            'kelasList', 'kelas', 'students', 'categories',
             'days', 'assessmentCheck', 'weekStart', 'prevWeek', 'nextWeek'
         ));
     }
@@ -138,14 +147,20 @@ class PenilaianController extends Controller
             'batch_id' => 'required|integer',
             'level' => 'required|string',
             'guru_id' => 'required|integer',
+            'kelas_sensei_id' => 'nullable|integer',
             'tanggal' => 'nullable|date',
         ]);
 
         $siswa = Siswa::findOrFail($request->siswa_id);
-        $kelas = KelasSensei::where('batch_id', $request->batch_id)
-            ->where('level', $request->level)
-            ->where('user_id', $request->guru_id)
-            ->first();
+
+        if ($request->kelas_sensei_id) {
+            $kelas = KelasSensei::find($request->kelas_sensei_id);
+        } else {
+            $kelas = KelasSensei::where('batch_id', $request->batch_id)
+                ->where('level', $request->level)
+                ->where('user_id', $request->guru_id)
+                ->first();
+        }
 
         if (!$kelas) {
             return response()->json(['error' => 'Kelas tidak ditemukan'], 404);

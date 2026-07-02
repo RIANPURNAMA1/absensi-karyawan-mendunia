@@ -50,12 +50,12 @@
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Batch / Kelas</label>
-                        <select name="batch_id" class="form-select" onchange="this.form.submit()">
-                            <option value="">Pilih Batch</option>
+                        <label class="form-label">Kelas</label>
+                        <select name="kelas_sensei_id" class="form-select" onchange="this.form.submit()">
+                            <option value="">Pilih Kelas</option>
                             @foreach($kelasList as $k)
-                                <option value="{{ $k->batch_id }}" {{ $batchId == $k->batch_id ? 'selected' : '' }}>
-                                    {{ $k->batchRelasi->nama_batch ?? $k->nama_kelas }}
+                                <option value="{{ $k->id }}" {{ ($kelas->id ?? null) == $k->id ? 'selected' : '' }}>
+                                    {{ $k->nama_kelas }} - {{ $k->batchRelasi->nama_batch ?? 'Batch #'.$k->batch_id }}
                                 </option>
                             @endforeach
                         </select>
@@ -68,7 +68,7 @@
         </div>
     </form>
 
-    @if($batchId && $categories->isNotEmpty())
+    @if(isset($kelas) && $categories->isNotEmpty())
         {{-- Week Navigation --}}
         <div class="d-flex align-items-center justify-content-between mb-3">
             <h6 class="fw-semibold mb-0" style="font-size: 14px;">
@@ -93,6 +93,7 @@
                     <thead>
                         <tr>
                             <th scope="col" style="position: sticky; left: 0; background: #fff; z-index: 1; min-width: 140px;">Nama Siswa</th>
+                            <th scope="col" style="min-width: 100px;">Kelas</th>
                             @foreach($days as $d)
                                 @php $carbon = \Carbon\Carbon::parse($d); @endphp
                                 <th scope="col" class="text-center" style="min-width: 70px;">
@@ -108,6 +109,14 @@
                                 <td style="position: sticky; left: 0; background: #fff; z-index: 1;">
                                     <span class="fw-medium" style="font-size: 13px;">{{ $student->nama }}</span>
                                 </td>
+                                <td>
+                                    @if(isset($kelas))
+                                        <span style="font-size: 12px;">{{ $kelas->nama_kelas }}</span>
+                                        <small class="d-block text-muted" style="font-size: 10px;">Level {{ $kelas->level }} - {{ $kelas->tanggal_mulai->format('d M') }} s/d {{ $kelas->tanggal_selesai->format('d M') }}</small>
+                                    @else
+                                        <span style="font-size: 12px;">{{ $student->kelasRelasi->nama_kelas ?? $student->kelas }}</span>
+                                    @endif
+                                </td>
                                 @foreach($days as $d)
                                     @php
                                         $key = $student->id . '_' . $d;
@@ -116,7 +125,7 @@
                                     <td class="text-center">
                                         @if($hasAssessment)
                                             <a href="javascript:void(0)"
-                                                onclick="openSummaryModal({{ $student->id }}, '{{ $student->nama }}', {{ $batchId }}, '{{ $level }}', {{ $guruId }})"
+                                                onclick="openSummaryModal({{ $student->id }}, '{{ $student->nama }}', {{ $batchId }}, '{{ $level }}', {{ $guruId }}, {{ $kelas->id ?? 'null' }})"
                                                 class="text-decoration-none">
                                                 <span class="badge bg-success fw-normal px-2 py-1" style="font-size: 13px; cursor: pointer;">&#10003;</span>
                                             </a>
@@ -130,7 +139,7 @@
 
                         @if($students->isEmpty())
                             <tr>
-                                <td colspan="{{ 1 + count($days) }}" class="text-center text-muted py-4">
+                                <td colspan="{{ 2 + count($days) }}" class="text-center text-muted py-4">
                                     <i class="ph ph-notebook d-block fs-2 mb-2"></i>
                                     Tidak ada siswa aktif di batch ini.
                                 </td>
@@ -141,7 +150,7 @@
             </div>
         </div>
 
-    @elseif($batchId)
+    @elseif(isset($kelas))
         <div class="text-center text-muted py-5">
             <i class="ph ph-warning-circle d-block fs-1 mb-2"></i>
             Belum ada kategori penilaian untuk level ini.
@@ -149,7 +158,7 @@
     @else
         <div class="text-center text-muted py-5">
             <i class="ph ph-funnel d-block fs-1 mb-2"></i>
-            Pilih Level, Guru, dan Batch untuk melihat rekap penilaian.
+            Pilih Level, Guru, dan Kelas untuk melihat rekap penilaian.
         </div>
     @endif
 </div>
@@ -183,15 +192,18 @@ function getResikoBadge(avg) {
     return '<span class="badge bg-' + cls + ' fw-normal">' + text + '</span>';
 }
 
-function openSummaryModal(siswaId, namaSiswa, batchId, level, guruId) {
+function openSummaryModal(siswaId, namaSiswa, batchId, level, guruId, kelasSenseiId) {
     $('#summaryModalTitle').text(namaSiswa);
     $('#summaryModalSubtitle').text('');
     $('#summaryModalBody').html('<div class="text-center text-muted py-3">Memuat...</div>');
     $('#summaryModal').modal('show');
 
+    var data = { siswa_id: siswaId, batch_id: batchId, level: level, guru_id: guruId };
+    if (kelasSenseiId) data.kelas_sensei_id = kelasSenseiId;
+
     $.ajax({
         url: '{{ route('penilaian.day-detail') }}',
-        data: { siswa_id: siswaId, batch_id: batchId, level: level, guru_id: guruId },
+        data: data,
         success: function(res) {
             $('#summaryModalSubtitle').text(res.total_pertemuan + ' pertemuan');
 
